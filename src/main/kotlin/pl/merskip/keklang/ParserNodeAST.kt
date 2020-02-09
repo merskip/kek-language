@@ -1,6 +1,7 @@
 package pl.merskip.keklang
 
 import pl.merskip.keklang.node.*
+import java.math.BigDecimal
 import kotlin.Exception
 
 class ParserNodeAST(
@@ -30,6 +31,7 @@ class ParserNodeAST(
         return when (token) {
             is Token.Func -> parseFunctionDefinition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
+            is Token.Number -> parseConstantValue(token)
             else -> throw Exception("Unexpected token: $token")
         }
     }
@@ -37,7 +39,19 @@ class ParserNodeAST(
     private fun parseFunctionDefinition(token: Token.Func): FunctionDefinitionNodeAST {
         val identifierToken = getNextToken<Token.Identifier>()
         getNextToken<Token.LeftParenthesis>()
-        // TODO: Parse parameter list
+
+        val parameters = mutableListOf<ReferenceNodeAST>()
+        while (true) {
+            if (isNextToken<Token.RightParenthesis>()) break
+
+            val node = parseNextToken()
+            if (node !is ReferenceNodeAST)
+                throw Exception("Expected reference node AST, but got ${node::class}")
+            parameters.add(node)
+
+            if (isNextToken<Token.RightParenthesis>()) break
+            getNextToken<Token.Semicolon>()
+        }
         getNextToken<Token.RightParenthesis>()
 
         val codeBlock = parseCodeBlock()
@@ -49,12 +63,15 @@ class ParserNodeAST(
         getNextToken<Token.LeftBracket>()
         val statements = mutableListOf<StatementNodeAST>()
         while (true) {
-            if (isNextToken<Token.RightBracket>())
-                break
+            if (isNextToken<Token.RightBracket>()) break
+
             val node = parseNextToken()
             if (node !is StatementNodeAST)
                 throw Exception("Expected statement node AST, but got ${node::class}")
-            getNextToken<Token.Semicolon>()
+
+            if (isNextToken<Token.Semicolon>())
+                getNextToken<Token.Semicolon>()
+
             statements.add(node)
         }
         getNextToken<Token.RightBracket>()
@@ -63,12 +80,34 @@ class ParserNodeAST(
 
     private fun parseReferenceOrFunctionCall(token: Token.Identifier): NodeAST {
         return if (getAnyNextToken() is Token.LeftParenthesis) {
-            // TODO: Parse call parameter list
+
+            val arguments = mutableListOf<StatementNodeAST>()
+            while (true) {
+                if (isNextToken<Token.RightParenthesis>()) break
+                val node = parseNextToken()
+                if (node !is StatementNodeAST)
+                    throw Exception("Expected statement node AST, but got ${node::class}")
+                arguments.add(node)
+            }
+
             getNextToken<Token.RightParenthesis>()
-            FunctionCallNodeAST(token.text, emptyList())
+            FunctionCallNodeAST(token.text, arguments.toList())
         } else {
             previousToken()
             ReferenceNodeAST(token.text)
+        }
+    }
+
+    private fun parseConstantValue(token: Token.Number): ConstantValueNodeAST {
+        return if (token.text.contains('.')) {
+            val (integerPart, decimalPart) = token.text.split('.', limit = 2)
+            DecimalConstantValueNodeAST(
+                integerPart.toInt(),
+                decimalPart.toInt(),
+                BigDecimal(token.text)
+            )
+        } else {
+            IntegerConstantValueNodeAST(token.text.toInt())
         }
     }
 
