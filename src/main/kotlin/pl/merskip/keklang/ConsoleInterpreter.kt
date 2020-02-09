@@ -21,6 +21,11 @@ class ConsoleInterpreter {
         }
     }
 
+    fun printError(exception: SourceLocationException) {
+        val offset = PROMPT.length + exception.sourceLocation.column - 1
+        println(" ".repeat(offset) + "^ Error: " + exception.localizedMessage)
+    }
+
     fun end() {
         printEnd()
     }
@@ -33,7 +38,7 @@ class ConsoleInterpreter {
     }
 
     private fun printPrompt() {
-        print("kek-lang > ")
+        print(PROMPT)
     }
 
     private fun printEnd() {
@@ -41,4 +46,7 @@ class ConsoleInterpreter {
         println("Bye!")
     }
 
+    companion object {
+        private const val PROMPT = "kek-lang> "
+    }
 }
