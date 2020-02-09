@@ -11,6 +11,11 @@ fun main() {
             tokens.forEach { token ->
                 println(token)
             }
+
+            val parserNodeAST = ParserNodeAST(tokens)
+            val fileNode = parserNodeAST.parse()
+            println(fileNode)
+
         } catch (e: SourceLocationException) {
             interpreter.printError(e)
         }

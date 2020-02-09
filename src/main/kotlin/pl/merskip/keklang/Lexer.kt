@@ -51,7 +51,7 @@ class Lexer {
     private fun consumeNumber(char: Char): Token.Number {
         var currentChar = char
         var numberString = ""
-        while (currentChar.isDigit()) {
+        while (currentChar.isDigit() || currentChar == '.') {
             numberString += char
             currentChar = getNextCharacter() ?: break
         }
