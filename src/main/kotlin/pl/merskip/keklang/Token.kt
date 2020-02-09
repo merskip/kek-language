@@ -13,7 +13,10 @@ sealed class Token(
     class Comma(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Semicolon(sourceLocation: SourceLocation) : Token(sourceLocation)
 
+    val text: String
+        get() = sourceLocation.text
+
     override fun toString(): String {
-        return "${this::class.simpleName}(\"${sourceLocation.text}\", ${sourceLocation.getSimpleStringLocation()})"
+        return "${this::class.simpleName}(\"$text\", ${sourceLocation.getSimpleStringLocation()})"
     }
 }

@@ -55,7 +55,10 @@ class Lexer {
             numberString += char
             currentChar = getNextCharacter() ?: break
         }
-        return Token.Number(getSourceLocation())
+
+        val numberToken = Token.Number(getSourceLocation())
+        backToPreviousCharacter()
+        return numberToken
     }
 
     private fun consumeIdentifierOrKeyword(char: Char): Token {
@@ -66,8 +69,10 @@ class Lexer {
             currentChar = getNextCharacter() ?: break
         }
 
-        return consumeKeyword(identifierString)
+        val token = consumeKeyword(identifierString)
             ?: Token.Identifier(getSourceLocation())
+        backToPreviousCharacter()
+        return token;
     }
 
     private fun consumeKeyword(text: String): Token? {
@@ -89,6 +94,10 @@ class Lexer {
 
     private fun getNextCharacter(): Char? {
         return source.getOrNull(++offset)
+    }
+
+    private fun backToPreviousCharacter() {
+        offset--
     }
 
     private fun beginTokenSourceLocation() {
