@@ -1,5 +1,7 @@
 package pl.merskip.keklang
 
+import org.bytedeco.llvm.global.LLVM
+
 fun main() {
     val interpreter = ConsoleInterpreter()
     interpreter.begin()
@@ -8,13 +10,24 @@ fun main() {
     interpreter.readInput { input ->
         try {
             val tokens = lexer.parse(null, input)
-            tokens.forEach { token ->
-                println(token)
-            }
+//            tokens.forEach { token ->
+//                println(token)
+//            }
 
             val parserNodeAST = ParserNodeAST(tokens)
             val fileNode = parserNodeAST.parse()
-            println(fileNode)
+//            fileNode.nodes.forEach {
+//                println(it)
+//            }
+
+            val compiler = LLVMCompiler(fileNode)
+            val module = compiler.compile()
+
+            val outputPointer = LLVM.LLVMPrintModuleToString(module)
+            println(outputPointer.string)
+
+            val backendCompiler = BackendCompiler(module)
+            backendCompiler.compile()
 
         } catch (e: SourceLocationException) {
             interpreter.printError(e)

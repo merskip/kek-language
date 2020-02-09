@@ -56,7 +56,7 @@ class ParserNodeAST(
 
         val codeBlock = parseCodeBlock()
 
-        return FunctionDefinitionNodeAST(identifierToken.text, emptyList(), codeBlock)
+        return FunctionDefinitionNodeAST(identifierToken.text, parameters.toList(), codeBlock)
     }
 
     private fun parseCodeBlock(): CodeBlockNodeAST {
