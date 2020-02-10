@@ -88,14 +88,20 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         parameters: Map<String, String> = emptyMap(),
         children: Map<String, List<NodeAST>> = emptyMap()
     ) {
-        output += "$indent[${nodeClass.simpleName} "
-        output += parameters.map { it.key + "=" + it.value }.joinToString(" ")
+        output += "$indent[${nodeClass.simpleName?.colored(Color.Blue)}"
+
+        if (parameters.isNotEmpty()) {
+            output += " "
+            output += parameters.map {
+                "${it.key}=" + it.value.colored(Color.BrightBlack)
+            }.joinToString(" ")
+        }
 
         if (children.isNotEmpty()) {
             output += "\n"
 
             children.forEach { childEntry ->
-                output += "$indent - " + childEntry.key + ":\n"
+                output += "$indent - " + childEntry.key.colored(Color.Green) + ":\n"
                 indentLevel++
                 childEntry.value.forEach { childNode ->
                     printNode(childNode)
