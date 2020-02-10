@@ -19,6 +19,8 @@ fun main() {
 //            fileNode.nodes.forEach {
 //                println(it)
 //            }
+            val nodeASTDump = PrinterNodeAST().print(fileNode)
+            println(nodeASTDump)
 
             val compiler = LLVMCompiler(fileNode)
             val module = compiler.compile()

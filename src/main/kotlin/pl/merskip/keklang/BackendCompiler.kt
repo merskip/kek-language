@@ -36,8 +36,9 @@ class BackendCompiler(
         }
 
         val errorMessage = PointerPointer<BytePointer>(512L)
-        if (LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer("output.o"), LLVM.LLVMObjectFile, errorMessage) != 0)
+        if (LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer("output.o"), LLVM.LLVMObjectFile, errorMessage) != 0) {
             println("Failed target mahcine to file")
-        println(BytePointer(errorMessage).string)
+            println(BytePointer(errorMessage).string)
+        }
     }
 }
