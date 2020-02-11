@@ -1,14 +1,22 @@
 package pl.merskip.keklang
 
 import pl.merskip.keklang.node.*
+import pl.merskip.keklang.node.BinaryOperatorNodeAST
 import java.math.BigDecimal
-import kotlin.Exception
+
 
 class ParserNodeAST(
     tokens: List<Token>
 ) {
 
     private val tokensIter = tokens.listIterator()
+
+    private val operators = listOf(
+        Operator("+", 100),
+        Operator("-", 100),
+        Operator("*", 200),
+        Operator("/", 200)
+    )
 
     fun parse(): FileNodeAST {
         val functions = mutableListOf<FunctionDefinitionNodeAST>()
@@ -22,18 +30,45 @@ class ParserNodeAST(
         return FileNodeAST(functions.toList())
     }
 
-    private fun parseNextToken(): NodeAST =
-        parseNextTokenOrNull() ?: throw Exception("Unexpected end of file")
+    private fun parseNextToken(minimumPrecedence: Int = 0): NodeAST =
+        parseNextTokenOrNull(minimumPrecedence) ?: throw Exception("Unexpected end of file")
 
-    private fun parseNextTokenOrNull(): NodeAST? {
+    private fun parseNextTokenOrNull(minimumPrecedence: Int = 0): NodeAST? {
         val token = expectNextTokenOrNull<Token>()
             ?: return null
-        return when (token) {
+        val parsedNode = when (token) {
             is Token.Func -> parseFunctionDefinition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
+            is Token.LeftParenthesis -> parseParenthesis(token)
             else -> throw Exception("Unexpected token: $token")
         }
+
+        if (isNextToken<Token.Operator>()) {
+            val parsedOperator = parseOperatorIfHasHigherPrecedence(minimumPrecedence, parsedNode)
+            if (parsedOperator != null)
+                return parsedOperator
+        }
+        return parsedNode
+    }
+
+    private fun parseParenthesis(token: Token.LeftParenthesis): NodeAST {
+        val nextNode = parseNextToken()
+        getNextToken<Token.RightParenthesis>()
+        return nextNode
+    }
+
+    private fun parseOperatorIfHasHigherPrecedence(minimumPrecedence: Int, parsedNode: NodeAST): NodeAST? {
+        val operatorToken = getNextToken<Token.Operator>()
+        val operator = findOperator(operatorToken)
+            ?: throw Exception("Unknown operator: ${operatorToken.text}")
+
+        if (operator.precedence > minimumPrecedence) {
+            val lhs = parsedNode as? StatementNodeAST
+                ?: throw Exception("Expected statement node as lhs for operator: ${operatorToken.text}")
+            return parseOperator(operatorToken, operator, lhs)
+        }
+        return null
     }
 
     private fun parseFunctionDefinition(token: Token.Func): FunctionDefinitionNodeAST {
@@ -109,6 +144,16 @@ class ParserNodeAST(
         } else {
             IntegerConstantValueNodeAST(token.text.toInt())
         }
+    }
+
+    private fun parseOperator(token: Token.Operator, operator: Operator, lhs: StatementNodeAST): BinaryOperatorNodeAST {
+        val rhs = parseNextToken(operator.precedence) as? StatementNodeAST
+            ?: throw Exception("Expected statement node as rhs for operator: ${token.text}")
+        return BinaryOperatorNodeAST(token.text, lhs, rhs)
+    }
+
+    private fun findOperator(token: Token.Operator): Operator? {
+        return operators.firstOrNull { it.identifier == token.text }
     }
 
     private inline fun <reified T : Token> getNextToken(): T {

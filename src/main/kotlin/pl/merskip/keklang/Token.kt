@@ -6,6 +6,7 @@ sealed class Token(
     class Func(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Identifier(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Number(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class Operator(sourceLocation: SourceLocation) : Token(sourceLocation)
     class LeftParenthesis(sourceLocation: SourceLocation) : Token(sourceLocation)
     class RightParenthesis(sourceLocation: SourceLocation) : Token(sourceLocation)
     class LeftBracket(sourceLocation: SourceLocation) : Token(sourceLocation)

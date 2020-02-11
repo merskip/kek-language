@@ -79,7 +79,18 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
     override fun visitReferenceNode(referenceNodeAST: ReferenceNodeAST) {
         print(
             nodeClass = referenceNodeAST::class,
-            parameters =  mapOf("identifier" to referenceNodeAST.identifier)
+            parameters = mapOf("identifier" to referenceNodeAST.identifier)
+        )
+    }
+
+    override fun visitBinaryOperatorNode(binaryOperatorNodeAST: BinaryOperatorNodeAST) {
+        print(
+            nodeClass = binaryOperatorNodeAST::class,
+            parameters = mapOf("identifier" to binaryOperatorNodeAST.identifier),
+            children = mapOf(
+                "lhs" to listOf(binaryOperatorNodeAST.lhs),
+                "ths" to listOf(binaryOperatorNodeAST.rhs)
+            )
         )
     }
 

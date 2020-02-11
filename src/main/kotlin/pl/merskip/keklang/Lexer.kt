@@ -28,24 +28,22 @@ class Lexer {
             ?: return null
         beginTokenSourceLocation()
 
-        if (char.isDigit())
-            return consumeNumber(char) // Consume [0-9]+
-        else if (char.isLetter() || char == '_')
-            return consumeIdentifierOrKeyword(char) // Consume [_a-Z][_a-Z0-9]
-        else if (char == '(')
-            return Token.LeftParenthesis(getSourceLocation())
-        else if (char == ')')
-            return Token.RightParenthesis(getSourceLocation())
-        else if (char == '{')
-            return Token.LeftBracket(getSourceLocation())
-        else if (char == '}')
-            return Token.RightBracket(getSourceLocation())
-        else if (char == ',')
-            return Token.Comma(getSourceLocation())
-        else if (char == ';')
-            return Token.Semicolon(getSourceLocation())
-        else
-            throw UnknownTokenException(getSourceLocation())
+        return when {
+            isNumberHead(char) -> consumeNumber(char) // Consume [0-9]+
+            isIdentifierHead(char) -> consumeIdentifierOrKeyword(char) // Consume [_a-Z][_a-Z0-9]
+            isOperator(char) -> Token.Operator(getSourceLocation())
+            char == '(' -> Token.LeftParenthesis(getSourceLocation())
+            char == ')' -> Token.RightParenthesis(getSourceLocation())
+            char == '{' -> Token.LeftBracket(getSourceLocation())
+            char == '}' -> Token.RightBracket(getSourceLocation())
+            char == ',' -> Token.Comma(getSourceLocation())
+            char == ';' -> Token.Semicolon(getSourceLocation())
+            else -> throw UnknownTokenException(getSourceLocation())
+        }
+    }
+
+    private fun isNumberHead(char: Char): Boolean {
+        return char.isDigit()
     }
 
     private fun consumeNumber(char: Char): Token.Number {
@@ -59,6 +57,14 @@ class Lexer {
         val numberToken = Token.Number(getSourceLocation())
         backToPreviousCharacter()
         return numberToken
+    }
+
+    private fun isIdentifierHead(char: Char): Boolean {
+        return char.isLetter() || char == '_'
+    }
+
+    private fun isOperator(char: Char): Boolean {
+        return char == '+' || char == '-' || char == '*' || char == '/'
     }
 
     private fun consumeIdentifierOrKeyword(char: Char): Token {
