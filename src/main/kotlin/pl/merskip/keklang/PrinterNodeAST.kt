@@ -89,7 +89,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
             parameters = mapOf("identifier" to binaryOperatorNodeAST.identifier),
             children = mapOf(
                 "lhs" to listOf(binaryOperatorNodeAST.lhs),
-                "ths" to listOf(binaryOperatorNodeAST.rhs)
+                "rhs" to listOf(binaryOperatorNodeAST.rhs)
             )
         )
     }

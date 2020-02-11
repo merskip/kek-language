@@ -63,7 +63,7 @@ class ParserNodeAST(
         val operator = findOperator(operatorToken)
             ?: throw Exception("Unknown operator: ${operatorToken.text}")
 
-        if (operator.precedence > minimumPrecedence) {
+        if (operator.precedence >= minimumPrecedence) {
             val lhs = parsedNode as? StatementNodeAST
                 ?: throw Exception("Expected statement node as lhs for operator: ${operatorToken.text}")
             return parseOperator(operatorToken, operator, lhs)
@@ -168,7 +168,7 @@ class ParserNodeAST(
     }
 
     private inline fun <reified T : Token> isNextToken(): Boolean {
-        val nextToken = getAnyNextToken()
+        val nextToken = getAnyNextToken() ?: return false
         val isMatched = nextToken is T
         previousToken()
         return isMatched
