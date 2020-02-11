@@ -1,12 +1,10 @@
 package pl.merskip.keklang
 
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
-import pl.merskip.keklang.node.BinaryOperatorNodeAST
-import pl.merskip.keklang.node.FileNodeAST
-import pl.merskip.keklang.node.FunctionCallNodeAST
-import pl.merskip.keklang.node.IntegerConstantValueNodeAST
+import pl.merskip.keklang.node.*
 
 internal class ParserNodeASTTest {
 
@@ -94,17 +92,11 @@ internal class ParserNodeASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single()
 
-        val operator = funcDef.codeBlockNodeAST.statements.single()
-                as BinaryOperatorNodeAST
+        val operator = funcDef.codeBlockNodeAST.single<BinaryOperatorNodeAST>()
         assertEquals("+", operator.identifier)
 
-        val lhsInteger = operator.lhs
-                as IntegerConstantValueNodeAST
-        assertEquals(1, lhsInteger.value)
-
-        val rhsInteger = operator.rhs
-                as IntegerConstantValueNodeAST
-        assertEquals(2, rhsInteger.value)
+        assertConstValue(1, operator.lhs)
+        assertConstValue(2, operator.rhs)
     }
 
     @Test
@@ -118,22 +110,66 @@ internal class ParserNodeASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single()
 
-        val firstAddingOperator = funcDef.codeBlockNodeAST.statements.single()
-                as BinaryOperatorNodeAST
-        assertEquals("+", firstAddingOperator.identifier)
+        val secondAddingOperator = funcDef.codeBlockNodeAST.single<BinaryOperatorNodeAST>()
 
-        assertEquals(1, (firstAddingOperator.lhs as IntegerConstantValueNodeAST).value)
+        assertConstValue(3, secondAddingOperator.rhs)
 
-        val secondAddingOperator = firstAddingOperator.rhs
-                as BinaryOperatorNodeAST
-        assertEquals("+", secondAddingOperator.identifier)
+        val firstAddingOperator = secondAddingOperator.lhs as BinaryOperatorNodeAST
+        assertConstValue(1, firstAddingOperator.lhs)
+        assertConstValue(2, firstAddingOperator.rhs)
+    }
 
-        assertEquals(2, (secondAddingOperator.lhs as IntegerConstantValueNodeAST).value)
-        assertEquals(3, (secondAddingOperator.rhs as IntegerConstantValueNodeAST).value)
+    @Test
+    fun `parse precedence adding and multiple operator`() {
+        val source = """
+            func a() {
+                1 + 2 * 3
+            }
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single()
+
+        val addingOperator = funcDef.codeBlockNodeAST.single<BinaryOperatorNodeAST>()
+        assertEquals("+", addingOperator.identifier)
+        assertConstValue(1, addingOperator.lhs)
+
+        val multipleOperator = addingOperator.rhs as BinaryOperatorNodeAST
+        assertEquals("*", multipleOperator.identifier)
+        assertConstValue(2, multipleOperator.lhs)
+        assertConstValue(3, multipleOperator.rhs)
+    }
+
+    @Test
+    fun `parse precedence multiple and adding operator`() {
+        val source = """
+            func a() {
+                1 * 2 + 3
+            }
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single()
+
+        val addingOperator = funcDef.codeBlockNodeAST.single<BinaryOperatorNodeAST>()
+        assertConstValue(3, addingOperator.rhs)
+
+        val multipleOperator = addingOperator.lhs as BinaryOperatorNodeAST
+        assertConstValue(1, multipleOperator.lhs)
+        assertConstValue(2, multipleOperator.rhs)
     }
 
     private fun parse(source: String): FileNodeAST {
         val tokens = Lexer().parse(null, source)
         return ParserNodeAST(tokens).parse()
+    }
+
+    private inline fun <reified T: StatementNodeAST> CodeBlockNodeAST.single(): T {
+        return statements.single() as T
+    }
+
+    private fun assertConstValue(expected: Int, node: NodeAST) {
+        val integerConstantValueNode = node as IntegerConstantValueNodeAST
+        assertEquals(expected, integerConstantValueNode.value)
     }
 }

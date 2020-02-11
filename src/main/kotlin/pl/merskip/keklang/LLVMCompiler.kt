@@ -46,12 +46,7 @@ class LLVMCompiler(
 
         var lastValue: LLVMValueRef? = null
         functionDefinition.codeBlockNodeAST.statements.forEach { statement ->
-
-            lastValue = when (statement) {
-                is FunctionCallNodeAST -> compileFunctionCall(statement)
-                is ConstantValueNodeAST -> compileConstantValue(statement)
-                else -> throw Exception("Unexpected statement: $statement")
-            }
+            lastValue = compileStatement(statement)
         }
 
         val returnValue = lastValue
@@ -64,6 +59,15 @@ class LLVMCompiler(
             val outputPointer = LLVM.LLVMPrintModuleToString(module)
             println(outputPointer.string)
             throw Exception("LLVMVerifyFunction failed")
+        }
+    }
+
+    private fun compileStatement(statement: StatementNodeAST): LLVMValueRef {
+        return when (statement) {
+            is FunctionCallNodeAST -> compileFunctionCall(statement)
+            is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
+            is ConstantValueNodeAST -> compileConstantValue(statement)
+            else -> throw Exception("Unexpected statement: $statement")
         }
     }
 
@@ -80,10 +84,23 @@ class LLVMCompiler(
         }.toTypedArray()
 
         return LLVM.LLVMBuildCall(
-            builder, /*LLVM.LLVMDoubleTypeInContext(context),*/ functionValue,
+            builder, functionValue,
             PointerPointer<LLVMValueRef>(*parameters), parameters.size,
             functionCall.identifier + "_call"
         )
+    }
+
+    private fun compileBinaryOperator(binaryOperator: BinaryOperatorNodeAST): LLVMValueRef {
+        val lhsValue = compileStatement(binaryOperator.lhs)
+        val rhsValue = compileStatement(binaryOperator.rhs)
+
+        return when (binaryOperator.identifier) {
+            "+" -> LLVM.LLVMBuildFAdd(builder, lhsValue, rhsValue, "add")
+            "-" -> LLVM.LLVMBuildFSub(builder, lhsValue, rhsValue, "sub")
+            "*" -> LLVM.LLVMBuildFMul(builder, lhsValue, rhsValue, "mul")
+            "/" -> LLVM.LLVMBuildFDiv(builder, lhsValue, rhsValue, "div")
+            else -> throw Exception("Unknown operator: ${binaryOperator.identifier}")
+        }
     }
 
     private fun compileConstantValue(constantValue: ConstantValueNodeAST): LLVMValueRef {

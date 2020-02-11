@@ -21,7 +21,9 @@ class ParserNodeAST(
     fun parse(): FileNodeAST {
         val functions = mutableListOf<FunctionDefinitionNodeAST>()
         while (true) {
-            val node = parseNextTokenOrNull() ?: break
+            if (!isAnyNextToken()) break
+
+            val node = parseNextToken()
             if (node !is FunctionDefinitionNodeAST)
                 throw Exception("Expected function definition at global scope")
 
@@ -30,17 +32,16 @@ class ParserNodeAST(
         return FileNodeAST(functions.toList())
     }
 
-    private fun parseNextToken(minimumPrecedence: Int = 0): NodeAST =
-        parseNextTokenOrNull(minimumPrecedence) ?: throw Exception("Unexpected end of file")
-
-    private fun parseNextTokenOrNull(minimumPrecedence: Int = 0): NodeAST? {
-        val token = expectNextTokenOrNull<Token>()
-            ?: return null
-        val parsedNode = when (token) {
-            is Token.Func -> parseFunctionDefinition(token)
+    private fun parseNextToken(
+        minimumPrecedence: Int = 0,
+        popStatement: () -> StatementNodeAST = ::throwNoLhsStatement
+    ): NodeAST {
+        val parsedNode = when (val token = getAnyNextToken()) {
+            is Token.Func -> parseFunctionDefinition()
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
-            is Token.LeftParenthesis -> parseParenthesis(token)
+            is Token.LeftParenthesis -> parseParenthesis()
+            is Token.Operator -> parseOperator(token, findOperator(token)!!, popStatement())
             else -> throw Exception("Unexpected token: $token")
         }
 
@@ -52,7 +53,11 @@ class ParserNodeAST(
         return parsedNode
     }
 
-    private fun parseParenthesis(token: Token.LeftParenthesis): NodeAST {
+    private fun throwNoLhsStatement(): Nothing {
+        throw Exception("No lhs statement in this context")
+    }
+
+    private fun parseParenthesis(): NodeAST {
         val nextNode = parseNextToken()
         getNextToken<Token.RightParenthesis>()
         return nextNode
@@ -63,15 +68,16 @@ class ParserNodeAST(
         val operator = findOperator(operatorToken)
             ?: throw Exception("Unknown operator: ${operatorToken.text}")
 
-        if (operator.precedence >= minimumPrecedence) {
+        if (operator.precedence > minimumPrecedence) {
             val lhs = parsedNode as? StatementNodeAST
                 ?: throw Exception("Expected statement node as lhs for operator: ${operatorToken.text}")
             return parseOperator(operatorToken, operator, lhs)
         }
-        return null
+        previousToken()
+        return parsedNode
     }
 
-    private fun parseFunctionDefinition(token: Token.Func): FunctionDefinitionNodeAST {
+    private fun parseFunctionDefinition(): FunctionDefinitionNodeAST {
         val identifierToken = getNextToken<Token.Identifier>()
         getNextToken<Token.LeftParenthesis>()
 
@@ -100,7 +106,13 @@ class ParserNodeAST(
         while (true) {
             if (isNextToken<Token.RightBracket>()) break
 
-            val node = parseNextToken()
+            val node = parseNextToken(
+                popStatement = {
+                    val last = statements.last()
+                    statements.remove(last)
+                    last
+                }
+            )
             if (node !is StatementNodeAST)
                 throw Exception("Expected statement node AST, but got ${node::class}")
 
@@ -162,13 +174,14 @@ class ParserNodeAST(
     }
 
     private inline fun <reified T : Token> expectNextTokenOrNull(): T? {
-        val token = getAnyNextToken() ?: return null
+        val token = getAnyNextToken()
         if (token is T) return token
         else throw Exception("Expected next token as type ${T::class.simpleName}, but got ${token::class.simpleName}")
     }
 
     private inline fun <reified T : Token> isNextToken(): Boolean {
-        val nextToken = getAnyNextToken() ?: return false
+        if (!isAnyNextToken()) return false
+        val nextToken = getAnyNextToken()
         val isMatched = nextToken is T
         previousToken()
         return isMatched
@@ -178,8 +191,11 @@ class ParserNodeAST(
         tokensIter.previous()
     }
 
-    private fun getAnyNextToken(): Token? {
-        if (!tokensIter.hasNext()) return null
+    private fun getAnyNextToken(): Token {
+        if (!isAnyNextToken()) throw Exception("Unexpected end of file")
         return tokensIter.next()
     }
+
+    private fun isAnyNextToken(): Boolean =
+        tokensIter.hasNext()
 }
