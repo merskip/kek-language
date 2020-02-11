@@ -2,7 +2,7 @@ package pl.merskip.keklang
 
 import org.bytedeco.llvm.global.LLVM
 
-fun main() {
+fun main(args: Array<String>) {
     val interpreter = ConsoleInterpreter()
     interpreter.begin()
 

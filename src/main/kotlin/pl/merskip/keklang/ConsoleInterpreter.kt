@@ -31,9 +31,9 @@ class ConsoleInterpreter {
     }
 
     private fun printWelcome() {
-        println("Welcome to Kek-Language!")
-        println(LLVM.lto_get_version().string)
-        println("Type 'q' or 'quit' to exit")
+        println("Welcome to Kek-Language!".colored(Color.BrightBlack))
+        println(LLVM.lto_get_version().string.colored(Color.BrightWhite))
+        println("Type 'q' or 'quit' to exit".colored(Color.BrightWhite))
         println()
     }
 
@@ -47,6 +47,6 @@ class ConsoleInterpreter {
     }
 
     companion object {
-        private const val PROMPT = "kek-lang> "
+        private val PROMPT = "kek-lang> ".colored(Color.Yellow)
     }
 }
