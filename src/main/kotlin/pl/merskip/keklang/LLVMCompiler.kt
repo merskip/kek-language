@@ -8,27 +8,14 @@ import pl.merskip.keklang.node.*
 
 
 class LLVMCompiler(
-    private val fileNodeAST: FileNodeAST
+    moduleId: String
 ) {
 
-    private lateinit var context: LLVMContextRef
-    private lateinit var module: LLVMModuleRef
-    private lateinit var builder: LLVMBuilderRef
+    private val context = LLVM.LLVMContextCreate()
+    val module = LLVM.LLVMModuleCreateWithNameInContext(moduleId, context)
+    private val builder = LLVM.LLVMCreateBuilder()
 
-    fun compile(): LLVMModuleRef {
-        context = LLVM.LLVMContextCreate()
-        module = LLVM.LLVMModuleCreateWithNameInContext("kek-main-module", context)
-        builder = LLVM.LLVMCreateBuilder()
-
-        tryCompile()
-
-//        LLVM.LLVMDisposeBuilder(builder)
-//        LLVM.LLVMDisposeModule(module)
-//        LLVM.LLVMContextDispose(context)
-        return module
-    }
-
-    private fun tryCompile() {
+    fun compile(fileNodeAST: FileNodeAST) {
         fileNodeAST.nodes.forEach { functionDefinition ->
             compileFunctionDefinition(functionDefinition)
         }

@@ -23,7 +23,13 @@ class ConsoleInterpreter {
 
     fun printError(exception: SourceLocationException) {
         val offset = PROMPT.length + exception.sourceLocation.column - 1
-        println(" ".repeat(offset) + "^ Error: " + exception.localizedMessage)
+        val text = "^ Error: " + exception.localizedMessage
+        println(" ".repeat(offset) + text.colored(Color.Red))
+    }
+
+    fun printError(exception: Exception) {
+        val text = "Error: " + exception.localizedMessage
+        println(text.colored(Color.Red))
     }
 
     fun end() {

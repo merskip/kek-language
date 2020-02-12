@@ -1,40 +1,87 @@
 package pl.merskip.keklang
 
+import com.xenomachina.argparser.ArgParser
+import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
+import java.io.File
+import java.lang.Exception
 
-fun main(args: Array<String>) {
-    val interpreter = ConsoleInterpreter()
-    interpreter.begin()
 
-    val lexer = Lexer()
-    interpreter.readInput { input ->
+fun withInterpreter(callback: (inputText: String) -> Unit) {
+    val console = ConsoleInterpreter()
+    console.begin()
+    console.readInput { inputText ->
         try {
-            val tokens = lexer.parse(null, input)
-//            tokens.forEach { token ->
-//                println(token)
-//            }
-
-            val parserNodeAST = ParserNodeAST(tokens)
-            val fileNode = parserNodeAST.parse()
-//            fileNode.nodes.forEach {
-//                println(it)
-//            }
-            val nodeASTDump = PrinterNodeAST().print(fileNode)
-            println(nodeASTDump)
-
-            val compiler = LLVMCompiler(fileNode)
-            val module = compiler.compile()
-
-            val outputPointer = LLVM.LLVMPrintModuleToString(module)
-            println(outputPointer.string)
-
-            val backendCompiler = BackendCompiler(module)
-            backendCompiler.compile()
-
+            callback(inputText)
         } catch (e: SourceLocationException) {
-            interpreter.printError(e)
+            console.printError(e)
+        } catch (e: Exception) {
+            console.printError(e)
         }
     }
+    console.end()
+}
 
-    interpreter.end()
+fun withReadSources(sources: List<String>, callback: (filename: String, content: String) -> Unit) {
+    sources.forEach { filename ->
+        val file = File(filename)
+        val content = file.readText()
+        callback(filename, content)
+    }
+}
+
+fun ApplicationArguments.processSource(filename: String?, content: String, llvmCompiler: LLVMCompiler) {
+    val tokens = Lexer().parse(filename, content)
+
+    if (tokensDump) {
+        println(tokens.joinToString("\n") { token -> token.toString() })
+    }
+
+    val parserNodeAST = ParserNodeAST(tokens)
+    val fileNode = parserNodeAST.parse()
+
+    if (astDump) {
+        println(PrinterNodeAST().print(fileNode))
+    }
+
+    llvmCompiler.compile(fileNode)
+}
+
+fun ApplicationArguments.processModule(module: LLVMModuleRef) {
+
+    if (llvmIRDump) {
+        println(LLVM.LLVMPrintModuleToString(module).string)
+    }
+
+    output?.let { outputFilename ->
+        val backendCompiler = BackendCompiler(module)
+        backendCompiler.compile(outputFilename.withExtensionIfNoExists(".o"))
+    }
+}
+
+fun main(args: Array<String>) {
+    ArgParser(args).parseInto(::ApplicationArguments).run {
+        val llvmCompiler = LLVMCompiler("kek-lang")
+        if (isInterpreterMode()) {
+            withInterpreter { inputText ->
+                processSource(null, inputText, llvmCompiler)
+                processModule(llvmCompiler.module)
+            }
+        } else {
+            withReadSources(sources) { filename, content ->
+                processSource(filename, content, llvmCompiler)
+            }
+            processModule(llvmCompiler.module)
+        }
+    }
+}
+
+private fun ApplicationArguments.isInterpreterMode(): Boolean =
+    sources.isEmpty()
+
+private fun String.withExtensionIfNoExists(extension: String): String {
+    if (this.isEmpty()) return this
+    val filename = substringAfterLast("/", this)
+    return if (filename.contains('.')) this
+    else this + "." + extension.removePrefix(".")
 }

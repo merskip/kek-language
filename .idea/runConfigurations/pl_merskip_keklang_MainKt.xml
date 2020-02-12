@@ -2,9 +2,9 @@
   <configuration default="false" name="pl.merskip.keklang.MainKt" type="JetRunConfigurationType" factoryName="Kotlin" nameIsGenerated="true">
     <module name="KeK-Language.main" />
     <option name="VM_PARAMETERS" value="" />
-    <option name="PROGRAM_PARAMETERS" value="" />
+    <option name="PROGRAM_PARAMETERS" value="--dump-ast --dump-llvm-ir --output prog.o" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
-    <option name="ALTERNATIVE_JRE_PATH" value="C:\Programy\java-1.8.0-openjdk-1.8.0.232-3.b09.redhat.windows.x86_64\jre" />
+    <option name="ALTERNATIVE_JRE_PATH" value="11" />
     <option name="PASS_PARENT_ENVS" value="true" />
     <option name="MAIN_CLASS_NAME" value="pl.merskip.keklang.MainKt" />
     <option name="WORKING_DIRECTORY" value="" />

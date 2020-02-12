@@ -9,7 +9,7 @@ class BackendCompiler(
     val module: LLVMModuleRef
 ) {
 
-    fun compile() {
+    fun compile(filename: String) {
 
         LLVM.LLVMInitializeAllTargetInfos()
         LLVM.LLVMInitializeAllTargets()
@@ -36,8 +36,8 @@ class BackendCompiler(
         }
 
         val errorMessage = PointerPointer<BytePointer>(512L)
-        if (LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer("output.o"), LLVM.LLVMObjectFile, errorMessage) != 0) {
-            println("Failed target mahcine to file")
+        if (LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer(filename), LLVM.LLVMObjectFile, errorMessage) != 0) {
+            println("Failed target machine to file")
             println(BytePointer(errorMessage).string)
         }
     }
