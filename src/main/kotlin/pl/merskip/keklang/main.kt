@@ -50,7 +50,7 @@ fun ApplicationArguments.processSource(filename: String?, content: String, llvmC
 fun ApplicationArguments.processModule(module: LLVMModuleRef) {
 
     if (llvmIRDump) {
-        println(LLVM.LLVMPrintModuleToString(module).string)
+        println(LLVM.LLVMPrintModuleToString(module).string.colorizeLLVMIR())
     }
 
     output?.let { outputFilename ->
