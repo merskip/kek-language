@@ -15,7 +15,10 @@ class LLVMCompiler(
     val module = LLVM.LLVMModuleCreateWithNameInContext(moduleId, context)
     private val builder = LLVM.LLVMCreateBuilder()
 
+    private lateinit var exitFunction: LLVMValueRef
+
     fun compile(fileNodeAST: FileNodeAST) {
+        exitFunction = declareExitFunction()
         fileNodeAST.nodes.forEach { functionDefinition ->
             compileFunctionDefinition(functionDefinition)
         }
@@ -23,6 +26,17 @@ class LLVMCompiler(
         if (LLVM.LLVMVerifyModule(module, LLVM.LLVMPrintMessageAction, err) != 0) {
             println(err.string)
         }
+    }
+
+    private fun declareExitFunction(): LLVMValueRef {
+        val parameters = listOf(
+            LLVM.LLVMInt32TypeInContext(context)
+        ).toTypedArray()
+        val returnType = LLVM.LLVMVoidTypeInContext(context)
+
+        val functionType =
+            LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
+        return LLVM.LLVMAddFunction(module, "exit", functionType)
     }
 
     private fun compileFunctionDefinition(functionDefinition: FunctionDefinitionNodeAST) {
@@ -40,7 +54,16 @@ class LLVMCompiler(
             ?: throw Exception("Block of function is empty")
 
         LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
-        LLVM.LLVMBuildRet(builder, returnValue)
+
+        if (functionDefinition.identifier != "_start") {
+            LLVM.LLVMBuildRet(builder, returnValue)
+        } else {
+            val exitParameters = listOf(
+                returnValue
+            ).toTypedArray()
+            LLVM.LLVMBuildCall(builder, exitFunction, PointerPointer<LLVMValueRef>(*exitParameters), 1, "")
+            LLVM.LLVMBuildUnreachable(builder)
+        }
 
         if (LLVM.LLVMVerifyFunction(functionValue, LLVM.LLVMPrintMessageAction) != 0) {
             val outputPointer = LLVM.LLVMPrintModuleToString(module)
@@ -82,9 +105,9 @@ class LLVMCompiler(
         val rhsValue = compileStatement(binaryOperator.rhs)
 
         return when (binaryOperator.identifier) {
-            "+" -> LLVM.LLVMBuildFAdd(builder, lhsValue, rhsValue, "add")
-            "-" -> LLVM.LLVMBuildFSub(builder, lhsValue, rhsValue, "sub")
-            "*" -> LLVM.LLVMBuildFMul(builder, lhsValue, rhsValue, "mul")
+            "+" -> LLVM.LLVMBuildAdd(builder, lhsValue, rhsValue, "add")
+            "-" -> LLVM.LLVMBuildSub(builder, lhsValue, rhsValue, "sub")
+            "*" -> LLVM.LLVMBuildMul(builder, lhsValue, rhsValue, "mul")
             "/" -> LLVM.LLVMBuildFDiv(builder, lhsValue, rhsValue, "div")
             else -> throw Exception("Unknown operator: ${binaryOperator.identifier}")
         }
@@ -92,19 +115,26 @@ class LLVMCompiler(
 
     private fun compileConstantValue(constantValue: ConstantValueNodeAST): LLVMValueRef {
         return when (constantValue) {
-            is DecimalConstantValueNodeAST -> LLVM.LLVMConstReal(LLVM.LLVMDoubleTypeInContext(context), constantValue.value.toDouble())
-            is IntegerConstantValueNodeAST -> LLVM.LLVMConstReal(LLVM.LLVMDoubleTypeInContext(context), constantValue.value.toDouble())
+            is DecimalConstantValueNodeAST -> LLVM.LLVMConstReal(
+                LLVM.LLVMDoubleTypeInContext(context),
+                constantValue.value.toDouble()
+            )
+            is IntegerConstantValueNodeAST -> LLVM.LLVMConstInt(
+                LLVM.LLVMInt32TypeInContext(context),
+                constantValue.value.toLong(),
+                1
+            )
             else -> throw Exception("Unexpected statement: $constantValue")
         }
     }
 
     private fun createFunction(functionDefinition: FunctionDefinitionNodeAST): LLVMValueRef {
-        val returnType = LLVM.LLVMDoubleTypeInContext(context)
+        val returnType = LLVM.LLVMInt32TypeInContext(context)
         val parameters = functionDefinition.arguments.map {
-            LLVM.LLVMDoubleTypeInContext(context)
+            LLVM.LLVMInt32TypeInContext(context)
         }.toTypedArray()
-        val functionType = LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
+        val functionType =
+            LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
         return LLVM.LLVMAddFunction(module, functionDefinition.identifier, functionType)
     }
-
 }
