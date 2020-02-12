@@ -29,6 +29,9 @@ class LLVMCompiler(
     }
 
     private fun declareExitFunction(): LLVMValueRef {
+        val exitFunction = LLVM.LLVMGetNamedFunction(module, "exit")
+        if (exitFunction != null) return exitFunction
+
         val parameters = listOf(
             LLVM.LLVMInt32TypeInContext(context)
         ).toTypedArray()
