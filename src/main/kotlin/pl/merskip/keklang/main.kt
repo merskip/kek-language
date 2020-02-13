@@ -55,7 +55,7 @@ fun ApplicationArguments.processModule(module: LLVMModuleRef) {
 
     output?.let { outputFilename ->
         val backendCompiler = BackendCompiler(module)
-        backendCompiler.compile(outputFilename.withExtensionIfNoExists(".o"))
+        backendCompiler.compile(outputFilename.withExtensionIfNoExists(".o"), asmDump, bitcode)
     }
 }
 

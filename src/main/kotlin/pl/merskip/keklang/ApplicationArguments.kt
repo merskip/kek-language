@@ -20,6 +20,16 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Enable dumps LLVM IR. Prints to standard output."
     )
 
+    val asmDump by parser.flagging(
+        "--dump-asm",
+        help = "Enable dumps assembler. Store into file with .asm extension."
+    )
+
+    val bitcode by parser.flagging(
+        "--bitcode",
+        help = "Generate bitcode. Store into file with .bc extension."
+    )
+
     val output by parser.storing(
         "-o", "--output",
         help = "Specify the output binary object file."
