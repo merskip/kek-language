@@ -5,7 +5,7 @@ import pl.merskip.keklang.node.BinaryOperatorNodeAST
 import java.math.BigDecimal
 
 
-class ParserNodeAST(
+public class ParserNodeAST(
     tokens: List<Token>
 ) {
 
@@ -18,7 +18,7 @@ class ParserNodeAST(
         Operator("/", 200)
     )
 
-    fun parse(): FileNodeAST {
+    public fun parse(): FileNodeAST {
         val functions = mutableListOf<FunctionDefinitionNodeAST>()
         while (true) {
             if (!isAnyNextToken()) break

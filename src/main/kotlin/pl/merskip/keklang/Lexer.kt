@@ -2,7 +2,7 @@ package pl.merskip.keklang
 
 import kotlin.math.max
 
-class Lexer {
+public class Lexer {
 
     private var filename: String? = null
     private lateinit var source: String
