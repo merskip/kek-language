@@ -7,7 +7,7 @@ data class DecimalConstantValueNodeAST(
     val integerPart: Int,
     val decimalPart: Int,
     val value: BigDecimal
-) : ConstantValueNodeAST {
+) : ConstantValueNodeAST() {
 
     override fun <T> accept(visitor: NodeASTVisitor<T>) = visitor.visitConstantValueNode(this)
 }

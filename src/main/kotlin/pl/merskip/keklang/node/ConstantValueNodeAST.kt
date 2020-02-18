@@ -1,3 +1,3 @@
 package pl.merskip.keklang.node
 
-interface ConstantValueNodeAST : StatementNodeAST
+abstract class ConstantValueNodeAST : StatementNodeAST()

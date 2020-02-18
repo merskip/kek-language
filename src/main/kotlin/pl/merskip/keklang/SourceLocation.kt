@@ -4,8 +4,12 @@ data class SourceLocation(
     val filename: String?,
     val line: Int,
     val column: Int,
+    val offset: Int,
     val text: String
 ) {
+
+    val size: Int
+        get() = text.length
 
     fun getStringLocation(): String {
         return (filename ?: "<source>") + ":" + getSimpleStringLocation()
@@ -16,13 +20,14 @@ data class SourceLocation(
     }
 
     companion object {
+
         fun from(filename: String?, source: String, offset: Int, size: Int): SourceLocation {
             val sourceToOffset = source.substring(startIndex = 0, endIndex = offset + size)
             val sourceLines = sourceToOffset.lineSequence()
             val lastLine = sourceLines.last()
             val lastLineIndex = lastLine.length - size
             val text = lastLine.substring(lastLineIndex)
-            return SourceLocation(filename, sourceLines.count(), lastLineIndex + 1, text)
+            return SourceLocation(filename, sourceLines.count(), lastLineIndex + 1, offset, text)
         }
     }
 }

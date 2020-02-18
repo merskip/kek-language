@@ -37,7 +37,7 @@ fun ApplicationArguments.processSource(filename: String?, content: String, llvmC
         println(tokens.joinToString("\n") { token -> token.toString() })
     }
 
-    val parserNodeAST = ParserNodeAST(tokens)
+    val parserNodeAST = ParserNodeAST(content, tokens)
     val fileNode = parserNodeAST.parse()
 
     if (astDump) {

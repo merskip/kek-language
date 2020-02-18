@@ -1,4 +1,4 @@
 package pl.merskip.keklang.node
 
 
-interface StatementNodeAST: NodeAST
+abstract class StatementNodeAST: NodeAST()

@@ -6,7 +6,7 @@ data class BinaryOperatorNodeAST(
     val identifier: String,
     val lhs: StatementNodeAST,
     val rhs: StatementNodeAST
-) : StatementNodeAST {
+) : StatementNodeAST() {
 
     override fun <T> accept(visitor: NodeASTVisitor<T>) = visitor.visitBinaryOperatorNode(this)
 }

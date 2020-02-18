@@ -6,6 +6,7 @@ import java.math.BigDecimal
 
 
 public class ParserNodeAST(
+    private val source: String,
     tokens: List<Token>
 ) {
 
@@ -37,7 +38,7 @@ public class ParserNodeAST(
         popStatement: () -> StatementNodeAST = ::throwNoLhsStatement
     ): NodeAST {
         val parsedNode = when (val token = getAnyNextToken()) {
-            is Token.Func -> parseFunctionDefinition()
+            is Token.Func -> parseFunctionDefinition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
             is Token.LeftParenthesis -> parseParenthesis()
@@ -77,7 +78,7 @@ public class ParserNodeAST(
         return parsedNode
     }
 
-    private fun parseFunctionDefinition(): FunctionDefinitionNodeAST {
+    private fun parseFunctionDefinition(funcToken: Token.Func): FunctionDefinitionNodeAST {
         val identifierToken = getNextToken<Token.Identifier>()
         getNextToken<Token.LeftParenthesis>()
 
@@ -98,10 +99,11 @@ public class ParserNodeAST(
         val codeBlock = parseCodeBlock()
 
         return FunctionDefinitionNodeAST(identifierToken.text, parameters.toList(), codeBlock)
+            .sourceLocation(source, funcToken.sourceLocation, codeBlock.sourceLocation)
     }
 
     private fun parseCodeBlock(): CodeBlockNodeAST {
-        getNextToken<Token.LeftBracket>()
+        val leftBracket = getNextToken<Token.LeftBracket>()
         val statements = mutableListOf<StatementNodeAST>()
         while (true) {
             if (isNextToken<Token.RightBracket>()) break
@@ -121,11 +123,12 @@ public class ParserNodeAST(
 
             statements.add(node)
         }
-        getNextToken<Token.RightBracket>()
+        val rightBracket = getNextToken<Token.RightBracket>()
         return CodeBlockNodeAST(statements.toList())
+            .sourceLocation(source, leftBracket, rightBracket)
     }
 
-    private fun parseReferenceOrFunctionCall(token: Token.Identifier): NodeAST {
+    private fun parseReferenceOrFunctionCall(identifierToken: Token.Identifier): NodeAST {
         return if (getAnyNextToken() is Token.LeftParenthesis) {
 
             val arguments = mutableListOf<StatementNodeAST>()
@@ -137,24 +140,27 @@ public class ParserNodeAST(
                 arguments.add(node)
             }
 
-            getNextToken<Token.RightParenthesis>()
-            FunctionCallNodeAST(token.text, arguments.toList())
+            val rightParenthesis = getNextToken<Token.RightParenthesis>()
+            FunctionCallNodeAST(identifierToken.text, arguments.toList())
+                .sourceLocation(source, identifierToken, rightParenthesis)
         } else {
             previousToken()
-            ReferenceNodeAST(token.text)
+            ReferenceNodeAST(identifierToken.text)
+                .sourceLocation(identifierToken)
         }
     }
 
-    private fun parseConstantValue(token: Token.Number): ConstantValueNodeAST {
-        return if (token.text.contains('.')) {
-            val (integerPart, decimalPart) = token.text.split('.', limit = 2)
+    private fun parseConstantValue(numberToken: Token.Number): ConstantValueNodeAST {
+        return if (numberToken.text.contains('.')) {
+            val (integerPart, decimalPart) = numberToken.text.split('.', limit = 2)
             DecimalConstantValueNodeAST(
                 integerPart.toInt(),
                 decimalPart.toInt(),
-                BigDecimal(token.text)
-            )
+                BigDecimal(numberToken.text)
+            ).sourceLocation(numberToken)
         } else {
-            IntegerConstantValueNodeAST(token.text.toInt())
+            IntegerConstantValueNodeAST(numberToken.text.toInt())
+                .sourceLocation(numberToken)
         }
     }
 
@@ -162,6 +168,7 @@ public class ParserNodeAST(
         val rhs = parseNextToken(operator.precedence) as? StatementNodeAST
             ?: throw Exception("Expected statement node as rhs for operator: ${token.text}")
         return BinaryOperatorNodeAST(token.text, lhs, rhs)
+            .sourceLocation(source, lhs.sourceLocation, rhs.sourceLocation)
     }
 
     private fun findOperator(token: Token.Operator): Operator? {
