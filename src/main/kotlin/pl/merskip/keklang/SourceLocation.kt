@@ -8,8 +8,8 @@ data class SourceLocation(
     val text: String
 ) {
 
-    val size: Int
-        get() = text.length
+    val size: Int = text.length
+    val offsetEnd: Int = offset + size
 
     fun getStringLocation(): String {
         return (filename ?: "<source>") + ":" + getSimpleStringLocation()
