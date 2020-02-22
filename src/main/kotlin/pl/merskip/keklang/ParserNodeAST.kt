@@ -10,7 +10,7 @@ public class ParserNodeAST(
     tokens: List<Token>
 ) {
 
-    private val tokensIter = tokens.listIterator()
+    private val tokensIter = tokens.withoutWhitespaces().listIterator()
 
     private val operators = listOf(
         Operator("+", 100),

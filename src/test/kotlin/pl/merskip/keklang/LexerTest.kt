@@ -15,7 +15,7 @@ internal class LexerTest {
             }
         """.trimIndent()
 
-        val tokens = Lexer().parse(null, source)
+        val tokens = Lexer().parse(null, source).withoutWhitespaces()
 
         assertToken(Token.Func::class, "func", 1, 1, tokens[0])
         assertToken(Token.Identifier::class, "abc", 1, 6, tokens[1])
@@ -40,7 +40,7 @@ internal class LexerTest {
     fun `parse operator`() {
         val source = "1 + 2 - 3 * 4 / 5"
 
-        val tokens = Lexer().parse(null, source)
+        val tokens = Lexer().parse(null, source).withoutWhitespaces()
 
         assertToken(Token.Number::class, "1", 1, 1, tokens[0])
         assertToken(Token.Operator::class, "+", 1, 3, tokens[1])
@@ -56,7 +56,7 @@ internal class LexerTest {
     private fun <T: Token> assertToken(tokenClass: KClass<T>, text: String, line: Int, column: Int, token: Token) {
         assertEquals(tokenClass, token::class)
         assertEquals(text, token.text)
-        assertEquals(line, token.sourceLocation.line)
-        assertEquals(column, token.sourceLocation.column)
+        assertEquals(line, token.sourceLocation.startIndex.line)
+        assertEquals(column, token.sourceLocation.startIndex.column)
     }
 }

@@ -21,10 +21,8 @@ fun <T: NodeAST> T.sourceLocation(source: String, from: Token, to: Token): T =
 
 fun <T: NodeAST> T.sourceLocation(source: String, from: SourceLocation, to: SourceLocation): T {
     this.sourceLocation = SourceLocation.from(
-        from.filename ?: to.filename,
-        source,
-        from.offset,
-        to.offset + to.size
+        from.filename ?: to.filename, source,
+        from.startIndex.offset, from.startIndex.distanceTo(to.endIndex)
     )
     return this
 }

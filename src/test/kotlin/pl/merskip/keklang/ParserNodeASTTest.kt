@@ -161,7 +161,7 @@ internal class ParserNodeASTTest {
 
     private fun parse(source: String): FileNodeAST {
         val tokens = Lexer().parse(null, source)
-        return ParserNodeAST(tokens).parse()
+        return ParserNodeAST(source, tokens).parse()
     }
 
     private inline fun <reified T: StatementNodeAST> CodeBlockNodeAST.single(): T {

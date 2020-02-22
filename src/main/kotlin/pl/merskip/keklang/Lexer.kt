@@ -16,11 +16,19 @@ public class Lexer {
 
         val tokens = mutableListOf<Token>()
         while (true) {
+            addWhitespaceTokenIfNeeded(tokens)
+
             val token = readNextToken()
                 ?: break
             tokens.add(token)
         }
         return tokens.toList()
+    }
+
+    private fun addWhitespaceTokenIfNeeded(tokens: MutableList<Token>) {
+        val whitespaceToken = getWhitespaceToken()
+        if (whitespaceToken != null)
+            tokens.add(whitespaceToken)
     }
 
     private fun readNextToken(): Token? {
@@ -86,6 +94,31 @@ public class Lexer {
             "func" -> Token.Func(getSourceLocation())
             else -> null
         }
+    }
+
+    private fun getWhitespaceToken(): Token? {
+        var char = getNextCharacter() ?: return null
+        if (!char.isWhitespace()) {
+            backToPreviousCharacter()
+            return null
+        }
+        beginTokenSourceLocation()
+
+        var text = ""
+        text += char
+
+        // Skip whitespaces
+        while (true) {
+            char = getNextCharacter() ?: break
+            if (char.isWhitespace())
+                text += char
+            else {
+                backToPreviousCharacter()
+                break
+            }
+        }
+
+        return Token.Whitespace(getSourceLocation())
     }
 
     private fun getNextNonWhitespaceCharacter(): Char? {

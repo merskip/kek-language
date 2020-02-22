@@ -1,33 +1,41 @@
 package pl.merskip.keklang
 
+import kotlin.math.abs
+
 data class SourceLocation(
     val filename: String?,
-    val line: Int,
-    val column: Int,
-    val offset: Int,
-    val text: String
+    val text: String,
+    val startIndex: Index,
+    val endIndex: Index,
+    val length: Int
 ) {
 
-    val size: Int = text.length
-    val offsetEnd: Int = offset + size
+    data class Index(
+        val offset: Int,
+        val line: Int,
+        val column: Int
+    ) {
 
-    fun getStringLocation(): String {
-        return (filename ?: "<source>") + ":" + getSimpleStringLocation()
-    }
+        fun distanceTo(other: Index): Int =
+            abs(other.offset - this.offset)
 
-    fun getSimpleStringLocation(): String {
-        return "$line:$column"
+        override fun toString() = "$line:$column"
     }
 
     companion object {
 
-        fun from(filename: String?, source: String, offset: Int, size: Int): SourceLocation {
-            val sourceToOffset = source.substring(startIndex = 0, endIndex = offset + size)
+        fun from(filename: String?, source: String, offset: Int, length: Int): SourceLocation {
+            val text = source.substring(offset, offset + length)
+            val startIndex = calculateIndex(source, offset)
+            val endIndex = calculateIndex(source, offset + length - 1)
+            return SourceLocation(filename, text, startIndex, endIndex, length)
+        }
+
+        private fun calculateIndex(source: String, offset: Int): Index {
+            val sourceToOffset = source.substring(0, offset)
             val sourceLines = sourceToOffset.lineSequence()
             val lastLine = sourceLines.last()
-            val lastLineIndex = lastLine.length - size
-            val text = lastLine.substring(lastLineIndex)
-            return SourceLocation(filename, sourceLines.count(), lastLineIndex + 1, offset, text)
+            return Index(offset, sourceLines.count(), lastLine.length + 1)
         }
     }
 }

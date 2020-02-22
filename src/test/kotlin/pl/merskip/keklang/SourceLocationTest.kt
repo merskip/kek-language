@@ -12,8 +12,10 @@ class SourceLocationTest {
 
         val sourceLocation = SourceLocation.from(null, source, 0, 1)
 
-        assertEquals(1, sourceLocation.line)
-        assertEquals(1, sourceLocation.column)
+        assertEquals(1, sourceLocation.startIndex.line)
+        assertEquals(1, sourceLocation.startIndex.column)
+        assertEquals(1, sourceLocation.endIndex.line)
+        assertEquals(1, sourceLocation.endIndex.column)
         assertEquals("a", sourceLocation.text)
     }
 
@@ -29,8 +31,11 @@ class SourceLocationTest {
         val size = "adipiscing".length
         val sourceLocation = SourceLocation.from(null, source, index, size)
 
-        assertEquals(2, sourceLocation.line)
-        assertEquals(13, sourceLocation.column)
+        assertEquals(2, sourceLocation.startIndex.line)
+        assertEquals(13, sourceLocation.startIndex.column)
+        assertEquals(2, sourceLocation.endIndex.line)
+        assertEquals(22, sourceLocation.endIndex.column)
         assertEquals("adipiscing", sourceLocation.text)
+        assertEquals("adipiscing".length, sourceLocation.length)
     }
 }

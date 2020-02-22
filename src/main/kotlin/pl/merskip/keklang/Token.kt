@@ -3,6 +3,7 @@ package pl.merskip.keklang
 sealed class Token(
     val sourceLocation: SourceLocation
 ) {
+    class Whitespace(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Func(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Identifier(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Number(sourceLocation: SourceLocation) : Token(sourceLocation)
@@ -18,6 +19,11 @@ sealed class Token(
         get() = sourceLocation.text
 
     override fun toString(): String {
-        return "${this::class.simpleName}(\"$text\", ${sourceLocation.getSimpleStringLocation()})"
+        val fields = listOfNotNull(
+            text.trimIndent().ifEmpty { null }?.let { "\"$it\"" },
+            "[${sourceLocation.startIndex.offset}..${sourceLocation.endIndex.offset}]",
+            "${sourceLocation.startIndex}..${sourceLocation.endIndex}"
+        )
+        return "${this::class.simpleName}(${fields.joinToString(", ")})"
     }
 }
