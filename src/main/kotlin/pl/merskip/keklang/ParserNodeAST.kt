@@ -43,7 +43,7 @@ public class ParserNodeAST(
             is Token.Number -> parseConstantValue(token)
             is Token.LeftParenthesis -> parseParenthesis()
             is Token.Operator -> parseOperator(token, findOperator(token)!!, popStatement())
-            else -> throw Exception("Unexpected token: $token")
+            else -> throw UnexpectedTokenException(null, token::class.simpleName!!, token.sourceLocation)
         }
 
         if (isNextToken<Token.Operator>()) {
@@ -183,7 +183,7 @@ public class ParserNodeAST(
     private inline fun <reified T : Token> expectNextTokenOrNull(): T? {
         val token = getAnyNextToken()
         if (token is T) return token
-        else throw Exception("Expected next token as type ${T::class.simpleName}, but got ${token::class.simpleName}")
+        else throw UnexpectedTokenException(T::class.simpleName!!, token::class.simpleName!!, token.sourceLocation)
     }
 
     private inline fun <reified T : Token> isNextToken(): Boolean {

@@ -31,6 +31,27 @@ fun withReadSources(sources: List<String>, callback: (filename: String, content:
 }
 
 fun ApplicationArguments.processSource(filename: String?, content: String, llvmCompiler: LLVMCompiler) {
+    try {
+        tryProcessSources(filename, content, llvmCompiler)
+    }
+    catch (exception: SourceLocationException) {
+        assert(exception.sourceLocation.startIndex.line == exception.sourceLocation.endIndex.line)
+
+        content.lineSequence()
+            .take(exception.sourceLocation.startIndex.line)
+            .toList()
+            .takeLast(2)
+            .forEach { println(it) }
+
+        print(" ".repeat(exception.sourceLocation.startIndex.column - 1))
+        print("^".repeat(exception.sourceLocation.length) + " Error: ")
+        println(exception.localizedMessage.colored(Color.Red))
+
+        exception.printStackTrace(System.err)
+    }
+}
+
+fun ApplicationArguments.tryProcessSources(filename: String?, content: String, llvmCompiler: LLVMCompiler) {
     val tokens = Lexer().parse(filename, content)
 
     if (tokensDump) {
