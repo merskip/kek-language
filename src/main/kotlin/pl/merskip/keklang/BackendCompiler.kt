@@ -2,13 +2,11 @@ package pl.merskip.keklang
 
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.LLVMMemoryBufferRef
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
-import java.io.File
 
 class BackendCompiler(
-    val module: LLVMModuleRef
+    private val module: LLVMModuleRef
 ) {
 
     fun compile(filename: String, dumpAssembler: Boolean, generateBitcode: Boolean) {
@@ -39,18 +37,17 @@ class BackendCompiler(
 
         if (dumpAssembler) {
             val error = BytePointer(512L)
-            LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer(filename.removeSuffix(".o") + ".asm"), LLVM.LLVMAssemblyFile, error)
-        }
-
-        if (generateBitcode) {
-            val bitcode = LLVM.LLVMWriteBitcodeToMemoryBuffer(module)
-            File(filename.removeSuffix(".o") + ".bc").writeBytes(BytePointer(bitcode).stringBytes)
+            LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer(filename.withExtension(".asm")), LLVM.LLVMAssemblyFile, error)
         }
 
         val errorMessage = PointerPointer<BytePointer>(512L)
-        if (LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer(filename), LLVM.LLVMObjectFile, errorMessage) != 0) {
+        if (LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer(filename.withExtension(".o")), LLVM.LLVMObjectFile, errorMessage) != 0) {
             println("Failed target machine to file")
             println(BytePointer(errorMessage).string)
+        }
+
+        if (generateBitcode) {
+            LLVM.LLVMWriteBitcodeToFile(module, filename.withExtension(".bc"))
         }
     }
 }

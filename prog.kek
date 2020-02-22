@@ -1,0 +1,11 @@
+func foo() {
+    2
+}
+
+func bar() {
+    foo() + 4
+}
+
+func _start() {
+    bar() * 4
+}
