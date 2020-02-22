@@ -53,6 +53,24 @@ internal class LexerTest {
         assertToken(Token.Number::class, "5", 1, 17, tokens[8])
     }
 
+    @Test
+    fun `test no gap in source locations`() {
+        val source = """
+            func foo() {
+                1 * 2 + 3
+            }
+            
+        """.trimIndent()
+
+        val tokens = Lexer().parse(null, source)
+
+        var expectedNextOffset = 0
+        for (token in tokens) {
+            assertEquals(expectedNextOffset, token.sourceLocation.startIndex.offset)
+            expectedNextOffset = token.sourceLocation.endIndex.offset + 1
+        }
+    }
+
     private fun <T: Token> assertToken(tokenClass: KClass<T>, text: String, line: Int, column: Int, token: Token) {
         assertEquals(tokenClass, token::class)
         assertEquals(text, token.text)

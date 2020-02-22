@@ -16,19 +16,14 @@ public class Lexer {
 
         val tokens = mutableListOf<Token>()
         while (true) {
-            addWhitespaceTokenIfNeeded(tokens)
+            getWhitespaceToken()?.let {
+                tokens.add(it)
+            }
 
-            val token = readNextToken()
-                ?: break
+            val token = readNextToken() ?: break
             tokens.add(token)
         }
         return tokens.toList()
-    }
-
-    private fun addWhitespaceTokenIfNeeded(tokens: MutableList<Token>) {
-        val whitespaceToken = getWhitespaceToken()
-        if (whitespaceToken != null)
-            tokens.add(whitespaceToken)
     }
 
     private fun readNextToken(): Token? {
@@ -39,14 +34,14 @@ public class Lexer {
         return when {
             isNumberHead(char) -> consumeNumber(char) // Consume [0-9]+
             isIdentifierHead(char) -> consumeIdentifierOrKeyword(char) // Consume [_a-Z][_a-Z0-9]
-            isOperator(char) -> Token.Operator(getSourceLocation())
-            char == '(' -> Token.LeftParenthesis(getSourceLocation())
-            char == ')' -> Token.RightParenthesis(getSourceLocation())
-            char == '{' -> Token.LeftBracket(getSourceLocation())
-            char == '}' -> Token.RightBracket(getSourceLocation())
-            char == ',' -> Token.Comma(getSourceLocation())
-            char == ';' -> Token.Semicolon(getSourceLocation())
-            else -> throw UnknownTokenException(getSourceLocation())
+            isOperator(char) -> Token.Operator(createSourceLocation())
+            char == '(' -> Token.LeftParenthesis(createSourceLocation())
+            char == ')' -> Token.RightParenthesis(createSourceLocation())
+            char == '{' -> Token.LeftBracket(createSourceLocation())
+            char == '}' -> Token.RightBracket(createSourceLocation())
+            char == ',' -> Token.Comma(createSourceLocation())
+            char == ';' -> Token.Semicolon(createSourceLocation())
+            else -> throw UnknownTokenException(createSourceLocation())
         }
     }
 
@@ -62,7 +57,7 @@ public class Lexer {
             currentChar = getNextCharacter() ?: break
         }
 
-        val numberToken = Token.Number(getSourceLocation())
+        val numberToken = Token.Number(createSourceLocation())
         backToPreviousCharacter()
         return numberToken
     }
@@ -84,20 +79,20 @@ public class Lexer {
         }
 
         val token = consumeKeyword(identifierString)
-            ?: Token.Identifier(getSourceLocation())
+            ?: Token.Identifier(createSourceLocation())
         backToPreviousCharacter()
-        return token;
+        return token
     }
 
     private fun consumeKeyword(text: String): Token? {
         return when (text) {
-            "func" -> Token.Func(getSourceLocation())
+            "func" -> Token.Func(createSourceLocation())
             else -> null
         }
     }
 
     private fun getWhitespaceToken(): Token? {
-        var char = getNextCharacter() ?: return null
+        val char = getNextCharacter() ?: return null
         if (!char.isWhitespace()) {
             backToPreviousCharacter()
             return null
@@ -106,19 +101,20 @@ public class Lexer {
 
         var text = ""
         text += char
+        val sourceLocation: SourceLocation
 
-        // Skip whitespaces
         while (true) {
-            char = getNextCharacter() ?: break
-            if (char.isWhitespace())
+            val currentChar = getNextCharacter()
+            if (currentChar != null && currentChar.isWhitespace()) {
                 text += char
-            else {
+            } else {
+                sourceLocation = createSourceLocation()
                 backToPreviousCharacter()
                 break
             }
         }
 
-        return Token.Whitespace(getSourceLocation())
+        return Token.Whitespace(sourceLocation)
     }
 
     private fun getNextNonWhitespaceCharacter(): Char? {
@@ -143,7 +139,7 @@ public class Lexer {
         sourceLocationOffset = offset
     }
 
-    private fun getSourceLocation(): SourceLocation {
+    private fun createSourceLocation(): SourceLocation {
         val sourceOffset = sourceLocationOffset
             ?: throw IllegalStateException("Method beginSourceLocation must be called before")
         sourceLocationOffset = null
