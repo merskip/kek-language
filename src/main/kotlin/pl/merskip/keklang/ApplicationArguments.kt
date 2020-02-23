@@ -39,6 +39,4 @@ class ApplicationArguments(parser: ArgParser) {
         "SOURCES",
         help = "Input sources file names. If provided nothing, the interpreter run."
     ).default(emptyList())
-
-
 }

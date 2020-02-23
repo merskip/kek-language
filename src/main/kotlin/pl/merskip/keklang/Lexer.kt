@@ -34,7 +34,7 @@ public class Lexer {
         return when {
             isNumberHead(char) -> consumeNumber(char) // Consume [0-9]+
             isIdentifierHead(char) -> consumeIdentifierOrKeyword(char) // Consume [_a-Z][_a-Z0-9]
-            isOperator(char) -> Token.Operator(createSourceLocation())
+            isOperatorHead(char) -> consumeOperator(char)
             char == '(' -> Token.LeftParenthesis(createSourceLocation())
             char == ')' -> Token.RightParenthesis(createSourceLocation())
             char == '{' -> Token.LeftBracket(createSourceLocation())
@@ -66,8 +66,20 @@ public class Lexer {
         return char.isLetter() || char == '_'
     }
 
-    private fun isOperator(char: Char): Boolean {
-        return char == '+' || char == '-' || char == '*' || char == '/'
+    private fun isOperatorHead(char: Char): Boolean {
+        return char == '+' || char == '-' || char == '*' || char == '/' || char == '='
+    }
+
+    private fun consumeOperator(char: Char): Token.Operator {
+        if (char == '=') {
+            val nextChar = getNextCharacter()
+            if (nextChar != '=')
+                throw SourceLocationException("Expected =, but got $nextChar", createSourceLocation())
+        }
+        getNextCharacter() // TODO: Fix me
+        val sourceLocation = createSourceLocation()
+        backToPreviousCharacter()
+        return Token.Operator(sourceLocation)
     }
 
     private fun consumeIdentifierOrKeyword(char: Char): Token {
@@ -87,6 +99,7 @@ public class Lexer {
     private fun consumeKeyword(text: String): Token? {
         return when (text) {
             "func" -> Token.Func(createSourceLocation())
+            "if" -> Token.If(createSourceLocation())
             else -> null
         }
     }
@@ -142,7 +155,6 @@ public class Lexer {
     private fun createSourceLocation(): SourceLocation {
         val sourceOffset = sourceLocationOffset
             ?: throw IllegalStateException("Method beginSourceLocation must be called before")
-        sourceLocationOffset = null
 
         val size = max(offset - sourceOffset, 1)
         return SourceLocation.from(filename, source, sourceOffset, size)

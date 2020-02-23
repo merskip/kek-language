@@ -60,7 +60,7 @@ class LLVMCompiler(
         LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
 
         var lastValue: LLVMValueRef? = null
-        functionDefinition.codeBlockNodeAST.statements.forEach { statement ->
+        functionDefinition.body.statements.forEach { statement ->
             lastValue = compileStatement(statement)
         }
 

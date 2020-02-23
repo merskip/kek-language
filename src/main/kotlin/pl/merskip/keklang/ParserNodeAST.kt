@@ -13,6 +13,7 @@ public class ParserNodeAST(
     private val tokensIter = tokens.withoutWhitespaces().listIterator()
 
     private val operators = listOf(
+        Operator("==", 10),
         Operator("+", 100),
         Operator("-", 100),
         Operator("*", 200),
@@ -39,6 +40,7 @@ public class ParserNodeAST(
     ): NodeAST {
         val parsedNode = when (val token = getAnyNextToken()) {
             is Token.Func -> parseFunctionDefinition(token)
+            is Token.If -> parseIfCondition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
             is Token.LeftParenthesis -> parseParenthesis()
@@ -99,7 +101,21 @@ public class ParserNodeAST(
         val codeBlock = parseCodeBlock()
 
         return FunctionDefinitionNodeAST(identifierToken.text, parameters.toList(), codeBlock)
-            .sourceLocation(source, funcToken.sourceLocation, codeBlock.sourceLocation)
+            .sourceLocation(funcToken.sourceLocation, codeBlock.sourceLocation)
+    }
+
+    private fun parseIfCondition(ifToken: Token.If): IfConditionNodeAST {
+        getNextToken<Token.LeftParenthesis>()
+
+        val conditionNode = parseNextToken()
+        if (conditionNode !is StatementNodeAST)
+            throw Exception("Expected statement node AST, but got ${conditionNode::class}")
+
+        getNextToken<Token.RightParenthesis>()
+
+        val bodyNode = parseCodeBlock()
+        return IfConditionNodeAST(conditionNode, bodyNode)
+            .sourceLocation(ifToken.sourceLocation, bodyNode.sourceLocation)
     }
 
     private fun parseCodeBlock(): CodeBlockNodeAST {
@@ -125,7 +141,7 @@ public class ParserNodeAST(
         }
         val rightBracket = getNextToken<Token.RightBracket>()
         return CodeBlockNodeAST(statements.toList())
-            .sourceLocation(source, leftBracket, rightBracket)
+            .sourceLocation(leftBracket, rightBracket)
     }
 
     private fun parseReferenceOrFunctionCall(identifierToken: Token.Identifier): NodeAST {
@@ -142,7 +158,7 @@ public class ParserNodeAST(
 
             val rightParenthesis = getNextToken<Token.RightParenthesis>()
             FunctionCallNodeAST(identifierToken.text, arguments.toList())
-                .sourceLocation(source, identifierToken, rightParenthesis)
+                .sourceLocation(identifierToken, rightParenthesis)
         } else {
             previousToken()
             ReferenceNodeAST(identifierToken.text)
@@ -168,7 +184,7 @@ public class ParserNodeAST(
         val rhs = parseNextToken(operator.precedence) as? StatementNodeAST
             ?: throw Exception("Expected statement node as rhs for operator: ${token.text}")
         return BinaryOperatorNodeAST(token.text, lhs, rhs)
-            .sourceLocation(source, lhs.sourceLocation, rhs.sourceLocation)
+            .sourceLocation(lhs.sourceLocation, rhs.sourceLocation)
     }
 
     private fun findOperator(token: Token.Operator): Operator? {
@@ -205,4 +221,20 @@ public class ParserNodeAST(
 
     private fun isAnyNextToken(): Boolean =
         tokensIter.hasNext()
+
+    fun <T: NodeAST> T.sourceLocation(token: Token): T {
+        this.sourceLocation = token.sourceLocation
+        return this
+    }
+
+    fun <T : NodeAST> T.sourceLocation(from: Token, to: Token): T =
+        sourceLocation(from.sourceLocation, to.sourceLocation)
+
+    fun <T : NodeAST> T.sourceLocation(from: SourceLocation, to: SourceLocation): T {
+        this.sourceLocation = SourceLocation.from(
+            from.filename ?: to.filename, source,
+            from.startIndex.offset, from.startIndex.distanceTo(to.endIndex)
+        )
+        return this
+    }
 }

@@ -38,7 +38,17 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
             parameters = mapOf("identifier" to functionDefinitionNodeAST.identifier),
             children = mapOf(
                 "arguments" to functionDefinitionNodeAST.arguments,
-                "codeBlock" to listOf(functionDefinitionNodeAST.codeBlockNodeAST)
+                "body" to listOf(functionDefinitionNodeAST.body)
+            )
+        )
+    }
+
+    override fun visitIfConditionNode(ifConditionNodeAST: IfConditionNodeAST) {
+        print(
+            nodeClass = ifConditionNodeAST::class,
+            children = mapOf(
+                "condition" to listOf(ifConditionNodeAST.condition),
+                "body" to listOf(ifConditionNodeAST.body)
             )
         )
     }
@@ -104,14 +114,16 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         if (parameters.isNotEmpty()) {
             output += " "
             output += parameters.map {
-                "${it.key}=" + it.value.colored(Color.BrightBlack)
+                it.key + "=\"" + it.value.colored(Color.BrightBlack) + "\""
             }.joinToString(" ")
         }
 
-        if (children.isNotEmpty()) {
+        if (children.isNotEmpty() && children.any { it.value.isNotEmpty() }) {
             output += "\n"
 
-            children.forEach { childEntry ->
+            children
+                .filter { it.value.isNotEmpty() }
+                .forEach { childEntry ->
                 output += "$indent - " + childEntry.key.colored(Color.Green) + ":\n"
                 indentLevel++
                 childEntry.value.forEach { childNode ->

@@ -1,6 +1,8 @@
 package pl.merskip.keklang
 
 import com.xenomachina.argparser.ArgParser
+import com.xenomachina.argparser.UnrecognizedOptionException
+import com.xenomachina.argparser.mainBody
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import java.io.File
@@ -80,7 +82,7 @@ fun ApplicationArguments.processModule(module: LLVMModuleRef) {
     }
 }
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
         val llvmCompiler = LLVMCompiler("kek-lang")
         if (isInterpreterMode()) {
