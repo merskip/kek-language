@@ -18,6 +18,7 @@ class LLVMCompiler(
     private val variableScopeStack = VariableScopeStack()
 
     private lateinit var exitFunction: LLVMValueRef
+    private var currentBlock: LLVMBasicBlockRef? = null
 
     fun compile(fileNodeAST: FileNodeAST) {
         exitFunction = declareExitFunction()
@@ -57,17 +58,11 @@ class LLVMCompiler(
         }
 
         val entryBlock = LLVM.LLVMAppendBasicBlockInContext(context, functionValue, "entry")
+        currentBlock = entryBlock
         LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
 
-        var lastValue: LLVMValueRef? = null
-        functionDefinition.body.statements.forEach { statement ->
-            lastValue = compileStatement(statement)
-        }
-
-        val returnValue = lastValue
-            ?: throw Exception("Block of function is empty")
-
-        LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
+        val returnValue = compileStatement(functionDefinition.body)
+        LLVM.LLVMPositionBuilderAtEnd(builder, currentBlock)
 
         if (functionDefinition.identifier != "_start") {
             LLVM.LLVMBuildRet(builder, returnValue)
@@ -93,7 +88,10 @@ class LLVMCompiler(
             is FunctionCallNodeAST -> compileFunctionCall(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
+            is IfConditionNodeAST -> compileIfCondition(statement)
+            is CodeBlockNodeAST -> compileCodeBlock(statement)
             is ReferenceNodeAST -> variableScopeStack.getReference(statement.identifier)
+
             else -> throw Exception("Unexpected statement: $statement")
         }
     }
@@ -126,6 +124,7 @@ class LLVMCompiler(
             "-" -> LLVM.LLVMBuildSub(builder, lhsValue, rhsValue, "sub")
             "*" -> LLVM.LLVMBuildMul(builder, lhsValue, rhsValue, "mul")
             "/" -> LLVM.LLVMBuildFDiv(builder, lhsValue, rhsValue, "div")
+            "==" -> LLVM.LLVMBuildICmp(builder, LLVM.LLVMIntEQ, lhsValue, rhsValue, "cmp")
             else -> throw Exception("Unknown operator: ${binaryOperator.identifier}")
         }
     }
@@ -143,6 +142,37 @@ class LLVMCompiler(
             )
             else -> throw Exception("Unexpected statement: $constantValue")
         }
+    }
+
+    private fun compileIfCondition(ifConditionNodeAST: IfConditionNodeAST): LLVMValueRef {
+        val conditionValue = compileStatement(ifConditionNodeAST.condition)
+
+        val ifTrueBlock = LLVM.LLVMCreateBasicBlockInContext(context, "ifTrue")
+
+        val rawCurrentBlockName = LLVM.LLVMGetBasicBlockName(currentBlock!!)
+        val simpleCurrentBlockNAme = rawCurrentBlockName.string.trimEnd { it.isDigit() }
+        val ifAfterBlock = LLVM.LLVMCreateBasicBlockInContext(context, simpleCurrentBlockNAme)
+
+        val ifBlockValue = LLVM.LLVMBuildCondBr(builder, conditionValue, ifTrueBlock, ifAfterBlock)
+
+        LLVM.LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifTrueBlock)
+        LLVM.LLVMPositionBuilderAtEnd(builder, ifTrueBlock)
+        val ifTrueValue = compileStatement(ifConditionNodeAST.body) // TODO: Do anything with result of if?
+        LLVM.LLVMBuildBr(builder, ifAfterBlock)
+
+        LLVM.LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifAfterBlock)
+        LLVM.LLVMPositionBuilderAtEnd(builder, ifAfterBlock)
+        currentBlock = ifAfterBlock
+
+        return ifBlockValue
+    }
+
+    private fun compileCodeBlock(codeBlockNodeAST: CodeBlockNodeAST): LLVMValueRef {
+        var lastValue: LLVMValueRef? = null
+        codeBlockNodeAST.statements.forEach { statement ->
+            lastValue = compileStatement(statement)
+        }
+        return lastValue ?: LLVM.LLVMBuildUnreachable(builder)
     }
 
     private fun createFunction(functionDefinition: FunctionDefinitionNodeAST): LLVMValueRef {

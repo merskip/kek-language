@@ -1,6 +1,5 @@
 package pl.merskip.keklang
 
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
 import org.junit.jupiter.api.Assertions.*
@@ -20,7 +19,7 @@ internal class ParserNodeASTTest {
 
         assertEquals("abc", funcDef.identifier)
         assertTrue(funcDef.arguments.isEmpty())
-        assertTrue(funcDef.codeBlockNodeAST.statements.isEmpty())
+        assertTrue(funcDef.body.statements.isEmpty())
     }
 
     @Test
@@ -52,7 +51,7 @@ internal class ParserNodeASTTest {
 
         assertEquals("b", secondFuncDef.identifier)
 
-        val callNode = secondFuncDef.codeBlockNodeAST.statements.single()
+        val callNode = secondFuncDef.body.statements.single()
                 as FunctionCallNodeAST
         assertEquals("a", callNode.identifier)
         assertTrue(callNode.parameters.isEmpty())
@@ -72,7 +71,7 @@ internal class ParserNodeASTTest {
 
         assertEquals("c", secondFuncDef.identifier)
 
-        val callNode = secondFuncDef.codeBlockNodeAST.statements.single()
+        val callNode = secondFuncDef.body.statements.single()
                 as FunctionCallNodeAST
         assertEquals("a", callNode.identifier)
 
@@ -92,7 +91,7 @@ internal class ParserNodeASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single()
 
-        val operator = funcDef.codeBlockNodeAST.single<BinaryOperatorNodeAST>()
+        val operator = funcDef.body.single<BinaryOperatorNodeAST>()
         assertEquals("+", operator.identifier)
 
         assertConstValue(1, operator.lhs)
@@ -110,7 +109,7 @@ internal class ParserNodeASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single()
 
-        val secondAddingOperator = funcDef.codeBlockNodeAST.single<BinaryOperatorNodeAST>()
+        val secondAddingOperator = funcDef.body.single<BinaryOperatorNodeAST>()
 
         assertConstValue(3, secondAddingOperator.rhs)
 
@@ -130,7 +129,7 @@ internal class ParserNodeASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single()
 
-        val addingOperator = funcDef.codeBlockNodeAST.single<BinaryOperatorNodeAST>()
+        val addingOperator = funcDef.body.single<BinaryOperatorNodeAST>()
         assertEquals("+", addingOperator.identifier)
         assertConstValue(1, addingOperator.lhs)
 
@@ -151,7 +150,7 @@ internal class ParserNodeASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single()
 
-        val addingOperator = funcDef.codeBlockNodeAST.single<BinaryOperatorNodeAST>()
+        val addingOperator = funcDef.body.single<BinaryOperatorNodeAST>()
         assertConstValue(3, addingOperator.rhs)
 
         val multipleOperator = addingOperator.lhs as BinaryOperatorNodeAST

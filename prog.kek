@@ -3,10 +3,18 @@ func foo() {
     2
 }
 
-func bar(qux) {
-	qux + 2
+func bar(a, b) {
+	if (a == 1) {
+		if (b == 2) {
+			foo() + 22
+		}
+		if (b == 3) {
+			foo() + 33
+		}
+	}
+	a * b
 }
 
 func _start() {
-    foo() * 4 + bar(2)
+    foo() * 4 + bar(1, 3)
 }

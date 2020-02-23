@@ -8,7 +8,7 @@ fun String.colorizeLLVMIR() =
         .colorize("void", color = Color.Green)
         .colorize("@[a-zA-Z0-9._]+".toRegex(), Color.Cyan)
         .colorize(";.*?\n".toRegex(), Color.BrightBlack)
-        .colorize(".*?:\n".toRegex(), Color.Magenta)
+        .colorize(".*?:".toRegex(), Color.Magenta)
 
 fun String.colorize(regex: Regex, color: Color): String =
     replace(regex, "$0".colored(color))

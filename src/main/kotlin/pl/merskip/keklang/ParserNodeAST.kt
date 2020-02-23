@@ -94,7 +94,7 @@ public class ParserNodeAST(
             parameters.add(node)
 
             if (isNextToken<Token.RightParenthesis>()) break
-            getNextToken<Token.Semicolon>()
+            getNextToken<Token.Comma>()
         }
         getNextToken<Token.RightParenthesis>()
 
@@ -150,10 +150,14 @@ public class ParserNodeAST(
             val arguments = mutableListOf<StatementNodeAST>()
             while (true) {
                 if (isNextToken<Token.RightParenthesis>()) break
+
                 val node = parseNextToken()
                 if (node !is StatementNodeAST)
                     throw Exception("Expected statement node AST, but got ${node::class}")
                 arguments.add(node)
+
+                if (isNextToken<Token.RightParenthesis>()) break
+                getNextToken<Token.Comma>()
             }
 
             val rightParenthesis = getNextToken<Token.RightParenthesis>()
