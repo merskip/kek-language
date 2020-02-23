@@ -35,6 +35,7 @@ public class Lexer {
             isNumberHead(char) -> consumeNumber(char) // Consume [0-9]+
             isIdentifierHead(char) -> consumeIdentifierOrKeyword(char) // Consume [_a-Z][_a-Z0-9]
             isOperatorHead(char) -> consumeOperator(char)
+            isStringLiteralHead(char) -> consumeStringLiteral()
             char == '(' -> Token.LeftParenthesis(createSourceLocation())
             char == ')' -> Token.RightParenthesis(createSourceLocation())
             char == '{' -> Token.LeftBracket(createSourceLocation())
@@ -102,6 +103,13 @@ public class Lexer {
             "if" -> Token.If(createSourceLocation())
             else -> null
         }
+    }
+
+    private fun isStringLiteralHead(char: Char) = char == '"'
+
+    private fun consumeStringLiteral(): Token.StringLiteral {
+        while (getNextCharacter() != '"') Unit
+        return Token.StringLiteral(createSourceLocation())
     }
 
     private fun getWhitespaceToken(): Token? {

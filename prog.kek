@@ -16,5 +16,6 @@ func bar(a, b) {
 }
 
 func _start() {
+    printf("Hello world!")
     foo() * 4 + bar(1, 3)
 }

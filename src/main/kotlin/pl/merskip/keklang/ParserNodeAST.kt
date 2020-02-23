@@ -45,6 +45,7 @@ public class ParserNodeAST(
             is Token.Number -> parseConstantValue(token)
             is Token.LeftParenthesis -> parseParenthesis()
             is Token.Operator -> parseOperator(token, findOperator(token)!!, popStatement())
+            is Token.StringLiteral -> parseConstantString(token)
             else -> throw UnexpectedTokenException(null, token::class.simpleName!!, token.sourceLocation)
         }
 
@@ -182,6 +183,12 @@ public class ParserNodeAST(
             IntegerConstantValueNodeAST(numberToken.text.toInt())
                 .sourceLocation(numberToken)
         }
+    }
+
+    private fun parseConstantString(stringLiteral: Token.StringLiteral): ConstantStringNodeAST {
+        val string = stringLiteral.text.removePrefix("\"").removeSuffix("\"")
+        return ConstantStringNodeAST(string)
+            .sourceLocation(stringLiteral)
     }
 
     private fun parseOperator(token: Token.Operator, operator: Operator, lhs: StatementNodeAST): BinaryOperatorNodeAST {

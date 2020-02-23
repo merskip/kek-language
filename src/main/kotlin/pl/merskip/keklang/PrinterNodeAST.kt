@@ -104,6 +104,13 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
+    override fun visitStringNode(constantStringNodeAST: ConstantStringNodeAST) {
+        print(
+            nodeClass = constantStringNodeAST::class,
+            parameters = mapOf("string" to constantStringNodeAST.string)
+        )
+    }
+
     private fun print(
         nodeClass: KClass<out NodeAST>,
         parameters: Map<String, String> = emptyMap(),

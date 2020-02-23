@@ -12,4 +12,5 @@ interface NodeASTVisitor<T> {
     fun visitConstantValueNode(constantValueNodeAST: ConstantValueNodeAST): T
     fun visitReferenceNode(referenceNodeAST: ReferenceNodeAST): T
     fun visitBinaryOperatorNode(binaryOperatorNodeAST: BinaryOperatorNodeAST): T
+    fun visitStringNode(constantStringNodeAST: ConstantStringNodeAST): T
 }
