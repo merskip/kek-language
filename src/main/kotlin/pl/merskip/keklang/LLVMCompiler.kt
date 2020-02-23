@@ -17,11 +17,13 @@ class LLVMCompiler(
 
     private val variableScopeStack = VariableScopeStack()
 
-    private lateinit var exitFunction: LLVMValueRef
+    private var exitFunction: LLVMValueRef = declareExitFunction()
+    private var printfFunction: LLVMValueRef = declarePrintfFunction()
+
     private var currentBlock: LLVMBasicBlockRef? = null
 
     fun compile(fileNodeAST: FileNodeAST) {
-        exitFunction = declareExitFunction()
+
         fileNodeAST.nodes.forEach { functionDefinition ->
             compileFunctionDefinition(functionDefinition)
         }
@@ -42,7 +44,27 @@ class LLVMCompiler(
 
         val functionType =
             LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
-        return LLVM.LLVMAddFunction(module, "exit", functionType)
+
+        val functionValue = LLVM.LLVMAddFunction(module, "exit", functionType)
+        LLVM.LLVMSetFunctionCallConv(functionValue, LLVM.LLVMCCallConv)
+        return functionValue
+    }
+
+    private fun declarePrintfFunction(): LLVMValueRef {
+        val printfFunction = LLVM.LLVMGetNamedFunction(module, "printf")
+        if (printfFunction != null) return printfFunction
+
+        val parameters = listOf(
+            LLVM.LLVMInt8TypeInContext(context)
+        ).toTypedArray()
+        val returnType = LLVM.LLVMInt32TypeInContext(context)
+
+        val functionType =
+            LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 1)
+
+        val functionValue = LLVM.LLVMAddFunction(module, "printf", functionType)
+        LLVM.LLVMSetFunctionCallConv(functionValue, LLVM.LLVMCCallConv)
+        return functionValue
     }
 
     private fun compileFunctionDefinition(functionDefinition: FunctionDefinitionNodeAST) {
@@ -90,8 +112,8 @@ class LLVMCompiler(
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is IfConditionNodeAST -> compileIfCondition(statement)
             is CodeBlockNodeAST -> compileCodeBlock(statement)
+            is ConstantStringNodeAST -> compileConstantStringValue(statement)
             is ReferenceNodeAST -> variableScopeStack.getReference(statement.identifier)
-
             else -> throw Exception("Unexpected statement: $statement")
         }
     }
@@ -100,13 +122,7 @@ class LLVMCompiler(
         val functionValue = LLVM.LLVMGetNamedFunction(module, functionCall.identifier)
             ?: throw Exception("Not found function: ${functionCall.identifier}")
 
-        val parameters = functionCall.parameters.map { parameter ->
-            when (parameter) {
-                is ConstantValueNodeAST -> compileConstantValue(parameter)
-                is FunctionCallNodeAST -> compileFunctionCall(parameter)
-                else -> throw Exception("Unexpected statement: $parameter")
-            }
-        }.toTypedArray()
+        val parameters = functionCall.parameters.map { compileStatement(it) }.toTypedArray()
 
         return LLVM.LLVMBuildCall(
             builder, functionValue,
@@ -142,6 +158,10 @@ class LLVMCompiler(
             )
             else -> throw Exception("Unexpected statement: $constantValue")
         }
+    }
+
+    private fun compileConstantStringValue(constantStringNodeAST: ConstantStringNodeAST): LLVMValueRef {
+        return LLVM.LLVMBuildGlobalStringPtr(builder, constantStringNodeAST.string, "string")
     }
 
     private fun compileIfCondition(ifConditionNodeAST: IfConditionNodeAST): LLVMValueRef {
