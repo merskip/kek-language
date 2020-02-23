@@ -1,11 +1,12 @@
+
 func foo() {
     2
 }
 
-func bar() {
-    foo() + 4
+func bar(qux) {
+	qux + 2
 }
 
 func _start() {
-    bar() * 4
+    foo() * 4 + bar(2)
 }

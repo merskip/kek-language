@@ -15,6 +15,8 @@ class LLVMCompiler(
     val module = LLVM.LLVMModuleCreateWithNameInContext(moduleId, context)
     private val builder = LLVM.LLVMCreateBuilder()
 
+    private val variableScopeStack = VariableScopeStack()
+
     private lateinit var exitFunction: LLVMValueRef
 
     fun compile(fileNodeAST: FileNodeAST) {
@@ -45,6 +47,15 @@ class LLVMCompiler(
     private fun compileFunctionDefinition(functionDefinition: FunctionDefinitionNodeAST) {
         val functionValue = createFunction(functionDefinition)
 
+        variableScopeStack.enterScope()
+
+        val parametersValues = FunctionGetParams(functionValue)
+        val parametersIdentifiers = functionDefinition.arguments.map { it.identifier }
+        (parametersIdentifiers zip parametersValues).forEach { (identifier, value) ->
+            variableScopeStack.addReference(identifier, value)
+            LLVM.LLVMSetValueName(value, identifier)
+        }
+
         val entryBlock = LLVM.LLVMAppendBasicBlockInContext(context, functionValue, "entry")
         LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
 
@@ -73,6 +84,8 @@ class LLVMCompiler(
             println(outputPointer.string)
             throw Exception("LLVMVerifyFunction failed")
         }
+
+        variableScopeStack.leaveScope()
     }
 
     private fun compileStatement(statement: StatementNodeAST): LLVMValueRef {
@@ -80,6 +93,7 @@ class LLVMCompiler(
             is FunctionCallNodeAST -> compileFunctionCall(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
+            is ReferenceNodeAST -> variableScopeStack.getReference(statement.identifier)
             else -> throw Exception("Unexpected statement: $statement")
         }
     }
@@ -136,6 +150,7 @@ class LLVMCompiler(
         val parameters = functionDefinition.arguments.map {
             LLVM.LLVMInt32TypeInContext(context)
         }.toTypedArray()
+
         val functionType =
             LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
         return LLVM.LLVMAddFunction(module, functionDefinition.identifier, functionType)
