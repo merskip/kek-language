@@ -17,7 +17,7 @@ class BackendCompiler(
         LLVM.LLVMInitializeAllAsmParsers()
         LLVM.LLVMInitializeAllAsmPrinters()
 
-        val targetTriple = LLVM.LLVMGetDefaultTargetTriple()
+        val targetTriple = LLVM.LLVMGetDefaultTargetTriple() // BytePointer("x86_64-pc-linux-gnu")
         LLVM.LLVMSetTarget(module, targetTriple)
         val target = LLVM.LLVMGetFirstTarget()
 
