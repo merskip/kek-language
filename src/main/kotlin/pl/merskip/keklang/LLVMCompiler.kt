@@ -12,15 +12,18 @@ class LLVMCompiler(
 ) {
 
     private val context = LLVM.LLVMContextCreate()
-    val module = LLVM.LLVMModuleCreateWithNameInContext(moduleId, context)
+    val module: LLVMModuleRef = LLVM.LLVMModuleCreateWithNameInContext(moduleId, context)
     private val builder = LLVM.LLVMCreateBuilder()
 
     private val variableScopeStack = VariableScopeStack()
 
     private var exitFunction: LLVMValueRef = declareExitFunction()
-    private var printfFunction: LLVMValueRef = declarePrintfFunction()
 
     private var currentBlock: LLVMBasicBlockRef? = null
+
+    init {
+        declarePrintfFunction()
+    }
 
     fun compile(fileNodeAST: FileNodeAST) {
 
@@ -55,7 +58,7 @@ class LLVMCompiler(
         if (printfFunction != null) return printfFunction
 
         val parameters = listOf(
-            LLVM.LLVMInt8TypeInContext(context)
+            LLVM.LLVMPointerType(LLVM.LLVMInt8Type(), 0)
         ).toTypedArray()
         val returnType = LLVM.LLVMInt32TypeInContext(context)
 
@@ -161,7 +164,8 @@ class LLVMCompiler(
     }
 
     private fun compileConstantStringValue(constantStringNodeAST: ConstantStringNodeAST): LLVMValueRef {
-        return LLVM.LLVMBuildGlobalStringPtr(builder, constantStringNodeAST.string, "string")
+        val hash = "%02x".format(constantStringNodeAST.string.hashCode())
+        return LLVM.LLVMBuildGlobalStringPtr(builder, constantStringNodeAST.string, ".str.$hash")
     }
 
     private fun compileIfCondition(ifConditionNodeAST: IfConditionNodeAST): LLVMValueRef {
