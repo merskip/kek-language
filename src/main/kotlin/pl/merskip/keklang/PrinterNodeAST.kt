@@ -121,7 +121,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         if (parameters.isNotEmpty()) {
             output += " "
             output += parameters.map {
-                it.key + "=\"" + it.value.colored(Color.BrightBlack) + "\""
+                it.key + "=" + it.value.escapeParamValue().colored(Color.BrightBlack)
             }.joinToString(" ")
         }
 
@@ -143,4 +143,18 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         }
         else output += "]\n"
     }
+
+    private fun String.escapeParamValue(): String =
+            let {
+                var newString = ""
+                it.forEach { char ->
+                    if (!char.isISOControl()) newString += char
+                    else newString += "\\${char.toHex()}"
+                }
+                newString
+            }
+        .let { "\"$it\"" }
+
+    private fun Char.toHex()
+            = toByte().toString(16).padStart(2, '0').toUpperCase()
 }
