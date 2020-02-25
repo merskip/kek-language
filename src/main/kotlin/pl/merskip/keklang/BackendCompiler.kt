@@ -54,7 +54,7 @@ class BackendCompiler(
         }
 
         val executableFile = filename.withExtension("")
-        val process = ProcessBuilder("ld", "-lc", "-o", executableFile, objectFile)
+        val process = ProcessBuilder("ld", "-o", executableFile, objectFile)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()

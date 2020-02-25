@@ -1,6 +1,7 @@
 package pl.merskip.keklang
 
 import org.bytedeco.javacpp.BytePointer
+import org.bytedeco.javacpp.Pointer
 import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.*
 import org.bytedeco.llvm.global.LLVM
@@ -19,12 +20,14 @@ class LLVMCompiler(
     private val variableScopeStack = VariableScopeStack()
 
     private var exitFunction: LLVMValueRef = declareExitFunction()
+    private var printFunction: LLVMValueRef
 
     private var currentBlock: LLVMBasicBlockRef? = null
 
     init {
         LLVM.LLVMSetTarget(module, targetTriple ?: LLVM.LLVMGetDefaultTargetTriple().string)
-        declarePrintfFunction()
+//        declarePrintfFunction()
+        printFunction = defineKekPrintFunction()
     }
 
     fun compile(fileNodeAST: FileNodeAST) {
@@ -72,12 +75,77 @@ class LLVMCompiler(
         return functionValue
     }
 
+    private fun defineKekPrintFunction(): LLVMValueRef {
+
+        val returnType = LLVM.LLVMVoidTypeInContext(context)
+        val parameters = arrayOf(
+            LLVM.LLVMPointerType(LLVM.LLVMInt8Type(), 0)
+        )
+
+        val functionType =
+            LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
+        val printFunctionValue = LLVM.LLVMAddFunction(module, ".kek.print", functionType)
+
+        val entryBlock = LLVM.LLVMAppendBasicBlockInContext(context, printFunctionValue, "entry")
+        LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
+
+        createSysCall(60)
+        LLVM.LLVMBuildRetVoid(builder)
+
+        if (LLVM.LLVMVerifyFunction(printFunctionValue, LLVM.LLVMPrintMessageAction) != 0) {
+            val outputPointer = LLVM.LLVMPrintModuleToString(module)
+            println(outputPointer.string)
+            throw Exception("LLVMVerifyFunction failed")
+        }
+
+        return printFunctionValue
+    }
+
+    private fun createSysCall(number: Long, parameters: List<Long> = emptyList()): LLVMValueRef {
+        val target = LLVM.LLVMGetTarget(module).getTargetTriple()
+        when (target.archType) {
+            "x86_64" -> {
+                return createAssembler(
+                    listOf(
+                        "mov \$\$0, %rdi",
+                        "mov \$\$${number}, %rax",
+                        "syscall"
+                    ),
+                    inputConstraints = listOf("={rax}"),
+                    clobberConstraints = listOf("~{rdi}", "~{rax}")
+                )
+            }
+            else -> error("Unsupported arch: ${target.archType}")
+        }
+    }
+
+    private fun createAssembler(
+        operations: List<String>,
+        outputConstraints: List<String> = emptyList(),
+        inputConstraints: List<String> = emptyList(),
+        clobberConstraints: List<String> = emptyList()
+    ): LLVMValueRef {
+        val assemblerCode = operations.joinToString("; ")
+        val constraints = listOf(outputConstraints, inputConstraints, clobberConstraints)
+            .flatten().joinToString(",")
+
+        val returnType = LLVM.LLVMInt64TypeInContext(context)
+        val functionType = LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(), 0, 0)
+        val asmValue = LLVM.LLVMGetInlineAsm(
+            functionType,
+            BytePointer(assemblerCode), assemblerCode.length.toLong(),
+            BytePointer(constraints), constraints.length.toLong(),
+            1, 0, LLVM.LLVMInlineAsmDialectATT
+        )
+        return LLVM.LLVMBuildCall(builder, asmValue, PointerPointer<LLVMValueRef>(), 0, "")
+    }
+
     private fun compileFunctionDefinition(functionDefinition: FunctionDefinitionNodeAST) {
         val functionValue = createFunction(functionDefinition)
 
         variableScopeStack.enterScope()
 
-        val parametersValues = FunctionGetParams(functionValue)
+        val parametersValues = functionValue.getFunctionParams()
         val parametersIdentifiers = functionDefinition.arguments.map { it.identifier }
         (parametersIdentifiers zip parametersValues).forEach { (identifier, value) ->
             variableScopeStack.addReference(identifier, value)
@@ -124,7 +192,8 @@ class LLVMCompiler(
     }
 
     private fun compileFunctionCall(functionCall: FunctionCallNodeAST): LLVMValueRef {
-        val functionValue = LLVM.LLVMGetNamedFunction(module, functionCall.identifier)
+        val identifier = if (functionCall.identifier == "printf") ".kek.print" else functionCall.identifier
+        val functionValue = LLVM.LLVMGetNamedFunction(module, identifier)
             ?: throw Exception("Not found function: ${functionCall.identifier}")
 
         val parameters = functionCall.parameters.map { compileStatement(it) }.toTypedArray()
@@ -132,7 +201,7 @@ class LLVMCompiler(
         return LLVM.LLVMBuildCall(
             builder, functionValue,
             PointerPointer<LLVMValueRef>(*parameters), parameters.size,
-            functionCall.identifier + "_call"
+            if (functionCall.identifier == "printf") "" else functionCall.identifier + "_call"
         )
     }
 
