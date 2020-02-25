@@ -8,7 +8,8 @@ import pl.merskip.keklang.node.*
 
 
 class LLVMCompiler(
-    moduleId: String
+    moduleId: String,
+    targetTriple: String?
 ) {
 
     private val context = LLVM.LLVMContextCreate()
@@ -22,6 +23,7 @@ class LLVMCompiler(
     private var currentBlock: LLVMBasicBlockRef? = null
 
     init {
+        LLVM.LLVMSetTarget(module, targetTriple ?: LLVM.LLVMGetDefaultTargetTriple().string)
         declarePrintfFunction()
     }
 

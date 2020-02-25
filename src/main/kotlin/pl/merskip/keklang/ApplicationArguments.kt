@@ -30,6 +30,11 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Generate bitcode. Store into file with .bc extension."
     )
 
+    val targetTriple by parser.storing(
+        "-t", "--target-triple",
+        help = "Specify the target triple"
+    ).default<String?>(null)
+
     val output by parser.storing(
         "-o", "--output",
         help = "Specify the output binary object file."

@@ -84,7 +84,8 @@ fun ApplicationArguments.processModule(module: LLVMModuleRef) {
 
 fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
-        val llvmCompiler = LLVMCompiler("kek-lang")
+
+        val llvmCompiler = LLVMCompiler("kek-lang", targetTriple)
         if (isInterpreterMode()) {
             withInterpreter { inputText ->
                 processSource(null, inputText, llvmCompiler)
