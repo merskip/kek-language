@@ -19,15 +19,16 @@ class LLVMCompiler(
 
     private val variableScopeStack = VariableScopeStack()
 
-    private var exitFunction: LLVMValueRef = declareExitFunction()
-    private var printFunction: LLVMValueRef
+    private var sysExitFunction: LLVMValueRef
+    private var sysWriteFunction: LLVMValueRef
 
     private var currentBlock: LLVMBasicBlockRef? = null
 
     init {
         LLVM.LLVMSetTarget(module, targetTriple ?: LLVM.LLVMGetDefaultTargetTriple().string)
-//        declarePrintfFunction()
-        printFunction = defineKekPrintFunction()
+        sysExitFunction = declareSysExitFunction()
+        sysWriteFunction = defineSysWriteFunction()
+        defineBuiltinPrintFunction()
     }
 
     fun compile(fileNodeAST: FileNodeAST) {
@@ -41,55 +42,89 @@ class LLVMCompiler(
         }
     }
 
-    private fun declareExitFunction(): LLVMValueRef {
-        val exitFunction = LLVM.LLVMGetNamedFunction(module, "exit")
-        if (exitFunction != null) return exitFunction
-
+    private fun declareSysExitFunction(): LLVMValueRef {
         val parameters = listOf(
-            LLVM.LLVMInt32TypeInContext(context)
+            LLVM.LLVMInt64TypeInContext(context)
         ).toTypedArray()
         val returnType = LLVM.LLVMVoidTypeInContext(context)
 
         val functionType =
             LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
 
-        val functionValue = LLVM.LLVMAddFunction(module, "exit", functionType)
-        LLVM.LLVMSetFunctionCallConv(functionValue, LLVM.LLVMCCallConv)
+        val functionValue = LLVM.LLVMAddFunction(module, ".kek.sys.exit", functionType)
+
+        val entryBlock = LLVM.LLVMAppendBasicBlockInContext(context, functionValue, "entry")
+        LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
+
+        val exitCode = functionValue.getFunctionParams()[0]
+        LLVM.LLVMSetValueName(exitCode, "exitCode")
+
+        createSysCall(
+            60,
+            listOf(exitCode)
+        )
+        LLVM.LLVMBuildUnreachable(builder)
+
         return functionValue
     }
 
-    private fun declarePrintfFunction(): LLVMValueRef {
-        val printfFunction = LLVM.LLVMGetNamedFunction(module, "printf")
-        if (printfFunction != null) return printfFunction
+    private fun defineSysWriteFunction(): LLVMValueRef {
 
-        val parameters = listOf(
-            LLVM.LLVMPointerType(LLVM.LLVMInt8Type(), 0)
-        ).toTypedArray()
-        val returnType = LLVM.LLVMInt32TypeInContext(context)
-
-        val functionType =
-            LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 1)
-
-        val functionValue = LLVM.LLVMAddFunction(module, "printf", functionType)
-        LLVM.LLVMSetFunctionCallConv(functionValue, LLVM.LLVMCCallConv)
-        return functionValue
-    }
-
-    private fun defineKekPrintFunction(): LLVMValueRef {
-
-        val returnType = LLVM.LLVMVoidTypeInContext(context)
+        val returnType = LLVM.LLVMInt64TypeInContext(context)
         val parameters = arrayOf(
-            LLVM.LLVMPointerType(LLVM.LLVMInt8Type(), 0)
+            LLVM.LLVMInt64Type(), // File descriptor
+            LLVM.LLVMPointerType(LLVM.LLVMInt8Type(), 0), // Buffer
+            LLVM.LLVMInt64Type() // Buffer size
         )
 
         val functionType =
             LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
-        val printFunctionValue = LLVM.LLVMAddFunction(module, ".kek.print", functionType)
+        val sysWriteFunctionValue = LLVM.LLVMAddFunction(module, ".kek.sys.write", functionType)
+
+        val entryBlock = LLVM.LLVMAppendBasicBlockInContext(context, sysWriteFunctionValue, "entry")
+        LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
+
+        val fd = sysWriteFunctionValue.getFunctionParams()[0]
+        LLVM.LLVMSetValueName(fd, "fd")
+
+        val buf = sysWriteFunctionValue.getFunctionParams()[1]
+        LLVM.LLVMSetValueName(buf, "buf")
+
+        val count = sysWriteFunctionValue.getFunctionParams()[2]
+        LLVM.LLVMSetValueName(count, "count")
+
+        val asmReturn = createSysCall(
+            1,
+            listOf(fd, buf, count)
+        )
+        LLVM.LLVMBuildRet(builder, asmReturn)
+
+        if (LLVM.LLVMVerifyFunction(sysWriteFunctionValue, LLVM.LLVMPrintMessageAction) != 0) {
+            val outputPointer = LLVM.LLVMPrintModuleToString(module)
+            println(outputPointer.string)
+            throw Exception("LLVMVerifyFunction failed")
+        }
+
+        return sysWriteFunctionValue
+    }
+
+    private fun defineBuiltinPrintFunction() {
+        val returnType = LLVM.LLVMVoidTypeInContext(context)
+        val parameters = arrayOf(
+            LLVM.LLVMPointerType(LLVM.LLVMInt8Type(), 0) // String pointer
+        )
+
+        val functionType =
+            LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(*parameters), parameters.size, 0)
+        val printFunctionValue = LLVM.LLVMAddFunction(module, ".kek.builtin.print", functionType)
 
         val entryBlock = LLVM.LLVMAppendBasicBlockInContext(context, printFunctionValue, "entry")
         LLVM.LLVMPositionBuilderAtEnd(builder, entryBlock)
 
-        createSysCall(60)
+//        createSysCall(
+//            60,
+//            LLVM.LLVMConstInt(LLVM.LLVMInt32TypeInContext(context), 0, 0)
+//        )
         LLVM.LLVMBuildRetVoid(builder)
 
         if (LLVM.LLVMVerifyFunction(printFunctionValue, LLVM.LLVMPrintMessageAction) != 0) {
@@ -97,22 +132,27 @@ class LLVMCompiler(
             println(outputPointer.string)
             throw Exception("LLVMVerifyFunction failed")
         }
-
-        return printFunctionValue
     }
 
-    private fun createSysCall(number: Long, parameters: List<Long> = emptyList()): LLVMValueRef {
+    private fun createSysCall(number: Long, parameters: List<LLVMValueRef>): LLVMValueRef {
         val target = LLVM.LLVMGetTarget(module).getTargetTriple()
         when (target.archType) {
             "x86_64" -> {
+                val paramsRegisters = listOf("%rdi", "%rsi", "%rdx")
+
+                val asm = mutableListOf("movq $0, %rax")
+                parameters.forEachIndexed { index, _ ->
+                    asm += "movq \$${index+1}, ${paramsRegisters[index]}"
+                }
+                asm += "syscall"
                 return createAssembler(
-                    listOf(
-                        "mov \$\$0, %rdi",
-                        "mov \$\$${number}, %rax",
-                        "syscall"
-                    ),
-                    inputConstraints = listOf("={rax}"),
-                    clobberConstraints = listOf("~{rdi}", "~{rax}")
+                    asm,
+                    outputConstraints = listOf("={rax}"),
+                    inputConstraints = listOf(listOf("i"), parameters.map { "r" }).flatten(),
+                    input = listOf(
+                        listOf(LLVM.LLVMConstInt(LLVM.LLVMInt64Type(), number, 0)),
+                        parameters
+                    ).flatten()
                 )
             }
             else -> error("Unsupported arch: ${target.archType}")
@@ -121,6 +161,7 @@ class LLVMCompiler(
 
     private fun createAssembler(
         operations: List<String>,
+        input: List<LLVMValueRef> = emptyList(),
         outputConstraints: List<String> = emptyList(),
         inputConstraints: List<String> = emptyList(),
         clobberConstraints: List<String> = emptyList()
@@ -130,14 +171,14 @@ class LLVMCompiler(
             .flatten().joinToString(",")
 
         val returnType = LLVM.LLVMInt64TypeInContext(context)
-        val functionType = LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(), 0, 0)
+        val functionType = LLVM.LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(), 0, 1)
         val asmValue = LLVM.LLVMGetInlineAsm(
             functionType,
             BytePointer(assemblerCode), assemblerCode.length.toLong(),
             BytePointer(constraints), constraints.length.toLong(),
             1, 0, LLVM.LLVMInlineAsmDialectATT
         )
-        return LLVM.LLVMBuildCall(builder, asmValue, PointerPointer<LLVMValueRef>(), 0, "")
+        return LLVM.LLVMBuildCall(builder, asmValue, PointerPointer<LLVMValueRef>(*input.toTypedArray()), input.size, "asm")
     }
 
     private fun compileFunctionDefinition(functionDefinition: FunctionDefinitionNodeAST) {
@@ -165,7 +206,7 @@ class LLVMCompiler(
             val exitParameters = listOf(
                 returnValue
             ).toTypedArray()
-            LLVM.LLVMBuildCall(builder, exitFunction, PointerPointer<LLVMValueRef>(*exitParameters), 1, "")
+            LLVM.LLVMBuildCall(builder, sysExitFunction, PointerPointer<LLVMValueRef>(*exitParameters), 1, "")
             LLVM.LLVMBuildUnreachable(builder)
         }
 
@@ -192,7 +233,7 @@ class LLVMCompiler(
     }
 
     private fun compileFunctionCall(functionCall: FunctionCallNodeAST): LLVMValueRef {
-        val identifier = if (functionCall.identifier == "printf") ".kek.print" else functionCall.identifier
+        val identifier = if (functionCall.identifier == "printf") ".kek.builtin.print" else functionCall.identifier
         val functionValue = LLVM.LLVMGetNamedFunction(module, identifier)
             ?: throw Exception("Not found function: ${functionCall.identifier}")
 
