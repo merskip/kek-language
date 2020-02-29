@@ -1,12 +1,14 @@
 package pl.merskip.keklang
 
 import com.xenomachina.argparser.ArgParser
-import com.xenomachina.argparser.UnrecognizedOptionException
 import com.xenomachina.argparser.mainBody
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
+import pl.merskip.keklang.compiler.Compiler
+import pl.merskip.keklang.compiler.IRCompiler
 import java.io.File
 import java.lang.Exception
+import javax.tools.JavaCompiler
 
 
 fun withInterpreter(callback: (inputText: String) -> Unit) {
@@ -32,9 +34,9 @@ fun withReadSources(sources: List<String>, callback: (filename: String, content:
     }
 }
 
-fun ApplicationArguments.processSource(filename: String?, content: String, llvmCompiler: LLVMCompiler) {
+fun ApplicationArguments.processSource(filename: String?, content: String, compiler: Compiler) {
     try {
-        tryProcessSources(filename, content, llvmCompiler)
+        tryProcessSources(filename, content, compiler)
     }
     catch (exception: SourceLocationException) {
         assert(exception.sourceLocation.startIndex.line == exception.sourceLocation.endIndex.line)
@@ -53,7 +55,7 @@ fun ApplicationArguments.processSource(filename: String?, content: String, llvmC
     }
 }
 
-fun ApplicationArguments.tryProcessSources(filename: String?, content: String, llvmCompiler: LLVMCompiler) {
+fun ApplicationArguments.tryProcessSources(filename: String?, content: String, compiler: Compiler) {
     val tokens = Lexer().parse(filename, content)
 
     if (tokensDump) {
@@ -67,7 +69,7 @@ fun ApplicationArguments.tryProcessSources(filename: String?, content: String, l
         println(PrinterNodeAST().print(fileNode))
     }
 
-    llvmCompiler.compile(fileNode)
+    compiler.compile(fileNode)
 }
 
 fun ApplicationArguments.processModule(module: LLVMModuleRef) {
@@ -85,17 +87,19 @@ fun ApplicationArguments.processModule(module: LLVMModuleRef) {
 fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
-        val llvmCompiler = LLVMCompiler("kek-lang", targetTriple)
+        val irCompiler = IRCompiler("kek-lang", targetTriple)
+        val compiler = Compiler(irCompiler)
+
         if (isInterpreterMode()) {
             withInterpreter { inputText ->
-                processSource(null, inputText, llvmCompiler)
-                processModule(llvmCompiler.module)
+                processSource(null, inputText, compiler)
+                processModule(compiler.module)
             }
         } else {
             withReadSources(sources) { filename, content ->
-                processSource(filename, content, llvmCompiler)
+                processSource(filename, content, compiler)
             }
-            processModule(llvmCompiler.module)
+            processModule(compiler.module)
         }
     }
 }

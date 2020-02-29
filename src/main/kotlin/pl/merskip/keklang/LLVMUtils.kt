@@ -16,15 +16,3 @@ fun LLVMValueRef.getFunctionParams(): List<LLVMValueRef> {
         LLVM.LLVMGetParam(this, index)
     }
 }
-
-fun BytePointer.getTargetTriple(): TargetTriple {
-    val chunks = string.split("-")
-    return TargetTriple(chunks[0], chunks[1], chunks[2], chunks.getOrNull(3))
-}
-
-data class TargetTriple(
-    val archType: String,
-    val vendor: String,
-    val operatingSystem: String,
-    val environment: String?
-)

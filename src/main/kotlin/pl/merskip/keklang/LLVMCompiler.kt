@@ -1,14 +1,15 @@
 package pl.merskip.keklang
 
 import org.bytedeco.javacpp.BytePointer
-import org.bytedeco.javacpp.Pointer
 import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.*
-import org.bytedeco.llvm.global.LLVM
 import org.bytedeco.llvm.global.LLVM.*
+import pl.merskip.keklang.compiler.TargetTriple
+import pl.merskip.keklang.compiler.llvm.getTargetTriple
 import pl.merskip.keklang.node.*
 
 
+@Deprecated("", replaceWith = ReplaceWith("pl.merskip.keklang.compiler.Compiler"))
 class LLVMCompiler(
     moduleId: String,
     targetTriple: String?
@@ -129,7 +130,7 @@ class LLVMCompiler(
     private fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
         val target = LLVMGetTarget(module).getTargetTriple()
         when (target.archType) {
-            "x86_64" -> {
+            TargetTriple.ArchType.x86_64 -> {
                 val paramsRegisters = listOf("%rdi", "%rsi", "%rdx")
 
                 val asm = mutableListOf("movq $0, %rax")

@@ -1,34 +1,33 @@
-package pl.merskip.keklang
+package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMValueRef
+import pl.merskip.keklang.compiler.Reference
+import pl.merskip.keklang.compiler.Type
 
-@Deprecated("")
-class VariableScopeStack {
+class ReferencesStack {
 
     private val scopes = mutableListOf(Scope())
     private val currentScope: Scope
         get() = scopes.last()
 
-    data class Scope(
-        val references: MutableMap<String, LLVMValueRef> = mutableMapOf()
+    class Scope(
+        val references: MutableList<Reference> = mutableListOf()
     )
 
     fun enterScope() {
         scopes.add(Scope())
     }
 
-    fun addReference(identifier: String, value: LLVMValueRef) {
-        if (currentScope.references.containsKey(identifier))
+    fun addReference(identifier: String, type: Type) {
+        if (currentScope.references.any { it.identifier == identifier })
             throw IllegalStateException("Already exists reference to \"$identifier\" in this scope.")
-        currentScope.references[identifier] = value
+        currentScope.references.add(Reference(identifier, type))
     }
 
-    fun getReference(identifier: String): LLVMValueRef {
+    fun getReference(identifier: String): Reference {
         scopes.reversed()
             .forEach { scope ->
-                scope.references[identifier]?.let {
-                    return it
-                }
+                scope.references.firstOrNull { it.identifier == identifier }
+                    ?.let { return it }
             }
         throw IllegalArgumentException("Not found reference to $identifier")
     }
