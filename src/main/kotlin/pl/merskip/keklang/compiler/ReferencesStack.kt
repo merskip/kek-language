@@ -12,12 +12,6 @@ class ReferencesStack {
         val references: MutableList<Reference> = mutableListOf()
     )
 
-    class Reference(
-        val identifier: String,
-        val type: Type,
-        val valueRef: LLVMValueRef
-    )
-
     fun createScope(block: () -> Unit) {
         enterScope()
         block()

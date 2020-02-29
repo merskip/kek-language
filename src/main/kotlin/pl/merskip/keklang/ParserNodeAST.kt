@@ -180,7 +180,7 @@ public class ParserNodeAST(
                 BigDecimal(numberToken.text)
             ).sourceLocation(numberToken)
         } else {
-            IntegerConstantValueNodeAST(numberToken.text.toInt())
+            IntegerConstantValueNodeAST(numberToken.text.toLong())
                 .sourceLocation(numberToken)
         }
     }

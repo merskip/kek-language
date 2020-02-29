@@ -1,10 +1,11 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
+import org.bytedeco.llvm.LLVM.LLVMValueRef
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.NodeASTWalker
 import pl.merskip.keklang.getFunctionParametersValues
-import pl.merskip.keklang.node.FileNodeAST
-import pl.merskip.keklang.node.FunctionDefinitionNodeAST
+import pl.merskip.keklang.node.*
 
 class Compiler(
     val irCompiler: IRCompiler
@@ -25,6 +26,7 @@ class Compiler(
         fileNodeAST.nodes.forEach {
             compileFunction(it)
         }
+        irCompiler.verifyModule()
     }
 
     private fun registerAllFunctions(fileNodeAST: FileNodeAST) {
@@ -60,8 +62,34 @@ class Compiler(
                 referencesStack.addReference(parameter.identifier, parameter.type, value)
             }
 
-            val entryBlock = irCompiler.addFunctionEntry(function)
+            irCompiler.beginFunctionEntry(function)
+            val returnValue = compileStatement(nodeAST.body)
 
+            irCompiler.createReturnValue(function, returnValue)
+            irCompiler.verifyFunction(function)
+        }
+    }
+
+    private fun compileStatement(statement: StatementNodeAST): Reference {
+        return when (statement) {
+            is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
+            is ConstantValueNodeAST -> compileConstantValue(statement)
+            else -> throw Exception("TODO: $statement")
+        }
+    }
+
+    private fun compileCodeBlockAndGetLastValue(nodeAST: CodeBlockNodeAST): Reference {
+        var lastValue: Reference? = null
+        nodeAST.statements.forEach { statement ->
+            lastValue = compileStatement(statement)
+        }
+        return lastValue ?: error("No last value")
+    }
+
+    private fun compileConstantValue(nodeAST: ConstantValueNodeAST): Reference {
+        return when (nodeAST) {
+            is IntegerConstantValueNodeAST -> irCompiler.createConstantIntegerValue(nodeAST.value, getDefaultType())
+            else -> throw Exception("TODO: $nodeAST")
         }
     }
 }

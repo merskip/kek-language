@@ -1,10 +1,11 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
+import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
-import pl.merskip.keklang.compiler.TargetTriple.ArchType.*
+import pl.merskip.keklang.compiler.TargetTriple.ArchType.x86
+import pl.merskip.keklang.compiler.TargetTriple.ArchType.x86_64
 import pl.merskip.keklang.compiler.llvm.*
 import pl.merskip.keklang.getFunctionParametersValues
 
@@ -47,11 +48,28 @@ class IRCompiler(
         return Pair(functionTypeRef, functionValueRef)
     }
 
-    fun addFunctionEntry(function: Function): LLVMBasicBlockRef {
+    fun beginFunctionEntry(function: Function) {
         val entryBlock = LLVMAppendBasicBlockInContext(context, function.valueRef, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)
-        LLVMBuildUnreachable(builder) // NOTE: Temporary
+    }
 
-        return entryBlock
+    fun createReturnValue(function: Function, reference: Reference) {
+        if (function.returnType.identifier != reference.type.identifier)
+            throw Exception("Mismatch types. Expected return ${function.returnType.identifier}, but got ${reference.type.identifier}")
+
+        LLVMBuildRet(builder, reference.valueRef)
+    }
+
+    fun createConstantIntegerValue(value: Long, type: Type): Reference {
+        val valueRef = LLVMConstInt(type.typeRef, value, 0)
+        return valueRef.withName("constInt").toReference(type = type)
+    }
+
+    fun verifyFunction(function: Function): Boolean {
+        return LLVMVerifyFunction(function.valueRef, LLVMPrintMessageAction) == 0
+    }
+
+    fun verifyModule(): Boolean {
+        return LLVMVerifyModule(module, LLVMPrintMessageAction, BytePointer()) == 0
     }
 }
