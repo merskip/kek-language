@@ -55,7 +55,7 @@ class LLVMCompiler(
         val entryBlock = LLVMAppendBasicBlockInContext(context, functionValue, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)
 
-        val exitCode = functionValue.getFunctionParam(0)
+        val exitCode = functionValue.getFunctionParameterValue(0)
         LLVMSetValueName(exitCode, "exitCode")
 
         createSysCall(60, exitCode)
@@ -80,13 +80,13 @@ class LLVMCompiler(
         val entryBlock = LLVMAppendBasicBlockInContext(context, sysWriteFunctionValue, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)
 
-        val fd = sysWriteFunctionValue.getFunctionParam(0)
+        val fd = sysWriteFunctionValue.getFunctionParameterValue(0)
         LLVMSetValueName(fd, "fd")
 
-        val buf = sysWriteFunctionValue.getFunctionParam(1)
+        val buf = sysWriteFunctionValue.getFunctionParameterValue(1)
         LLVMSetValueName(buf, "buf")
 
-        val count = sysWriteFunctionValue.getFunctionParam(2)
+        val count = sysWriteFunctionValue.getFunctionParameterValue(2)
         LLVMSetValueName(count, "count")
 
         val result = createSysCall(1, fd, buf, count)
@@ -179,7 +179,7 @@ class LLVMCompiler(
 
         variableScopeStack.enterScope()
 
-        val parametersValues = functionValue.getFunctionParams()
+        val parametersValues = functionValue.getFunctionParametersValues()
         val parametersIdentifiers = functionDefinition.arguments.map { it.identifier }
         (parametersIdentifiers zip parametersValues).forEach { (identifier, value) ->
             variableScopeStack.addReference(identifier, value)

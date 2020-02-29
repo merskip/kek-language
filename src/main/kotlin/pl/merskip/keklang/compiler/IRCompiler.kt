@@ -1,12 +1,12 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.LLVMModuleRef
+import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.compiler.TargetTriple.ArchType.*
 import pl.merskip.keklang.compiler.llvm.*
+import pl.merskip.keklang.getFunctionParametersValues
 
 class IRCompiler(
     moduleId: String,
@@ -37,12 +37,21 @@ class IRCompiler(
     }
 
     fun declareFunction(identifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
-        val parametersTypesRefs = parameters.map { it.type.typeRef }.toTypedArray()
-        val parametersPointer = PointerPointer<LLVMTypeRef>(*parametersTypesRefs)
-
-        val functionTypeRef = LLVMFunctionType(returnType.typeRef, parametersPointer, parameters.size, 0)
+        val functionTypeRef = LLVMFunctionType(returnType.typeRef, parameters.toTypeRefPointer(), parameters.size, 0)
         val functionValueRef = LLVMAddFunction(module, identifier, functionTypeRef)
 
+        (parameters zip functionValueRef.getFunctionParametersValues()).forEach { (parameter, value) ->
+            LLVMSetValueName(value, parameter.identifier)
+        }
+
         return Pair(functionTypeRef, functionValueRef)
+    }
+
+    fun addFunctionEntry(function: Function): LLVMBasicBlockRef {
+        val entryBlock = LLVMAppendBasicBlockInContext(context, function.valueRef, "entry")
+        LLVMPositionBuilderAtEnd(builder, entryBlock)
+        LLVMBuildUnreachable(builder) // NOTE: Temporary
+
+        return entryBlock
     }
 }

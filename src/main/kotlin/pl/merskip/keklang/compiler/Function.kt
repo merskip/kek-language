@@ -9,7 +9,7 @@ open class Function(
     val parameters: List<Parameter>,
     val returnType: Type,
     typeRef: LLVMTypeRef,
-    valueRef: LLVMValueRef
+    val valueRef: LLVMValueRef
 ) : Type(identifier, typeRef) {
 
     class Parameter(
