@@ -63,7 +63,7 @@ class Compiler(
             irCompiler.beginFunctionEntry(function)
             val returnValue = compileStatement(nodeAST.body)
 
-            if (function.returnType.identifier != returnValue.type.identifier)
+            if (!function.returnType.isCompatibleWith(returnValue.type))
                 throw Exception("Mismatch types. Expected return ${function.returnType.identifier}, but got ${returnValue.type.identifier}")
             irCompiler.createReturnValue(returnValue.valueRef)
 
@@ -102,7 +102,7 @@ class Compiler(
         if (function.parameters.size != arguments.size)
             throw Exception("Mismatch numbers of parameters. Expected ${function.parameters.size}, but got ${arguments.size}")
         (function.parameters zip arguments).forEach { (functionParameter, passedArgument) ->
-            if (functionParameter.type.identifier != passedArgument.type.identifier)
+            if (!functionParameter.type.isCompatibleWith(passedArgument.type))
                 throw Exception("Mismatch types. Expected parameter ${functionParameter.type.identifier}, but got ${passedArgument.type.identifier}")
         }
 

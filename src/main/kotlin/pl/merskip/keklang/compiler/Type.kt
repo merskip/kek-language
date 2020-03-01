@@ -8,6 +8,9 @@ abstract class Type(
     val typeRef: LLVMTypeRef
 ) {
 
+    fun isCompatibleWith(otherType: Type): Boolean =
+        identifier == otherType.identifier
+
     abstract override fun toString(): String
 }
 
