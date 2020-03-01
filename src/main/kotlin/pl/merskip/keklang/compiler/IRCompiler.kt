@@ -41,11 +41,17 @@ class IRCompiler(
         val functionTypeRef = LLVMFunctionType(returnType.typeRef, parameters.toTypeRefPointer(), parameters.size, 0)
         val functionValueRef = LLVMAddFunction(module, identifier, functionTypeRef)
 
-        (parameters zip functionValueRef.getFunctionParametersValues()).forEach { (parameter, value) ->
-            LLVMSetValueName(value, parameter.identifier)
-        }
+        (parameters zip functionValueRef.getFunctionParametersValues())
+            .forEach { (parameter, value) ->
+                LLVMSetValueName(value, parameter.identifier)
+            }
 
         return Pair(functionTypeRef, functionValueRef)
+    }
+
+    fun setFunctionAsInline(function: Function) {
+        val attribute = LLVMCreateEnumAttribute(context, 3, 0L) // KindId=3 - alwaysinline
+        LLVMAddAttributeAtIndex(function.valueRef, LLVMAttributeFunctionIndex.toInt(), attribute)
     }
 
     fun beginFunctionEntry(function: Function) {
@@ -57,9 +63,8 @@ class IRCompiler(
         LLVMBuildRet(builder, valueRef)
     }
 
-    fun createConstantIntegerValue(value: Long, type: Type): Reference {
-        val valueRef = LLVMConstInt(type.typeRef, value, 0)
-        return valueRef.toReference(type = type)
+    fun createConstantIntegerValue(value: Long, type: Type): LLVMValueRef {
+        return LLVMConstInt(type.typeRef, value, 0)
     }
 
     fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef {
@@ -69,6 +74,21 @@ class IRCompiler(
             function.identifier + "_call"
         )
     }
+
+    fun createAdd(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+        LLVMBuildAdd(builder, lhsValueRef, rhsValueRef, "add")
+
+    fun createSub(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+        LLVMBuildSub(builder, lhsValueRef, rhsValueRef, "sub")
+
+    fun createMul(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+        LLVMBuildMul(builder, lhsValueRef, rhsValueRef, "mul")
+
+    fun createIntegersIsEqual(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+        LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
+
+    fun createIntegersIsNotEqual(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+        LLVMBuildICmp(builder, LLVMIntNE, lhsValueRef, rhsValueRef, "cmpNotEq")
 
     fun verifyFunction(function: Function): Boolean {
         return LLVMVerifyFunction(function.valueRef, LLVMPrintMessageAction) == 0

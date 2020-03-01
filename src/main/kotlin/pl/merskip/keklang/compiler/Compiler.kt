@@ -2,6 +2,7 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import pl.merskip.keklang.NodeASTWalker
+import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 import pl.merskip.keklang.node.*
 
@@ -20,6 +21,7 @@ class Compiler(
     }
 
     fun compile(fileNodeAST: FileNodeAST) {
+        createIntegerAdd()
         registerAllFunctions(fileNodeAST)
         fileNodeAST.nodes.forEach {
             compileFunction(it)
@@ -47,6 +49,30 @@ class Compiler(
                 typesRegister.register(functionType)
             }
         })
+    }
+
+    private fun createIntegerAdd() {
+        val integerType = getDefaultType()
+        val identifier = TypeFunction.createIdentifier(integerType, "add")
+        val parameters = TypeFunction.createParameters(integerType, Function.Parameter("other", integerType))
+
+        val (typeRef, valueRef) = irCompiler.declareFunction(identifier, parameters, integerType)
+        val addFunction = TypeFunction(
+            identifier = identifier,
+            onType = integerType,
+            parameters = parameters,
+            returnType = integerType,
+            typeRef = typeRef,
+            valueRef = valueRef
+        )
+        irCompiler.setFunctionAsInline(addFunction)
+        irCompiler.beginFunctionEntry(addFunction)
+
+        val parametersValues = addFunction.valueRef.getFunctionParametersValues()
+        val addResult = irCompiler.createAdd(parametersValues[0], parametersValues[1])
+        irCompiler.createReturnValue(addResult)
+
+        irCompiler.verifyFunction(addFunction)
     }
 
     private fun getDefaultType() = typesRegister.findType("Integer")
@@ -90,7 +116,11 @@ class Compiler(
 
     private fun compileConstantValue(nodeAST: ConstantValueNodeAST): Reference {
         return when (nodeAST) {
-            is IntegerConstantValueNodeAST -> irCompiler.createConstantIntegerValue(nodeAST.value, getDefaultType())
+            is IntegerConstantValueNodeAST -> {
+                val type = getDefaultType()
+                irCompiler.createConstantIntegerValue(nodeAST.value, type)
+                    .toReference(type = type)
+            }
             else -> throw Exception("TODO: $nodeAST")
         }
     }

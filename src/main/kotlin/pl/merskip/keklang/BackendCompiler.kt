@@ -18,6 +18,10 @@ class BackendCompiler(
         LLVM.LLVMInitializeAllAsmParsers()
         LLVM.LLVMInitializeAllAsmPrinters()
 
+        val passManager = LLVM.LLVMCreatePassManager()
+        LLVM.LLVMAddAlwaysInlinerPass(passManager)
+        LLVM.LLVMRunPassManager(passManager, module)
+
         val targetTriple = LLVM.LLVMGetDefaultTargetTriple()
         LLVM.LLVMSetTarget(module, targetTriple)
         val target = LLVM.LLVMGetFirstTarget()

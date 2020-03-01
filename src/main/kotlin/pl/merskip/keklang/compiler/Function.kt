@@ -22,12 +22,28 @@ open class Function(
 
 class TypeFunction(
     identifier: String,
-    val type: Type,
+    val onType: Type,
     parameters: List<Parameter>,
     returnType: Type,
     typeRef: LLVMTypeRef,
     valueRef: LLVMValueRef
-) : Function(identifier, parameters.addingBegin(Parameter("this", type)), returnType, typeRef, valueRef)
+) : Function(identifier, parameters, returnType, typeRef, valueRef) {
+
+    init {
+        if (parameters[0].identifier != "this" || parameters[0].type != onType)
+            throw Exception("The first parameter must be 'this' and type equal to `onType`")
+    }
+
+    companion object {
+
+        fun createIdentifier(onType: Type, functionIdentifier: String) =
+            onType.identifier + "." + functionIdentifier
+
+        fun createParameters(onType: Type, vararg parameters: Parameter): List<Parameter> {
+            return parameters.toList().addingBegin(Parameter("this", onType))
+        }
+    }
+}
 
 class BinaryOperatorFunction(
     identifier: String,
