@@ -1,7 +1,6 @@
 package pl.merskip.keklang
 
 import pl.merskip.keklang.node.*
-import pl.merskip.keklang.node.BinaryOperatorNodeAST
 import java.math.BigDecimal
 
 

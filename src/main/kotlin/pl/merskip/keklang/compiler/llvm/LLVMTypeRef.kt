@@ -6,6 +6,6 @@ import pl.merskip.keklang.compiler.Function
 
 fun List<Function.Parameter>.toTypeRefPointer(): PointerPointer<LLVMTypeRef> {
     val typesRefs = this.map { it.type.typeRef }.toTypedArray()
-    return PointerPointer<LLVMTypeRef>(*typesRefs)
+    return PointerPointer(*typesRefs)
 }
 

@@ -2,7 +2,6 @@ package pl.merskip.keklang.node
 
 import pl.merskip.keklang.NodeASTVisitor
 import pl.merskip.keklang.SourceLocation
-import pl.merskip.keklang.Token
 
 abstract class NodeAST {
 

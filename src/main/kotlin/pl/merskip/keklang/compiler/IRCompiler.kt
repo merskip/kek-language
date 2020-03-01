@@ -53,16 +53,21 @@ class IRCompiler(
         LLVMPositionBuilderAtEnd(builder, entryBlock)
     }
 
-    fun createReturnValue(function: Function, reference: Reference) {
-        if (function.returnType.identifier != reference.type.identifier)
-            throw Exception("Mismatch types. Expected return ${function.returnType.identifier}, but got ${reference.type.identifier}")
-
-        LLVMBuildRet(builder, reference.valueRef)
+    fun createReturnValue(valueRef: LLVMValueRef) {
+        LLVMBuildRet(builder, valueRef)
     }
 
     fun createConstantIntegerValue(value: Long, type: Type): Reference {
         val valueRef = LLVMConstInt(type.typeRef, value, 0)
-        return valueRef.withName("constInt").toReference(type = type)
+        return valueRef.toReference(type = type)
+    }
+
+    fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef {
+        return LLVMBuildCall(
+            builder, function.valueRef,
+            arguments.toValueRefPointer(), arguments.size,
+            function.identifier + "_call"
+        )
     }
 
     fun verifyFunction(function: Function): Boolean {

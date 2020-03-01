@@ -7,8 +7,6 @@ import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.Compiler
 import pl.merskip.keklang.compiler.IRCompiler
 import java.io.File
-import java.lang.Exception
-import javax.tools.JavaCompiler
 
 
 fun withInterpreter(callback: (inputText: String) -> Unit) {

@@ -5,7 +5,6 @@ import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import java.util.concurrent.TimeUnit
-import javax.swing.plaf.ProgressBarUI
 
 class BackendCompiler(
     private val module: LLVMModuleRef

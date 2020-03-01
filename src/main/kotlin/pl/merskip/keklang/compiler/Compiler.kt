@@ -1,8 +1,6 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
-import org.bytedeco.llvm.LLVM.LLVMValueRef
-import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.NodeASTWalker
 import pl.merskip.keklang.getFunctionParametersValues
 import pl.merskip.keklang.node.*
@@ -65,7 +63,10 @@ class Compiler(
             irCompiler.beginFunctionEntry(function)
             val returnValue = compileStatement(nodeAST.body)
 
-            irCompiler.createReturnValue(function, returnValue)
+            if (function.returnType.identifier != returnValue.type.identifier)
+                throw Exception("Mismatch types. Expected return ${function.returnType.identifier}, but got ${returnValue.type.identifier}")
+            irCompiler.createReturnValue(returnValue.valueRef)
+
             irCompiler.verifyFunction(function)
         }
     }
@@ -74,6 +75,7 @@ class Compiler(
         return when (statement) {
             is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
+            is FunctionCallNodeAST -> compileCallFunction(statement)
             else -> throw Exception("TODO: $statement")
         }
     }
@@ -91,5 +93,20 @@ class Compiler(
             is IntegerConstantValueNodeAST -> irCompiler.createConstantIntegerValue(nodeAST.value, getDefaultType())
             else -> throw Exception("TODO: $nodeAST")
         }
+    }
+
+    private fun compileCallFunction(nodeAST: FunctionCallNodeAST): Reference {
+        val function = typesRegister.findFunction(nodeAST.identifier)
+        val arguments = nodeAST.parameters.map { compileStatement(it) }
+
+        if (function.parameters.size != arguments.size)
+            throw Exception("Mismatch numbers of parameters. Expected ${function.parameters.size}, but got ${arguments.size}")
+        (function.parameters zip arguments).forEach { (functionParameter, passedArgument) ->
+            if (functionParameter.type.identifier != passedArgument.type.identifier)
+                throw Exception("Mismatch types. Expected parameter ${functionParameter.type.identifier}, but got ${passedArgument.type.identifier}")
+        }
+
+        val returnValueRef = irCompiler.createCallFunction(function, arguments.map { it.valueRef })
+        return Reference(null, function.returnType, returnValueRef)
     }
 }
