@@ -30,7 +30,7 @@ class IRCompiler(
         when (target.archType) {
             x86, x86_64 -> {
                 typesRegister.register(PrimitiveType("Boolean", context.createInt1()))
-                typesRegister.register(PrimitiveType("Integer", context.createInt64()))
+                typesRegister.register(PrimitiveType("Integer", context.createInt32()))
                 typesRegister.register(PrimitiveType("BytePointer", context.createBytePointer()))
             }
             else -> error("Unsupported arch: ${target.archType}")
