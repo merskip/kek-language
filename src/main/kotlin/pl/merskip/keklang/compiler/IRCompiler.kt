@@ -87,9 +87,6 @@ class IRCompiler(
     fun createIntegersIsEqual(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
         LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
 
-    fun createIntegersIsNotEqual(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
-        LLVMBuildICmp(builder, LLVMIntNE, lhsValueRef, rhsValueRef, "cmpNotEq")
-
     fun verifyFunction(function: Function): Boolean {
         return LLVMVerifyFunction(function.valueRef, LLVMPrintMessageAction) == 0
     }

@@ -4,13 +4,9 @@ func foo() {
 }
 
 func bar(a, b) {
-    if (a == 2) {
-        printf("bar: 'a' param is equal to two\n")
-    }
-    a * b
+    foo() + 3
 }
 
 func main() {
-    printf("Hello world from Kek-Language!\n")
-    0
+    bar(1, 3) - 1
 }

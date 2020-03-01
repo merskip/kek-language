@@ -73,6 +73,7 @@ class Compiler(
         irCompiler.createReturnValue(addResult)
 
         irCompiler.verifyFunction(addFunction)
+        typesRegister.register(addFunction)
     }
 
     private fun getDefaultType() = typesRegister.findType("Integer")
@@ -101,6 +102,7 @@ class Compiler(
         return when (statement) {
             is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
+            is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
             is FunctionCallNodeAST -> compileCallFunction(statement)
             else -> throw Exception("TODO: $statement")
         }
@@ -125,10 +127,31 @@ class Compiler(
         }
     }
 
+    private fun compileBinaryOperator(nodeAST: BinaryOperatorNodeAST): Reference {
+        val lhs = compileStatement(nodeAST.lhs)
+        val rhs = compileStatement(nodeAST.rhs)
+
+        if (!lhs.type.isCompatibleWith(getDefaultType()) || !rhs.type.isCompatibleWith(getDefaultType()))
+            throw Exception("Both types must be Integer.")
+
+        val invokeFunction = when (nodeAST.identifier) {
+            "+" -> typesRegister.findFunction(TypeFunction.createIdentifier(getDefaultType(), "add"))
+            "-" -> typesRegister.findFunction(TypeFunction.createIdentifier(getDefaultType(), "sub"))
+            "*" -> typesRegister.findFunction(TypeFunction.createIdentifier(getDefaultType(), "mul"))
+            "==" -> typesRegister.findFunction(TypeFunction.createIdentifier(getDefaultType(), "equalsTo"))
+            else -> throw Exception("Unknown operator: ${nodeAST.identifier}")
+        }
+        return compileCallFunction(invokeFunction, listOf(lhs, rhs))
+    }
+
     private fun compileCallFunction(nodeAST: FunctionCallNodeAST): Reference {
         val function = typesRegister.findFunction(nodeAST.identifier)
         val arguments = nodeAST.parameters.map { compileStatement(it) }
 
+       return compileCallFunction(function, arguments)
+    }
+
+    private fun compileCallFunction(function: Function, arguments: List<Reference>): Reference {
         if (function.parameters.size != arguments.size)
             throw Exception("Mismatch numbers of parameters. Expected ${function.parameters.size}, but got ${arguments.size}")
         (function.parameters zip arguments).forEach { (functionParameter, passedArgument) ->
