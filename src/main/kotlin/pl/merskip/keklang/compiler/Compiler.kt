@@ -24,7 +24,7 @@ class Compiler(
         createIntegerAdd()
         registerAllFunctions(fileNodeAST)
         fileNodeAST.nodes.forEach {
-            compileFunction(it)
+            compileFunctionBody(it)
         }
         irCompiler.verifyModule()
     }
@@ -37,14 +37,15 @@ class Compiler(
             }
 
             override fun visitFunctionDefinitionNode(functionDefinitionNodeAST: FunctionDefinitionNodeAST) {
-                val identifier = functionDefinitionNodeAST.identifier
+                val simpleIdentifier = functionDefinitionNodeAST.identifier
                 val parameters = functionDefinitionNodeAST.arguments.map {
                     val type = getDefaultType()
                     Function.Parameter(it.identifier, type)
                 }
                 val returnType = getDefaultType()
+                val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
 
-                val (typeRef, valueRef) = irCompiler.declareFunction(identifier, parameters, returnType)
+                val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
                 val functionType = Function(identifier, parameters, returnType, typeRef, valueRef)
                 typesRegister.register(functionType)
             }
@@ -53,10 +54,10 @@ class Compiler(
 
     private fun createIntegerAdd() {
         val integerType = getDefaultType()
-        val identifier = TypeFunction.createIdentifier(integerType, "add")
         val parameters = TypeFunction.createParameters(integerType, Function.Parameter("other", integerType))
+        val identifier = TypeIdentifier.create("add", parameters.map { it.type }, integerType)
 
-        val (typeRef, valueRef) = irCompiler.declareFunction(identifier, parameters, integerType)
+        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, integerType)
         val addFunction = TypeFunction(
             identifier = identifier,
             onType = integerType,
@@ -78,8 +79,13 @@ class Compiler(
 
     private fun getDefaultType() = typesRegister.findType("Integer")
 
-    private fun compileFunction(nodeAST: FunctionDefinitionNodeAST) {
-        val function = typesRegister.findFunction(nodeAST.identifier)
+    private fun compileFunctionBody(nodeAST: FunctionDefinitionNodeAST) {
+        val parameters = nodeAST.arguments.map {
+            val type = getDefaultType()
+            Function.Parameter(it.identifier, type)
+        } // TODO: Extract to method
+        val identifier = TypeIdentifier.create(nodeAST.identifier, parameters.map { it.type })
+        val function = typesRegister.findFunction(identifier)
 
         referencesStack.createScope {
             val functionParametersValues = function.valueRef.getFunctionParametersValues()
@@ -134,19 +140,23 @@ class Compiler(
         if (!lhs.type.isCompatibleWith(getDefaultType()) || !rhs.type.isCompatibleWith(getDefaultType()))
             throw Exception("Both types must be Integer.")
 
+        val toIdentifier = { simpleIdentifier: String ->
+            TypeIdentifier.create(simpleIdentifier, listOf(lhs.type, rhs.type), getDefaultType())
+        }
+
         val invokeFunction = when (nodeAST.identifier) {
-            "+" -> typesRegister.findFunction(TypeFunction.createIdentifier(getDefaultType(), "add"))
-            "-" -> typesRegister.findFunction(TypeFunction.createIdentifier(getDefaultType(), "sub"))
-            "*" -> typesRegister.findFunction(TypeFunction.createIdentifier(getDefaultType(), "mul"))
-            "==" -> typesRegister.findFunction(TypeFunction.createIdentifier(getDefaultType(), "equalsTo"))
+            "+" -> typesRegister.findFunction(toIdentifier("add"))
+            "-" -> typesRegister.findFunction(toIdentifier("sub"))
+            "*" -> typesRegister.findFunction(toIdentifier("mul"))
+            "==" -> typesRegister.findFunction(toIdentifier("equalsTo"))
             else -> throw Exception("Unknown operator: ${nodeAST.identifier}")
         }
         return compileCallFunction(invokeFunction, listOf(lhs, rhs))
     }
 
     private fun compileCallFunction(nodeAST: FunctionCallNodeAST): Reference {
-        val function = typesRegister.findFunction(nodeAST.identifier)
         val arguments = nodeAST.parameters.map { compileStatement(it) }
+        val function = typesRegister.findFunction(TypeIdentifier.create(nodeAST.identifier, arguments.map { it.type }))
 
        return compileCallFunction(function, arguments)
     }

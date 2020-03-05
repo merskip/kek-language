@@ -5,7 +5,7 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import pl.merskip.keklang.addingBegin
 
 open class Function(
-    identifier: String,
+    identifier: TypeIdentifier,
     val parameters: List<Parameter>,
     val returnType: Type,
     typeRef: LLVMTypeRef,
@@ -17,12 +17,12 @@ open class Function(
         val type: Type
     )
 
-    override fun toString() = "F^$identifier(" + parameters.joinToString(", ") { "${it.identifier}: ${it.type}" } + ") -> $returnType"
+    override fun toString() = "F^${identifier.simpleIdentifier}(" + parameters.joinToString(", ") { "${it.identifier}: ${it.type}" } + ") -> $returnType (${identifier.uniqueIdentifier})"
 }
 
 class TypeFunction(
-    identifier: String,
     val onType: Type,
+    identifier: TypeIdentifier,
     parameters: List<Parameter>,
     returnType: Type,
     typeRef: LLVMTypeRef,
@@ -36,20 +36,8 @@ class TypeFunction(
 
     companion object {
 
-        fun createIdentifier(onType: Type, functionIdentifier: String) =
-            onType.identifier + "." + functionIdentifier
-
         fun createParameters(onType: Type, vararg parameters: Parameter): List<Parameter> {
             return parameters.toList().addingBegin(Parameter("this", onType))
         }
     }
 }
-
-class BinaryOperatorFunction(
-    identifier: String,
-    lhsType: Type,
-    rhsType: Type,
-    returnType: Type,
-    typeRef: LLVMTypeRef,
-    valueRef: LLVMValueRef
-) : Function(identifier, listOf(Parameter("lhs", lhsType), Parameter("rhs", rhsType)), returnType, typeRef, valueRef)

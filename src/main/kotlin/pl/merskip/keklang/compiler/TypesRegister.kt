@@ -11,12 +11,16 @@ class TypesRegister {
         println("Registered type: $type")
     }
 
-    fun findType(identifier: String): Type {
-        return types.first { it.identifier == identifier }
+    fun findType(simpleIdentifier: String) = findType(TypeIdentifier.create(simpleIdentifier))
+
+    fun findType(identifier: TypeIdentifier): Type {
+        return types.firstOrNull { it.identifier == identifier }
+            ?: error("Not found type with identifier: $identifier")
     }
 
-    fun findFunction(identifier: String): Function {
+    fun findFunction(identifier: TypeIdentifier): Function {
         return types.mapNotNull { it as? Function }
-            .first { it.identifier == identifier }
+            .firstOrNull { it.identifier == identifier }
+            ?: error("Not found function with identifier: $identifier")
     }
 }

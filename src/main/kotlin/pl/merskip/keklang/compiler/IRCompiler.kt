@@ -29,17 +29,17 @@ class IRCompiler(
     fun registerPrimitiveTypes(typesRegister: TypesRegister) {
         when (target.archType) {
             x86, x86_64 -> {
-                typesRegister.register(PrimitiveType("Boolean", context.createInt1()))
-                typesRegister.register(PrimitiveType("Integer", context.createInt32()))
-                typesRegister.register(PrimitiveType("BytePointer", context.createBytePointer()))
+                typesRegister.register(PrimitiveType(TypeIdentifier.create("Boolean"), context.createInt1()))
+                typesRegister.register(PrimitiveType(TypeIdentifier.create("Integer"), context.createInt32()))
+                typesRegister.register(PrimitiveType(TypeIdentifier.create("BytePointer"), context.createBytePointer()))
             }
             else -> error("Unsupported arch: ${target.archType}")
         }
     }
 
-    fun declareFunction(identifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
+    fun declareFunction(uniqueIdentifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
         val functionTypeRef = LLVMFunctionType(returnType.typeRef, parameters.toTypeRefPointer(), parameters.size, 0)
-        val functionValueRef = LLVMAddFunction(module, identifier, functionTypeRef)
+        val functionValueRef = LLVMAddFunction(module, uniqueIdentifier, functionTypeRef)
 
         (parameters zip functionValueRef.getFunctionParametersValues())
             .forEach { (parameter, value) ->
@@ -71,7 +71,7 @@ class IRCompiler(
         return LLVMBuildCall(
             builder, function.valueRef,
             arguments.toValueRefPointer(), arguments.size,
-            function.identifier + "_call"
+            function.identifier.simpleIdentifier + "_call"
         )
     }
 

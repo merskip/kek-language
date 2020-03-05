@@ -4,7 +4,7 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.global.LLVM
 
 abstract class Type(
-    val identifier: String, // eg. Int
+    val identifier: TypeIdentifier,
     val typeRef: LLVMTypeRef
 ) {
 
@@ -15,7 +15,7 @@ abstract class Type(
 }
 
 class PrimitiveType(
-    identifier: String,
+    identifier: TypeIdentifier,
     typeRef: LLVMTypeRef
 ) : Type(identifier, typeRef) {
 
@@ -23,7 +23,7 @@ class PrimitiveType(
 }
 
 class StructType(
-    identifier: String,
+    identifier: TypeIdentifier,
     val fields: List<Type>,
     typeRef: LLVMTypeRef
 ) : Type(identifier, typeRef) {
