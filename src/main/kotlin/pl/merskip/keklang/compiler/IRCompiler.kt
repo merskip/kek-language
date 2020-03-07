@@ -29,9 +29,9 @@ class IRCompiler(
     fun registerPrimitiveTypes(typesRegister: TypesRegister) {
         when (target.archType) {
             x86, x86_64 -> {
-                typesRegister.register(PrimitiveType(TypeIdentifier.create("Boolean"), context.createInt1()))
-                typesRegister.register(PrimitiveType(TypeIdentifier.create("Integer"), context.createInt32()))
-                typesRegister.register(PrimitiveType(TypeIdentifier.create("BytePointer"), context.createBytePointer()))
+                typesRegister.register(PrimitiveType(BuiltInIdentifier.Boolean, context.createInt1()))
+                typesRegister.register(PrimitiveType(BuiltInIdentifier.Integer, context.createInt32()))
+                typesRegister.register(PrimitiveType(BuiltInIdentifier.BytePointer, context.createBytePointer()))
             }
             else -> error("Unsupported arch: ${target.archType}")
         }
@@ -84,7 +84,7 @@ class IRCompiler(
     fun createMul(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
         LLVMBuildMul(builder, lhsValueRef, rhsValueRef, "mul")
 
-    fun createIntegersIsEqual(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+    fun createIsEqual(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
         LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
 
     fun verifyFunction(function: Function): Boolean {

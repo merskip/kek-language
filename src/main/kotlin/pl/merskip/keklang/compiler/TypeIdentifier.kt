@@ -1,5 +1,7 @@
 package pl.merskip.keklang.compiler
 
+import pl.merskip.keklang.addingBegin
+
 
 data class TypeIdentifier(
     val simpleIdentifier: String,
@@ -13,17 +15,18 @@ data class TypeIdentifier(
             parameters: List<Type> = emptyList(),
             type: Type? = null
         ): TypeIdentifier {
-            val mangledParameters = parameters.map { it.mangled() }.toTypedArray()
+            val allParameters = if (type != null) parameters.addingBegin(type) else parameters
+            val mangledParameters = allParameters.map { it.mangled() }.toTypedArray()
             val uniqueIdentifier = listOfNotNull(type?.identifier, simpleIdentifier, *mangledParameters).joinToString(".")
             return TypeIdentifier(simpleIdentifier, uniqueIdentifier)
         }
 
         private fun Type.mangled(): String =
             when (identifier.uniqueIdentifier) {
-                "Integer" -> "Bi"
-                "Boolean" -> "Bb"
-                "BytePointer" -> "Bp"
-                else -> "R$identifier"
+                "Integer" -> "_i"
+                "Boolean" -> "_b"
+                "BytePointer" -> "_p"
+                else -> "T$identifier"
             }
     }
 

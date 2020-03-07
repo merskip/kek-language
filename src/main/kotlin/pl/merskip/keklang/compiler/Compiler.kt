@@ -1,6 +1,7 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
+import org.bytedeco.llvm.LLVM.LLVMValueRef
 import pl.merskip.keklang.NodeASTWalker
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
@@ -21,7 +22,15 @@ class Compiler(
     }
 
     fun compile(fileNodeAST: FileNodeAST) {
-        createIntegerAdd()
+
+        registerBinaryOperatorMethod(typesRegister.builtInInteger, "add") { lhs, rhs -> irCompiler.createAdd(lhs, rhs) }
+        registerBinaryOperatorMethod(typesRegister.builtInInteger, "sub") { lhs, rhs -> irCompiler.createSub(lhs, rhs) }
+        registerBinaryOperatorMethod(typesRegister.builtInInteger, "mul") { lhs, rhs -> irCompiler.createMul(lhs, rhs) }
+        registerBinaryOperatorMethod(typesRegister.builtInInteger, "isEqualTo", typesRegister.builtInBoolean, irCompiler::createIsEqual)
+
+        registerBinaryOperatorMethod(typesRegister.builtInBoolean, "isEqualTo", typesRegister.builtInBoolean, irCompiler::createIsEqual)
+        registerBinaryOperatorMethod(typesRegister.builtInBytePointer, "isEqualTo", typesRegister.builtInBoolean, irCompiler::createIsEqual)
+
         registerAllFunctions(fileNodeAST)
         fileNodeAST.nodes.forEach {
             compileFunctionBody(it)
@@ -39,10 +48,10 @@ class Compiler(
             override fun visitFunctionDefinitionNode(functionDefinitionNodeAST: FunctionDefinitionNodeAST) {
                 val simpleIdentifier = functionDefinitionNodeAST.identifier
                 val parameters = functionDefinitionNodeAST.arguments.map {
-                    val type = getDefaultType()
+                    val type = typesRegister.builtInInteger
                     Function.Parameter(it.identifier, type)
                 }
-                val returnType = getDefaultType()
+                val returnType = typesRegister.builtInInteger
                 val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
 
                 val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
@@ -52,17 +61,21 @@ class Compiler(
         })
     }
 
-    private fun createIntegerAdd() {
-        val integerType = getDefaultType()
-        val parameters = TypeFunction.createParameters(integerType, Function.Parameter("other", integerType))
-        val identifier = TypeIdentifier.create("add", parameters.map { it.type }, integerType)
+    private fun registerBinaryOperatorMethod(
+        type: Type,
+        simpleIdentifier: String,
+        returnType: Type = type,
+        getResult: (lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef) -> LLVMValueRef
+    ) {
+        val identifier = TypeIdentifier.create(simpleIdentifier, listOf(type), type)
+        val parameters = TypeFunction.createParameters(type, Function.Parameter("other", type))
 
-        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, integerType)
+        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
         val addFunction = TypeFunction(
             identifier = identifier,
-            onType = integerType,
+            onType = type,
             parameters = parameters,
-            returnType = integerType,
+            returnType = returnType,
             typeRef = typeRef,
             valueRef = valueRef
         )
@@ -70,18 +83,16 @@ class Compiler(
         irCompiler.beginFunctionEntry(addFunction)
 
         val parametersValues = addFunction.valueRef.getFunctionParametersValues()
-        val addResult = irCompiler.createAdd(parametersValues[0], parametersValues[1])
+        val addResult = getResult(parametersValues[0], parametersValues[1])
         irCompiler.createReturnValue(addResult)
 
         irCompiler.verifyFunction(addFunction)
         typesRegister.register(addFunction)
     }
 
-    private fun getDefaultType() = typesRegister.findType("Integer")
-
     private fun compileFunctionBody(nodeAST: FunctionDefinitionNodeAST) {
         val parameters = nodeAST.arguments.map {
-            val type = getDefaultType()
+            val type = typesRegister.builtInInteger
             Function.Parameter(it.identifier, type)
         } // TODO: Extract to method
         val identifier = TypeIdentifier.create(nodeAST.identifier, parameters.map { it.type })
@@ -125,7 +136,7 @@ class Compiler(
     private fun compileConstantValue(nodeAST: ConstantValueNodeAST): Reference {
         return when (nodeAST) {
             is IntegerConstantValueNodeAST -> {
-                val type = getDefaultType()
+                val type = typesRegister.builtInInteger
                 irCompiler.createConstantIntegerValue(nodeAST.value, type)
                     .toReference(type = type)
             }
@@ -137,11 +148,9 @@ class Compiler(
         val lhs = compileStatement(nodeAST.lhs)
         val rhs = compileStatement(nodeAST.rhs)
 
-        if (!lhs.type.isCompatibleWith(getDefaultType()) || !rhs.type.isCompatibleWith(getDefaultType()))
-            throw Exception("Both types must be Integer.")
 
         val toIdentifier = { simpleIdentifier: String ->
-            TypeIdentifier.create(simpleIdentifier, listOf(lhs.type, rhs.type), getDefaultType())
+            TypeIdentifier.create(simpleIdentifier, listOf(rhs.type), lhs.type)
         }
 
         val invokeFunction = when (nodeAST.identifier) {
@@ -158,7 +167,7 @@ class Compiler(
         val arguments = nodeAST.parameters.map { compileStatement(it) }
         val function = typesRegister.findFunction(TypeIdentifier.create(nodeAST.identifier, arguments.map { it.type }))
 
-       return compileCallFunction(function, arguments)
+        return compileCallFunction(function, arguments)
     }
 
     private fun compileCallFunction(function: Function, arguments: List<Reference>): Reference {
