@@ -1,36 +1,26 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMModuleRef
-import org.bytedeco.llvm.LLVM.LLVMValueRef
 import pl.merskip.keklang.NodeASTWalker
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 import pl.merskip.keklang.node.*
 
 class Compiler(
-    val irCompiler: IRCompiler
+    private val irCompiler: IRCompiler
 ) {
 
-    val module: LLVMModuleRef
-        get() = irCompiler.getModule()
+    val module = irCompiler.module
 
     private val typesRegister = TypesRegister()
     private val referencesStack = ReferencesStack()
+    private val builtInTypes = BuiltInTypes(typesRegister, irCompiler)
 
     init {
-        irCompiler.registerPrimitiveTypes(typesRegister)
+        builtInTypes.registerPrimitiveTypes(irCompiler.target)
+        builtInTypes.registerFunctions()
     }
 
     fun compile(fileNodeAST: FileNodeAST) {
-
-        registerBinaryOperatorMethod(typesRegister.builtInInteger, "add") { lhs, rhs -> irCompiler.createAdd(lhs, rhs) }
-        registerBinaryOperatorMethod(typesRegister.builtInInteger, "sub") { lhs, rhs -> irCompiler.createSub(lhs, rhs) }
-        registerBinaryOperatorMethod(typesRegister.builtInInteger, "mul") { lhs, rhs -> irCompiler.createMul(lhs, rhs) }
-        registerBinaryOperatorMethod(typesRegister.builtInInteger, "isEqualTo", typesRegister.builtInBoolean, irCompiler::createIsEqual)
-
-        registerBinaryOperatorMethod(typesRegister.builtInBoolean, "isEqualTo", typesRegister.builtInBoolean, irCompiler::createIsEqual)
-        registerBinaryOperatorMethod(typesRegister.builtInBytePointer, "isEqualTo", typesRegister.builtInBoolean, irCompiler::createIsEqual)
-
         registerAllFunctions(fileNodeAST)
         fileNodeAST.nodes.forEach {
             compileFunctionBody(it)
@@ -48,10 +38,10 @@ class Compiler(
             override fun visitFunctionDefinitionNode(functionDefinitionNodeAST: FunctionDefinitionNodeAST) {
                 val simpleIdentifier = functionDefinitionNodeAST.identifier
                 val parameters = functionDefinitionNodeAST.arguments.map {
-                    val type = typesRegister.builtInInteger
+                    val type = builtInTypes.integerType
                     Function.Parameter(it.identifier, type)
                 }
-                val returnType = typesRegister.builtInInteger
+                val returnType = builtInTypes.integerType
                 val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
 
                 val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
@@ -61,38 +51,9 @@ class Compiler(
         })
     }
 
-    private fun registerBinaryOperatorMethod(
-        type: Type,
-        simpleIdentifier: String,
-        returnType: Type = type,
-        getResult: (lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef) -> LLVMValueRef
-    ) {
-        val identifier = TypeIdentifier.create(simpleIdentifier, listOf(type), type)
-        val parameters = TypeFunction.createParameters(type, Function.Parameter("other", type))
-
-        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-        val addFunction = TypeFunction(
-            identifier = identifier,
-            onType = type,
-            parameters = parameters,
-            returnType = returnType,
-            typeRef = typeRef,
-            valueRef = valueRef
-        )
-        irCompiler.setFunctionAsInline(addFunction)
-        irCompiler.beginFunctionEntry(addFunction)
-
-        val parametersValues = addFunction.valueRef.getFunctionParametersValues()
-        val addResult = getResult(parametersValues[0], parametersValues[1])
-        irCompiler.createReturnValue(addResult)
-
-        irCompiler.verifyFunction(addFunction)
-        typesRegister.register(addFunction)
-    }
-
     private fun compileFunctionBody(nodeAST: FunctionDefinitionNodeAST) {
         val parameters = nodeAST.arguments.map {
-            val type = typesRegister.builtInInteger
+            val type = builtInTypes.integerType
             Function.Parameter(it.identifier, type)
         } // TODO: Extract to method
         val identifier = TypeIdentifier.create(nodeAST.identifier, parameters.map { it.type })
@@ -136,9 +97,9 @@ class Compiler(
     private fun compileConstantValue(nodeAST: ConstantValueNodeAST): Reference {
         return when (nodeAST) {
             is IntegerConstantValueNodeAST -> {
-                val type = typesRegister.builtInInteger
+                val type = builtInTypes.integerType
                 irCompiler.createConstantIntegerValue(nodeAST.value, type)
-                    .toReference(type = type)
+                    .toReference(type)
             }
             else -> throw Exception("TODO: $nodeAST")
         }
@@ -148,16 +109,15 @@ class Compiler(
         val lhs = compileStatement(nodeAST.lhs)
         val rhs = compileStatement(nodeAST.rhs)
 
-
         val toIdentifier = { simpleIdentifier: String ->
             TypeIdentifier.create(simpleIdentifier, listOf(rhs.type), lhs.type)
         }
 
         val invokeFunction = when (nodeAST.identifier) {
-            "+" -> typesRegister.findFunction(toIdentifier("add"))
-            "-" -> typesRegister.findFunction(toIdentifier("sub"))
-            "*" -> typesRegister.findFunction(toIdentifier("mul"))
-            "==" -> typesRegister.findFunction(toIdentifier("equalsTo"))
+            "+" -> typesRegister.findFunction(toIdentifier(BuiltInTypes.ADD_FUNCTION))
+            "-" -> typesRegister.findFunction(toIdentifier(BuiltInTypes.SUBTRACT_FUNCTION))
+            "*" -> typesRegister.findFunction(toIdentifier(BuiltInTypes.MULTIPLE_FUNCTION))
+            "==" -> typesRegister.findFunction(toIdentifier(BuiltInTypes.IS_EQUAL_TO_FUNCTION))
             else -> throw Exception("Unknown operator: ${nodeAST.identifier}")
         }
         return compileCallFunction(invokeFunction, listOf(lhs, rhs))
@@ -179,6 +139,6 @@ class Compiler(
         }
 
         val returnValueRef = irCompiler.createCallFunction(function, arguments.map { it.valueRef })
-        return Reference(null, function.returnType, returnValueRef)
+        return returnValueRef.toReference(function.returnType)
     }
 }

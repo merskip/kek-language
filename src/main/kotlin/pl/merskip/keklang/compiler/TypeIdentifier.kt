@@ -13,11 +13,11 @@ data class TypeIdentifier(
         fun create(
             simpleIdentifier: String,
             parameters: List<Type> = emptyList(),
-            type: Type? = null
+            calleeType: Type? = null
         ): TypeIdentifier {
-            val allParameters = if (type != null) parameters.addingBegin(type) else parameters
+            val allParameters = if (calleeType != null) parameters.addingBegin(calleeType) else parameters
             val mangledParameters = allParameters.map { it.mangled() }.toTypedArray()
-            val uniqueIdentifier = listOfNotNull(type?.identifier, simpleIdentifier, *mangledParameters).joinToString(".")
+            val uniqueIdentifier = listOfNotNull(calleeType?.identifier, simpleIdentifier, *mangledParameters).joinToString(".")
             return TypeIdentifier(simpleIdentifier, uniqueIdentifier)
         }
 

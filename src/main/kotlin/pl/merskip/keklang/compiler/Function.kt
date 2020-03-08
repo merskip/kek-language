@@ -21,7 +21,7 @@ open class Function(
 }
 
 class TypeFunction(
-    val onType: Type,
+    calleeType: Type,
     identifier: TypeIdentifier,
     parameters: List<Parameter>,
     returnType: Type,
@@ -30,14 +30,14 @@ class TypeFunction(
 ) : Function(identifier, parameters, returnType, typeRef, valueRef) {
 
     init {
-        if (parameters[0].identifier != "this" || parameters[0].type != onType)
+        if (parameters[0].identifier != "this" || parameters[0].type != calleeType)
             throw Exception("The first parameter must be 'this' and type equal to `onType`")
     }
 
     companion object {
 
-        fun createParameters(onType: Type, vararg parameters: Parameter): List<Parameter> {
-            return parameters.toList().addingBegin(Parameter("this", onType))
+        fun createParameters(calleeType: Type, vararg parameters: Parameter): List<Parameter> {
+            return parameters.toList().addingBegin(Parameter("this", calleeType))
         }
     }
 }

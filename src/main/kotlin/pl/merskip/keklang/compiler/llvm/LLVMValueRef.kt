@@ -6,7 +6,7 @@ import org.bytedeco.llvm.global.LLVM.LLVMGetValueName
 import pl.merskip.keklang.compiler.Reference
 import pl.merskip.keklang.compiler.Type
 
-fun LLVMValueRef.toReference(identifier: String? = null, type: Type): Reference {
+fun LLVMValueRef.toReference(type: Type, identifier: String? = null): Reference {
     val resolvedIdentifier = identifier ?: LLVMGetValueName(this).string.ifEmpty { null }
     return Reference(resolvedIdentifier, type, this)
 }
