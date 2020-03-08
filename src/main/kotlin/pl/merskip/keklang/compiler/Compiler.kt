@@ -1,6 +1,5 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.NodeASTWalker
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 import pl.merskip.keklang.node.*
@@ -29,33 +28,20 @@ class Compiler(
     }
 
     private fun registerAllFunctions(fileNodeAST: FileNodeAST) {
-        fileNodeAST.accept(object : NodeASTWalker() {
+        fileNodeAST.nodes.forEach { functionDefinitionNodeAST ->
+            val simpleIdentifier = functionDefinitionNodeAST.identifier
+            val parameters = functionDefinitionNodeAST.getParameters()
+            val returnType = builtInTypes.integerType
+            val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
 
-            override fun visitFileNode(fileNodeAST: FileNodeAST) {
-                fileNodeAST.nodes.forEach { it.accept(this) }
-            }
-
-            override fun visitFunctionDefinitionNode(functionDefinitionNodeAST: FunctionDefinitionNodeAST) {
-                val simpleIdentifier = functionDefinitionNodeAST.identifier
-                val parameters = functionDefinitionNodeAST.arguments.map {
-                    val type = builtInTypes.integerType
-                    Function.Parameter(it.identifier, type)
-                }
-                val returnType = builtInTypes.integerType
-                val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
-
-                val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-                val functionType = Function(identifier, parameters, returnType, typeRef, valueRef)
-                typesRegister.register(functionType)
-            }
-        })
+            val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
+            val functionType = Function(identifier, parameters, returnType, typeRef, valueRef)
+            typesRegister.register(functionType)
+        }
     }
 
     private fun compileFunctionBody(nodeAST: FunctionDefinitionNodeAST) {
-        val parameters = nodeAST.arguments.map {
-            val type = builtInTypes.integerType
-            Function.Parameter(it.identifier, type)
-        } // TODO: Extract to method
+        val parameters = nodeAST.getParameters()
         val identifier = TypeIdentifier.create(nodeAST.identifier, parameters.map { it.type })
         val function = typesRegister.findFunction(identifier)
 
@@ -75,6 +61,9 @@ class Compiler(
             irCompiler.verifyFunction(function)
         }
     }
+
+    private fun FunctionDefinitionNodeAST.getParameters(): List<Function.Parameter> =
+        arguments.map { Function.Parameter(it.identifier, builtInTypes.integerType) }
 
     private fun compileStatement(statement: StatementNodeAST): Reference {
         return when (statement) {
