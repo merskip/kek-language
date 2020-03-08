@@ -15,8 +15,7 @@ class Compiler(
     private val builtInTypes = BuiltInTypes(typesRegister, irCompiler)
 
     init {
-        builtInTypes.registerPrimitiveTypes(irCompiler.target)
-        builtInTypes.registerFunctions()
+        builtInTypes.registerTypes(irCompiler.target)
     }
 
     fun compile(fileNodeAST: FileNodeAST) {

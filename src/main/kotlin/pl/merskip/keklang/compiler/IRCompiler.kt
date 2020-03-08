@@ -24,7 +24,6 @@ class IRCompiler(
         target = LLVMGetTarget(module).getTargetTriple()
     }
 
-
     fun declareFunction(uniqueIdentifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
         val functionTypeRef = LLVMFunctionType(returnType.typeRef, parameters.toTypeRefPointer(), parameters.size, 0)
         val functionValueRef = LLVMAddFunction(module, uniqueIdentifier, functionTypeRef)
@@ -46,15 +45,22 @@ class IRCompiler(
         LLVMBuildRet(builder, valueRef)
     }
 
+    fun createUnreachable() {
+        LLVMBuildUnreachable(builder)
+    }
+
     fun createConstantIntegerValue(value: Long, type: Type): LLVMValueRef {
         return LLVMConstInt(type.typeRef, value, 0)
     }
 
-    fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef {
+    fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef =
+        createCallFunction(function.valueRef, function.identifier.simpleIdentifier, arguments)
+
+    fun createCallFunction(functionValueRef: LLVMValueRef, simpleIdentifier: String? = null, arguments: List<LLVMValueRef>): LLVMValueRef {
         return LLVMBuildCall(
-            builder, function.valueRef,
+            builder, functionValueRef,
             arguments.toValueRefPointer(), arguments.size,
-            function.identifier.simpleIdentifier + "_call"
+            simpleIdentifier?.let { "${it}_call" }.orEmpty()
         )
     }
 

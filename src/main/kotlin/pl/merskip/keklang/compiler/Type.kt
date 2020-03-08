@@ -16,7 +16,8 @@ abstract class Type(
 
 class PrimitiveType(
     identifier: TypeIdentifier,
-    typeRef: LLVMTypeRef
+    typeRef: LLVMTypeRef,
+    val isVoid: Boolean
 ) : Type(identifier, typeRef) {
 
     override fun toString() = "P^$identifier=" + LLVM.LLVMPrintTypeToString(typeRef).string
