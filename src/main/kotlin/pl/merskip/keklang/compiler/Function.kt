@@ -42,7 +42,7 @@ class TypeFunction(
 
     companion object {
 
-        fun createParameters(calleeType: Type, vararg parameters: Parameter): List<Parameter> {
+        fun createParameters(calleeType: Type, parameters: List<Parameter>): List<Parameter> {
             if (calleeType is PrimitiveType && calleeType.isVoid) return parameters.toList()
             return parameters.toList().addingBegin(Parameter("this", calleeType))
         }

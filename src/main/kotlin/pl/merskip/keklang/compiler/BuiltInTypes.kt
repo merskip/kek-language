@@ -2,8 +2,10 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
-import pl.merskip.keklang.compiler.llvm.*
-import pl.merskip.keklang.getFunctionParametersValues
+import pl.merskip.keklang.compiler.llvm.createBytePointer
+import pl.merskip.keklang.compiler.llvm.createInt1
+import pl.merskip.keklang.compiler.llvm.createInt32
+import pl.merskip.keklang.compiler.llvm.createVoid
 
 class BuiltInTypes(
     private val typesRegister: TypesRegister,
@@ -65,23 +67,25 @@ class BuiltInTypes(
 
     private fun registerSystemExit(systemType: Type) {
 
-        val cstdlibExit = irCompiler.declareFunction("exit", listOf(Function.Parameter("", integerType)), voidType)
+        // Declare `void exit(int status)` from C Standard Library
+        val externExit = FunctionBuilder.register(typesRegister, irCompiler) {
+            noOverload(true)
+            simpleIdentifier("exit")
+            parameters("statusCode" to integerType)
+            returnType(voidType)
+        }
 
-        val exitCodeParamType = integerType
-        val identifier = TypeIdentifier.create(EXIT_FUNCTION, listOf(exitCodeParamType), systemType)
-        val parameters = TypeFunction.createParameters(systemType, Function.Parameter("exitCode", exitCodeParamType))
-
-        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, voidType)
-        val function = TypeFunction(systemType, identifier, parameters, voidType, typeRef, valueRef)
-        function.valueRef.setPrivateAndAlwaysInline(irCompiler.context)
-        irCompiler.beginFunctionEntry(function)
-
-        val exitCodeValueRef = function.valueRef.getFunctionParametersValues()[0]
-        irCompiler.createCallFunction(cstdlibExit.second, null, listOf(exitCodeValueRef))
-        irCompiler.createUnreachable()
-
-        irCompiler.verifyFunction(function)
-        typesRegister.register(function)
+        // System.exit(exitCode: Integer)
+        FunctionBuilder.register(typesRegister, irCompiler) {
+            calleeType(systemType)
+            simpleIdentifier(EXIT_FUNCTION)
+            parameters("exitCode" to integerType)
+            returnType(voidType)
+            implementation { irCompiler, (exitCode) ->
+                irCompiler.createCallFunction(externExit, listOf(exitCode))
+                irCompiler.createUnreachable()
+            }
+        }
     }
 
     private fun registerOperatorsFunctions() {
@@ -101,19 +105,15 @@ class BuiltInTypes(
         returnType: Type,
         getResult: (lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef) -> LLVMValueRef
     ) {
-        val identifier = TypeIdentifier.create(simpleIdentifier, listOf(otherType), otherType)
-        val parameters = TypeFunction.createParameters(calleeType, Function.Parameter("other", otherType))
-
-        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-        val function = TypeFunction(calleeType, identifier, parameters, returnType, typeRef, valueRef)
-        function.valueRef.setPrivateAndAlwaysInline(irCompiler.context)
-        irCompiler.beginFunctionEntry(function)
-
-        val parametersValues = function.valueRef.getFunctionParametersValues()
-        val addResult = getResult(parametersValues[0], parametersValues[1])
-        irCompiler.createReturnValue(addResult)
-
-        irCompiler.verifyFunction(function)
-        typesRegister.register(function)
+        FunctionBuilder.register(typesRegister, irCompiler) {
+            calleeType(calleeType)
+            simpleIdentifier(simpleIdentifier)
+            parameters("other" to otherType)
+            returnType(returnType)
+            implementation { irCompiler, (lhsValueRef, rhsValueRef) ->
+                val resultValueRef = getResult(lhsValueRef, rhsValueRef)
+                irCompiler.createReturnValue(resultValueRef)
+            }
+        }
     }
 }

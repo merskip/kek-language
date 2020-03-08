@@ -77,7 +77,11 @@ class IRCompiler(
         LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
 
     fun verifyFunction(function: Function): Boolean {
-        return LLVMVerifyFunction(function.valueRef, LLVMPrintMessageAction) == 0
+        if (LLVMVerifyFunction(function.valueRef, LLVMPrintMessageAction) != 0) {
+            LLVMDumpModule(module)
+            return false
+        }
+        return true
     }
 
     fun verifyModule(): Boolean {

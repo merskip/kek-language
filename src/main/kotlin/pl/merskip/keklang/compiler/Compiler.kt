@@ -38,18 +38,27 @@ class Compiler(
             typesRegister.register(functionType)
 
             if (functionType.identifier.simpleIdentifier == "main") {
-                val identifier = TypeIdentifier.create("_kek_start", listOf())
-                val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, builtInTypes.voidType)
-                val function = Function(identifier, emptyList(), builtInTypes.voidType, typeRef, valueRef)
-                irCompiler.beginFunctionEntry(function)
 
-                val returnCode = irCompiler.createCallFunction(functionType, listOf())
-                val systemExit = typesRegister.findFunction(TypeIdentifier.create("exit", listOf(builtInTypes.integerType), builtInTypes.systemType))
-                irCompiler.createCallFunction(systemExit, listOf(returnCode))
-                irCompiler.createUnreachable()
+                FunctionBuilder.register(typesRegister, irCompiler) {
+                    noOverload(true)
+                    simpleIdentifier("_kek_start")
+                    parameters()
+                    returnType(builtInTypes.voidType)
+                    implementation { irCompiler, _ ->
 
-                irCompiler.verifyFunction(function)
-                typesRegister.register(function)
+                        // Call main()
+                        val returnCode = irCompiler.createCallFunction(functionType, emptyList())
+
+                        // Call System.exit(Integer)
+                        val systemExit = typesRegister.findFunction(
+                            calleeType = builtInTypes.systemType,
+                            simpleIdentifier = BuiltInTypes.EXIT_FUNCTION,
+                            parameters = listOf(builtInTypes.integerType)
+                        )
+                        irCompiler.createCallFunction(systemExit, listOf(returnCode))
+                        irCompiler.createUnreachable()
+                    }
+                }
             }
         }
     }

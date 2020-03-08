@@ -18,6 +18,9 @@ class TypesRegister {
             ?: error("Not found type with identifier: $identifier")
     }
 
+    fun findFunction(calleeType: Type?, simpleIdentifier: String, parameters: List<Type>): Function =
+        findFunction(TypeIdentifier.create(simpleIdentifier, parameters, calleeType))
+
     fun findFunction(identifier: TypeIdentifier): Function {
         return types.mapNotNull { it as? Function }
             .firstOrNull { it.identifier == identifier }
