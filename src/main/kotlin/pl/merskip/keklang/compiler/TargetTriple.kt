@@ -62,31 +62,6 @@ data class TargetTriple(
     }
 
     @Suppress("unused", "EnumEntryName", "SpellCheckingInspection")
-    enum class EnvironmentType {
-        GNU,
-        GNUABIN32,
-        GNUABI64,
-        GNUEABI,
-        GNUEABIHF,
-        GNUX32,
-        CODE16,
-        EABI,
-        EABIHF,
-        ELFv1,
-        ELFv2,
-        Android,
-        Musl,
-        MuslEABI,
-        MuslEABIHF,
-        MSVC,
-        Itanium,
-        Cygnus,
-        CoreCLR,
-        Simulator,
-        MacABI
-    }
-
-    @Suppress("unused", "EnumEntryName", "SpellCheckingInspection")
     enum class VendorType {
         Apple,
         PC,
@@ -122,7 +97,7 @@ data class TargetTriple(
         NetBSD,
         OpenBSD,
         Solaris,
-        Win32,
+        Windows,
         Haiku,
         Minix,
         RTEMS,
@@ -143,5 +118,30 @@ data class TargetTriple(
         Hurd,
         WASI,
         Emscripten
+    }
+
+    @Suppress("unused", "EnumEntryName", "SpellCheckingInspection")
+    enum class EnvironmentType {
+        GNU,
+        GNUABIN32,
+        GNUABI64,
+        GNUEABI,
+        GNUEABIHF,
+        GNUX32,
+        CODE16,
+        EABI,
+        EABIHF,
+        ELFv1,
+        ELFv2,
+        Android,
+        Musl,
+        MuslEABI,
+        MuslEABIHF,
+        MSVC,
+        Itanium,
+        Cygnus,
+        CoreCLR,
+        Simulator,
+        MacABI
     }
 }

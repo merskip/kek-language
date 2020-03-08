@@ -8,6 +8,8 @@ abstract class Type(
     val typeRef: LLVMTypeRef
 ) {
 
+    val isVoid: Boolean = LLVM.LLVMGetTypeKind(typeRef) == LLVM.LLVMVoidTypeKind
+
     fun isCompatibleWith(otherType: Type): Boolean =
         identifier == otherType.identifier
 
@@ -16,8 +18,7 @@ abstract class Type(
 
 class PrimitiveType(
     identifier: TypeIdentifier,
-    typeRef: LLVMTypeRef,
-    val isVoid: Boolean
+    typeRef: LLVMTypeRef
 ) : Type(identifier, typeRef) {
 
     override fun toString() = "P^$identifier=" + LLVM.LLVMPrintTypeToString(typeRef).string

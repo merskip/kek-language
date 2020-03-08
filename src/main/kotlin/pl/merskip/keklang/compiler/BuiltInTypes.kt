@@ -15,6 +15,8 @@ class BuiltInTypes(
     lateinit var integerType: Type
     lateinit var bytePointerType: Type
 
+    lateinit var systemType: Type
+
     companion object {
         const val VOID = "Void"
         const val BOOLEAN = "Boolean"
@@ -50,13 +52,13 @@ class BuiltInTypes(
 
     private fun registerType(simpleIdentifier: String, typeRef: LLVMTypeRef): Type {
         val identifier = TypeIdentifier.create(simpleIdentifier)
-        val primitiveType = PrimitiveType(identifier, typeRef, simpleIdentifier == VOID)
+        val primitiveType = PrimitiveType(identifier, typeRef)
         typesRegister.register(primitiveType)
         return primitiveType
     }
 
     private fun registerStandardTypes() {
-        val systemType = PrimitiveType(TypeIdentifier.create(SYSTEM), irCompiler.context.createVoid(), true)
+        systemType = PrimitiveType(TypeIdentifier.create(SYSTEM), irCompiler.context.createVoid())
         typesRegister.register(systemType)
         registerSystemExit(systemType)
     }

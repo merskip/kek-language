@@ -54,7 +54,7 @@ class IRCompiler(
     }
 
     fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef =
-        createCallFunction(function.valueRef, function.identifier.simpleIdentifier, arguments)
+        createCallFunction(function.valueRef, if (function.returnType.isVoid) null else function.identifier.simpleIdentifier, arguments)
 
     fun createCallFunction(functionValueRef: LLVMValueRef, simpleIdentifier: String? = null, arguments: List<LLVMValueRef>): LLVMValueRef {
         return LLVMBuildCall(
