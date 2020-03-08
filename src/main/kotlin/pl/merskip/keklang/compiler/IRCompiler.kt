@@ -37,11 +37,6 @@ class IRCompiler(
         return Pair(functionTypeRef, functionValueRef)
     }
 
-    fun setFunctionAsInline(function: Function) {
-        val attribute = LLVMCreateEnumAttribute(context, 3, 0L) // KindId=3 - alwaysinline
-        LLVMAddAttributeAtIndex(function.valueRef, LLVMAttributeFunctionIndex.toInt(), attribute)
-    }
-
     fun beginFunctionEntry(function: Function) {
         val entryBlock = LLVMAppendBasicBlockInContext(context, function.valueRef, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)

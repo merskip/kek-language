@@ -5,6 +5,7 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import pl.merskip.keklang.compiler.llvm.createBytePointer
 import pl.merskip.keklang.compiler.llvm.createInt1
 import pl.merskip.keklang.compiler.llvm.createInt32
+import pl.merskip.keklang.compiler.llvm.setPrivateAndAlwaysInline
 import pl.merskip.keklang.getFunctionParametersValues
 
 class BuiltInTypes(
@@ -66,15 +67,15 @@ class BuiltInTypes(
         val parameters = TypeFunction.createParameters(calleeType, Function.Parameter("other", otherType))
 
         val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-        val addFunction = TypeFunction(calleeType, identifier, parameters, returnType, typeRef, valueRef)
-        irCompiler.setFunctionAsInline(addFunction)
-        irCompiler.beginFunctionEntry(addFunction)
+        val function = TypeFunction(calleeType, identifier, parameters, returnType, typeRef, valueRef)
+        function.valueRef.setPrivateAndAlwaysInline(irCompiler.context)
+        irCompiler.beginFunctionEntry(function)
 
-        val parametersValues = addFunction.valueRef.getFunctionParametersValues()
+        val parametersValues = function.valueRef.getFunctionParametersValues()
         val addResult = getResult(parametersValues[0], parametersValues[1])
         irCompiler.createReturnValue(addResult)
 
-        irCompiler.verifyFunction(addFunction)
-        typesRegister.register(addFunction)
+        irCompiler.verifyFunction(function)
+        typesRegister.register(function)
     }
 }
