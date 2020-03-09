@@ -38,27 +38,30 @@ class Compiler(
             typesRegister.register(functionType)
 
             if (functionType.identifier.simpleIdentifier == "main") {
+                createEntryProgram(functionType)
+            }
+        }
+    }
 
-                FunctionBuilder.register(typesRegister, irCompiler) {
-                    noOverload(true)
-                    simpleIdentifier("_kek_start")
-                    parameters()
-                    returnType(builtInTypes.voidType)
-                    implementation { irCompiler, _ ->
+    private fun createEntryProgram(mainFunction: Function) {
+        FunctionBuilder.register(typesRegister, irCompiler) {
+            noOverload(true)
+            simpleIdentifier("_kek_start")
+            parameters()
+            returnType(builtInTypes.voidType)
+            implementation { irCompiler, _ ->
 
-                        // Call main()
-                        val returnCode = irCompiler.createCallFunction(functionType, emptyList())
+                // Call main()
+                val returnCode = irCompiler.createCallFunction(mainFunction, emptyList())
 
-                        // Call System.exit(Integer)
-                        val systemExit = typesRegister.findFunction(
-                            calleeType = builtInTypes.systemType,
-                            simpleIdentifier = BuiltInTypes.EXIT_FUNCTION,
-                            parameters = listOf(builtInTypes.integerType)
-                        )
-                        irCompiler.createCallFunction(systemExit, listOf(returnCode))
-                        irCompiler.createUnreachable()
-                    }
-                }
+                // Call System.exit(Integer)
+                val systemExit = typesRegister.findFunction(
+                    calleeType = builtInTypes.systemType,
+                    simpleIdentifier = BuiltInTypes.EXIT_FUNCTION,
+                    parameters = listOf(builtInTypes.integerType)
+                )
+                irCompiler.createCallFunction(systemExit, listOf(returnCode))
+                irCompiler.createUnreachable()
             }
         }
     }
