@@ -20,6 +20,7 @@ class BackendCompiler(
 
         val passManager = LLVM.LLVMCreatePassManager()
         LLVM.LLVMAddAlwaysInlinerPass(passManager)
+        LLVM.LLVMAddJumpThreadingPass(passManager)
         LLVM.LLVMRunPassManager(passManager, module)
 
         val targetTriple = LLVM.LLVMGetDefaultTargetTriple()

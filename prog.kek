@@ -4,6 +4,12 @@ func foo() {
 }
 
 func bar(a, b) {
+    if (a == 2) {
+        foo() + 2
+        if (b == 1) {
+            foo() + 1
+        }
+    }
     foo() + 3
 }
 

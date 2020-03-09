@@ -64,6 +64,22 @@ class IRCompiler(
         )
     }
 
+    fun createIf(conditionValueRef: LLVMValueRef, ifTrueBuilder: () -> LLVMValueRef): LLVMValueRef {
+        val ifTrueBlock = LLVMCreateBasicBlockInContext(context, "ifTrue")
+        val ifAfterBlock = LLVMCreateBasicBlockInContext(context, "ifAfter")
+        val ifBlockValueRef = LLVMBuildCondBr(builder, conditionValueRef, ifTrueBlock, ifAfterBlock)
+
+        LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifTrueBlock)
+        LLVMPositionBuilderAtEnd(builder, ifTrueBlock)
+        val ifTrueValueRef = ifTrueBuilder()
+        LLVMBuildBr(builder, ifAfterBlock)
+
+        LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifAfterBlock)
+        LLVMPositionBuilderAtEnd(builder, ifAfterBlock)
+
+        return ifBlockValueRef
+    }
+
     fun createAdd(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
         LLVMBuildAdd(builder, lhsValueRef, rhsValueRef, "add")
 

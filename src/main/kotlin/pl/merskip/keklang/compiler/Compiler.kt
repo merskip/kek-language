@@ -1,5 +1,6 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.llvm.LLVM.LLVMValueRef
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 import pl.merskip.keklang.node.*
@@ -93,10 +94,12 @@ class Compiler(
 
     private fun compileStatement(statement: StatementNodeAST): Reference {
         return when (statement) {
+            is ReferenceNodeAST -> referencesStack.getReference(statement.identifier)
             is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
             is FunctionCallNodeAST -> compileCallFunction(statement)
+            is IfConditionNodeAST -> compileIfCondition(statement)
             else -> throw Exception("TODO: $statement")
         }
     }
@@ -155,5 +158,16 @@ class Compiler(
 
         val returnValueRef = irCompiler.createCallFunction(function, arguments.map { it.valueRef })
         return returnValueRef.toReference(function.returnType)
+    }
+
+    private fun compileIfCondition(nodeAST: IfConditionNodeAST): Reference {
+        val condition = compileStatement(nodeAST.condition)
+        if (!condition.type.isCompatibleWith(builtInTypes.booleanType))
+            throw Exception("Conditional expression must be logic expression")
+
+        irCompiler.createIf(condition.valueRef) {
+            compileStatement(nodeAST.body).valueRef
+        }
+        return Reference(null, builtInTypes.voidType, LLVMValueRef())
     }
 }
