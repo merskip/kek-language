@@ -81,6 +81,7 @@ class BuiltInTypes(
             simpleIdentifier(EXIT_FUNCTION)
             parameters("exitCode" to integerType)
             returnType(voidType)
+            inline(true)
             implementation { irCompiler, (exitCode) ->
                 irCompiler.createCallFunction(externExit, listOf(exitCode))
                 irCompiler.createUnreachable()
@@ -110,6 +111,7 @@ class BuiltInTypes(
             simpleIdentifier(simpleIdentifier)
             parameters("other" to otherType)
             returnType(returnType)
+            inline(true)
             implementation { irCompiler, (lhsValueRef, rhsValueRef) ->
                 val resultValueRef = getResult(lhsValueRef, rhsValueRef)
                 irCompiler.createReturnValue(resultValueRef)

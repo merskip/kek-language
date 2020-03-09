@@ -1,6 +1,7 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMValueRef
+import pl.merskip.keklang.compiler.llvm.setPrivateAndAlwaysInline
 import pl.merskip.keklang.getFunctionParametersValues
 
 typealias Implementation = (IRCompiler, List<LLVMValueRef>) -> Unit
@@ -12,6 +13,7 @@ class FunctionBuilder {
     private lateinit var returnType: Type
     private var calleeType: Type? = null
     private var noOverload: Boolean = false
+    private var inline: Boolean = false
     private var implementation: Implementation? = null
 
     companion object {
@@ -43,6 +45,9 @@ class FunctionBuilder {
     fun noOverload(noOverload: Boolean) =
         apply { this.noOverload = noOverload }
 
+    fun inline(inline: Boolean) =
+        apply { this.inline = inline }
+
     fun implementation(implementation: Implementation) =
         apply { this.implementation = implementation }
 
@@ -58,6 +63,9 @@ class FunctionBuilder {
         val function =
             if (calleeType == null) Function(identifier, parameters, returnType, typeRef, valueRef)
             else TypeFunction(calleeType!!, identifier, parameters, returnType, typeRef, valueRef)
+
+        if (inline)
+            function.valueRef.setPrivateAndAlwaysInline(irCompiler.context)
 
         implementation?.let { implementation ->
             val parametersValues = function.valueRef.getFunctionParametersValues()
