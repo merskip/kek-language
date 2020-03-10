@@ -4,7 +4,7 @@ import pl.merskip.keklang.NodeASTVisitor
 
 data class FunctionDefinitionNodeAST(
     val identifier: String,
-    val arguments: List<ReferenceNodeAST>,
+    val parameters: List<ReferenceDeclarationNodeAST>,
     val body: CodeBlockNodeAST
 ): NodeAST() {
 

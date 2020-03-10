@@ -90,7 +90,10 @@ class Compiler(
     }
 
     private fun FunctionDefinitionNodeAST.getParameters(): List<Function.Parameter> =
-        arguments.map { Function.Parameter(it.identifier, builtInTypes.integerType) }
+        parameters.map {
+            val type = typesRegister.findType(it.type)
+            Function.Parameter(it.identifier, type)
+        }
 
     private fun compileStatement(statement: StatementNodeAST): Reference {
         return when (statement) {

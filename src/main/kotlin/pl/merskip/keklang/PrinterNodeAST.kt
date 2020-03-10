@@ -35,9 +35,11 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
     override fun visitFunctionDefinitionNode(functionDefinitionNodeAST: FunctionDefinitionNodeAST) {
         print(
             nodeClass = functionDefinitionNodeAST::class,
-            parameters = mapOf("identifier" to functionDefinitionNodeAST.identifier),
+            parameters = mapOf(
+                "identifier" to functionDefinitionNodeAST.identifier
+            ),
             children = mapOf(
-                "arguments" to functionDefinitionNodeAST.arguments,
+                "parameters" to functionDefinitionNodeAST.parameters,
                 "body" to listOf(functionDefinitionNodeAST.body)
             )
         )
@@ -84,6 +86,16 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
                 parameters =  mapOf("value" to constantValueNodeAST.value.toString())
             )
         }
+    }
+
+    override fun visitReferenceDeclarationNodeAST(referenceDeclarationNodeAST: ReferenceDeclarationNodeAST) {
+        print(
+            nodeClass = referenceDeclarationNodeAST::class,
+            parameters = mapOf(
+                "identifier" to referenceDeclarationNodeAST.identifier,
+                "type" to referenceDeclarationNodeAST.type
+            )
+        )
     }
 
     override fun visitReferenceNode(referenceNodeAST: ReferenceNodeAST) {

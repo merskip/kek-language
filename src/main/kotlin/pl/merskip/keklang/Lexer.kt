@@ -42,6 +42,7 @@ public class Lexer {
             char == '}' -> Token.RightBracket(createSourceLocation())
             char == ',' -> Token.Comma(createSourceLocation())
             char == ';' -> Token.Semicolon(createSourceLocation())
+            char == ':' -> Token.Colon(createSourceLocation())
             else -> throw UnknownTokenException(createSourceLocation())
         }
     }

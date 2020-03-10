@@ -82,26 +82,32 @@ public class ParserNodeAST(
 
     private fun parseFunctionDefinition(funcToken: Token.Func): FunctionDefinitionNodeAST {
         val identifierToken = getNextToken<Token.Identifier>()
-        getNextToken<Token.LeftParenthesis>()
 
-        val parameters = mutableListOf<ReferenceNodeAST>()
+        val parameters = parseFunctionParameters()
+        val codeBlock = parseCodeBlock()
+
+        return FunctionDefinitionNodeAST(identifierToken.text, parameters.toList(), codeBlock)
+            .sourceLocation(funcToken.sourceLocation, codeBlock.sourceLocation)
+    }
+
+    private fun parseFunctionParameters(): List<ReferenceDeclarationNodeAST> {
+        getNextToken<Token.LeftParenthesis>()
+        val parameters = mutableListOf<ReferenceDeclarationNodeAST>()
         while (true) {
             if (isNextToken<Token.RightParenthesis>()) break
 
-            val node = parseNextToken()
-            if (node !is ReferenceNodeAST)
-                throw Exception("Expected reference node AST, but got ${node::class}")
-            parameters.add(node)
+            val identifier = getNextToken<Token.Identifier>()
+            getNextToken<Token.Colon>()
+            val type = getNextToken<Token.Identifier>()
+
+            parameters.add(ReferenceDeclarationNodeAST(identifier.text, type.text))
 
             if (isNextToken<Token.RightParenthesis>()) break
             getNextToken<Token.Comma>()
         }
         getNextToken<Token.RightParenthesis>()
 
-        val codeBlock = parseCodeBlock()
-
-        return FunctionDefinitionNodeAST(identifierToken.text, parameters.toList(), codeBlock)
-            .sourceLocation(funcToken.sourceLocation, codeBlock.sourceLocation)
+        return parameters.toList()
     }
 
     private fun parseIfCondition(ifToken: Token.If): IfConditionNodeAST {

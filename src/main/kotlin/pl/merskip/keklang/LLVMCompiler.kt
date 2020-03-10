@@ -183,7 +183,7 @@ class LLVMCompiler(
         variableScopeStack.enterScope()
 
         val parametersValues = functionValue.getFunctionParametersValues()
-        val parametersIdentifiers = functionDefinition.arguments.map { it.identifier }
+        val parametersIdentifiers = functionDefinition.parameters.map { it.identifier }
         (parametersIdentifiers zip parametersValues).forEach { (identifier, value) ->
             variableScopeStack.addReference(identifier, value)
             LLVMSetValueName(value, identifier)
@@ -309,7 +309,7 @@ class LLVMCompiler(
 
     private fun createFunction(functionDefinition: FunctionDefinitionNodeAST): LLVMValueRef {
         val returnType = LLVMInt32TypeInContext(context)
-        val parameters = functionDefinition.arguments.map {
+        val parameters = functionDefinition.parameters.map {
             LLVMInt32TypeInContext(context)
         }.toTypedArray()
 
