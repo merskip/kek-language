@@ -42,6 +42,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
             ),
             children = mapOf(
                 "parameters" to node.parameters,
+                "returnType" to listOfNotNull(node.returnType),
                 "body" to listOf(node.body)
             )
         )
