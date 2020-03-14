@@ -97,6 +97,50 @@ internal class LexerTest {
         }
     }
 
+    @Test
+    fun `parse if-else tree`() {
+        """
+            if (a == 1) {}
+            else if (a == 2) {}
+            else {}
+        """ assertTokens {
+            expect<If>("if")
+            expectWhitespace()
+            expect<LeftParenthesis>("(")
+            expect<Identifier>("a")
+            expectWhitespace()
+            expect<Operator>("==")
+            expectWhitespace()
+            expect<Number>("1")
+            expect<RightParenthesis>(")")
+            expectWhitespace()
+            expect<LeftBracket>("{")
+            expect<RightBracket>("}")
+            expectNextLine()
+
+            expect<Else>("else")
+            expectWhitespace()
+            expect<If>("if")
+            expectWhitespace()
+            expect<LeftParenthesis>("(")
+            expect<Identifier>("a")
+            expectWhitespace()
+            expect<Operator>("==")
+            expectWhitespace()
+            expect<Number>("2")
+            expect<RightParenthesis>(")")
+            expectWhitespace()
+            expect<LeftBracket>("{")
+            expect<RightBracket>("}")
+            expectNextLine()
+
+            expect<Else>("else")
+            expectWhitespace()
+            expect<LeftBracket>("{")
+            expect<RightBracket>("}")
+        }
+    }
+
     private infix fun String.assertTokens(callback: TokenTester.() -> Unit) {
         val tokens = Lexer().parse(null, this.trimIndent())
         val tester = TokenTester(tokens)

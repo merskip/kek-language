@@ -91,6 +91,7 @@ public class Lexer {
         return when (text) {
             "func" -> Token.Func(createSourceLocation())
             "if" -> Token.If(createSourceLocation())
+            "else" -> Token.Else(createSourceLocation())
             else -> null
         }
     }

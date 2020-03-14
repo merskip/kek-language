@@ -6,6 +6,7 @@ interface NodeASTVisitor<T> {
 
     fun visitFileNode(node: FileNodeAST): T
     fun visitFunctionDefinitionNode(node: FunctionDefinitionNodeAST): T
+    fun visitIfElseConditionNode(node: IfElseConditionNodeAST): T
     fun visitIfConditionNode(node: IfConditionNodeAST): T
     fun visitCodeBlockNode(node: CodeBlockNodeAST): T
     fun visitFunctionCallNode(node: FunctionCallNodeAST): T

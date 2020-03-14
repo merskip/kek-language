@@ -10,6 +10,7 @@ sealed class Token(
     class Number(sourceLocation: SourceLocation) : Token(sourceLocation)
     class StringLiteral(sourceLocation: SourceLocation) : Token(sourceLocation)
     class If(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class Else(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Operator(sourceLocation: SourceLocation) : Token(sourceLocation)
     class LeftParenthesis(sourceLocation: SourceLocation) : Token(sourceLocation)
     class RightParenthesis(sourceLocation: SourceLocation) : Token(sourceLocation)

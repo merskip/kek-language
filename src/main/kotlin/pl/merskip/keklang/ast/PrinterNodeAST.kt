@@ -48,6 +48,16 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
+    override fun visitIfElseConditionNode(node: IfElseConditionNodeAST) {
+        print(
+            nodeClass = node::class,
+            children = mapOf(
+                "ifCondition" to listOf(node.ifCondition),
+                "elseNode" to listOfNotNull(node.elseNode?.nodeAST)
+            )
+        )
+    }
+
     override fun visitIfConditionNode(node: IfConditionNodeAST) {
         print(
             nodeClass = node::class,
