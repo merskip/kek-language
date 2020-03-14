@@ -28,7 +28,7 @@ public class Lexer {
             isWhitespaceHead(char) -> consumeWhitespace() // Consume eg. ' ', \r, \n
             isNumberHead(char) -> consumeNumber() // Consume [0-9]+
             isIdentifierHead(char) -> consumeIdentifierOrKeyword() // Consume [_a-Z][_a-Z0-9]
-            isOperatorHead(char) -> consumeOperator(char) // Consume +, -, *, /, ==
+            isOperatorHead(char) -> consumeOperatorOrArrow(char) // Consume +, -, *, /, == and ->
             isStringLiteralHead(char) -> consumeStringLiteral()
             char == '(' -> Token.LeftParenthesis(createSourceLocation())
             char == ')' -> Token.RightParenthesis(createSourceLocation())
@@ -67,11 +67,16 @@ public class Lexer {
         return char == '+' || char == '-' || char == '*' || char == '/' || char == '='
     }
 
-    private fun consumeOperator(char: Char): Token.Operator {
+    private fun consumeOperatorOrArrow(char: Char): Token {
         if (char == '=') {
             val nextChar = getNextCharacter()
             if (nextChar != '=')
                 throw SourceLocationException("Expected =, but got $nextChar", createSourceLocation())
+        }
+        if (char == '-') {
+            if (getNextCharacterIf { it == '>' } != null) {
+                return Token.Arrow(createSourceLocation())
+            }
         }
         return Token.Operator(createSourceLocation())
     }

@@ -18,6 +18,7 @@ sealed class Token(
     class Comma(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Semicolon(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Colon(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class Arrow(sourceLocation: SourceLocation) : Token(sourceLocation)
 
     val text: String
         get() = sourceLocation.text

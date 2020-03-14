@@ -80,6 +80,21 @@ internal class LexerTest {
         }
     }
 
+    @Test
+    fun `parse arrow`() {
+        "2 -> 3 - 1" assertTokens {
+            expect<Number>("2")
+            expectWhitespace()
+            expect<Arrow>("->")
+            expectWhitespace()
+            expect<Number>("3")
+            expectWhitespace()
+            expect<Operator>("-")
+            expectWhitespace()
+            expect<Number>("1")
+        }
+    }
+
     private infix fun String.assertTokens(callback: TokenTester.() -> Unit) {
         val tokens = Lexer().parse(null, this.trimIndent())
         val tester = TokenTester(tokens)
