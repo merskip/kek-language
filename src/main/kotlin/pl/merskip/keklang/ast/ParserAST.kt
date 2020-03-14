@@ -88,9 +88,13 @@ public class ParserAST(
         val identifierToken = getNextToken<Token.Identifier>()
 
         val parameters = parseFunctionParameters()
+        val returnType = if (isNextToken<Token.Arrow>()) {
+            getNextToken<Token.Arrow>()
+            parseTypeReference()
+        } else null
         val codeBlock = parseCodeBlock()
 
-        return FunctionDefinitionNodeAST(identifierToken.text, parameters.toList(), codeBlock)
+        return FunctionDefinitionNodeAST(identifierToken.text, parameters, returnType, codeBlock)
             .sourceLocation(funcToken.sourceLocation, codeBlock.sourceLocation)
     }
 
@@ -100,11 +104,8 @@ public class ParserAST(
         while (true) {
             if (isNextToken<Token.RightParenthesis>()) break
 
-            val identifier = getNextToken<Token.Identifier>()
-            getNextToken<Token.Colon>()
-            val type = getNextToken<Token.Identifier>()
-
-            parameters.add(ReferenceDeclarationNodeAST(identifier.text, type.text))
+            val parameterDeclaration = parseReferenceDeclaration()
+            parameters.add(parameterDeclaration)
 
             if (isNextToken<Token.RightParenthesis>()) break
             getNextToken<Token.Comma>()
@@ -112,6 +113,20 @@ public class ParserAST(
         getNextToken<Token.RightParenthesis>()
 
         return parameters.toList()
+    }
+
+    private fun parseReferenceDeclaration(): ReferenceDeclarationNodeAST {
+        val identifier = getNextToken<Token.Identifier>()
+        getNextToken<Token.Colon>()
+        val type = parseTypeReference()
+        return ReferenceDeclarationNodeAST(identifier.text, type)
+            .sourceLocation(identifier.sourceLocation, type.sourceLocation)
+    }
+
+    private fun parseTypeReference(): TypeReferenceNodeAST {
+        val identifier = getNextToken<Token.Identifier>()
+        return TypeReferenceNodeAST(identifier.text)
+            .sourceLocation(identifier)
     }
 
     private fun parseIfCondition(ifToken: Token.If): IfConditionNodeAST {

@@ -134,8 +134,7 @@ public class Lexer {
     }
 
     private fun createSourceLocation(): SourceLocation {
-        val sourceOffset = sourceLocationOffset
-            ?: throw IllegalStateException("Method beginSourceLocation must be called before")
+        val sourceOffset = sourceLocationOffset ?: throw IllegalStateException("Method beginSourceLocation must be called before")
         sourceLocationOffset = null
 
         val size = offset - sourceOffset + 1

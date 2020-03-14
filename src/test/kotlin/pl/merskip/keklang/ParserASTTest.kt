@@ -1,7 +1,6 @@
 package pl.merskip.keklang
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.node.*
@@ -20,14 +19,15 @@ internal class ParserASTTest {
         val funcDef = fileNodeAST.nodes.single()
 
         assertEquals("abc", funcDef.identifier)
-//        assertTrue(funcDef.arguments.isEmpty()) // FIXME
+        assertTrue(funcDef.parameters.isEmpty())
+        assertNull(funcDef.returnType)
         assertTrue(funcDef.body.statements.isEmpty())
     }
 
     @Test
-    fun `parse function arguments`() {
+    fun `parse function with single parameter`() {
         val source = """
-            func abc(arg1) {
+            func abc(arg1: Integer) {
             }
         """.trimIndent()
 
@@ -35,8 +35,26 @@ internal class ParserASTTest {
         val funcDef = fileNodeAST.nodes.single()
 
         assertEquals("abc", funcDef.identifier)
-        //val argument = funcDef.arguments.single()  // FIXME
-//        assertEquals("arg1", argument.identifier)
+        assertNull(funcDef.returnType)
+
+        val parameter = funcDef.parameters.single()
+        assertEquals("arg1", parameter.identifier)
+        assertEquals("Integer", parameter.type.identifier)
+    }
+
+    @Test
+    fun `parse function with return type`() {
+        val source = """
+            func abc() -> Integer {
+                2
+            }
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single()
+
+        assertEquals("abc", funcDef.identifier)
+        assertEquals("Integer", funcDef.returnType!!.identifier)
     }
 
     @Test
@@ -62,7 +80,7 @@ internal class ParserASTTest {
     @Test
     fun `parse function call with argument`() {
         val source = """
-            func a(b) {}
+            func a(b: Integer) {}
             func c() {
                 a(1)
             }
@@ -169,7 +187,7 @@ internal class ParserASTTest {
         return statements.single() as T
     }
 
-    private fun assertConstValue(expected: Int, node: ASTNode) {
+    private fun assertConstValue(expected: Long, node: ASTNode) {
         val integerConstantValueNode = node as IntegerConstantValueNodeAST
         assertEquals(expected, integerConstantValueNode.value)
     }

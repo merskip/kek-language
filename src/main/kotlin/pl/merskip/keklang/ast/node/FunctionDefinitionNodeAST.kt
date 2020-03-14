@@ -5,6 +5,7 @@ import pl.merskip.keklang.ast.NodeASTVisitor
 data class FunctionDefinitionNodeAST(
     val identifier: String,
     val parameters: List<ReferenceDeclarationNodeAST>,
+    val returnType: TypeReferenceNodeAST?,
     val body: CodeBlockNodeAST
 ): ASTNode() {
 

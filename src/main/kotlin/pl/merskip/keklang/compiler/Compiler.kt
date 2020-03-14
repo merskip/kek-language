@@ -91,7 +91,7 @@ class Compiler(
 
     private fun FunctionDefinitionNodeAST.getParameters(): List<Function.Parameter> =
         parameters.map {
-            val type = typesRegister.findType(it.type)
+            val type = typesRegister.findType(it.type.identifier)
             Function.Parameter(it.identifier, type)
         }
 

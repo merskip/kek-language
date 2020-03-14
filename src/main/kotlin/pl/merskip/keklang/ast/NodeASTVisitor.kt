@@ -10,7 +10,8 @@ interface NodeASTVisitor<T> {
     fun visitCodeBlockNode(node: CodeBlockNodeAST): T
     fun visitFunctionCallNode(node: FunctionCallNodeAST): T
     fun visitConstantValueNode(node: ConstantValueNodeAST): T
-    fun visitReferenceDeclarationNodeAST(node: ReferenceDeclarationNodeAST): T
+    fun visitReferenceDeclarationNode(node: ReferenceDeclarationNodeAST): T
+    fun visitTypeReferenceNode(node: TypeReferenceNodeAST): T
     fun visitReferenceNode(node: ReferenceNodeAST): T
     fun visitBinaryOperatorNode(node: BinaryOperatorNodeAST): T
     fun visitStringNode(node: ConstantStringNodeAST): T

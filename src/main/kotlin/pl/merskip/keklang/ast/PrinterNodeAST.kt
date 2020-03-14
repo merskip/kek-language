@@ -25,103 +25,114 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         node.accept(this)
     }
 
-    override fun visitFileNode(fileNodeAST: FileNodeAST) {
+    override fun visitFileNode(node: FileNodeAST) {
         print(
-            nodeClass = fileNodeAST::class,
+            nodeClass = node::class,
             children = mapOf(
-                "nodes" to fileNodeAST.nodes
+                "nodes" to node.nodes
             )
         )
     }
 
-    override fun visitFunctionDefinitionNode(functionDefinitionNodeAST: FunctionDefinitionNodeAST) {
+    override fun visitFunctionDefinitionNode(node: FunctionDefinitionNodeAST) {
         print(
-            nodeClass = functionDefinitionNodeAST::class,
+            nodeClass = node::class,
             parameters = mapOf(
-                "identifier" to functionDefinitionNodeAST.identifier
+                "identifier" to node.identifier
             ),
             children = mapOf(
-                "parameters" to functionDefinitionNodeAST.parameters,
-                "body" to listOf(functionDefinitionNodeAST.body)
+                "parameters" to node.parameters,
+                "body" to listOf(node.body)
             )
         )
     }
 
-    override fun visitIfConditionNode(ifConditionNodeAST: IfConditionNodeAST) {
+    override fun visitIfConditionNode(node: IfConditionNodeAST) {
         print(
-            nodeClass = ifConditionNodeAST::class,
+            nodeClass = node::class,
             children = mapOf(
-                "condition" to listOf(ifConditionNodeAST.condition),
-                "body" to listOf(ifConditionNodeAST.body)
+                "condition" to listOf(node.condition),
+                "body" to listOf(node.body)
             )
         )
     }
 
-    override fun visitCodeBlockNode(codeBlockNodeAST: CodeBlockNodeAST) {
+    override fun visitCodeBlockNode(node: CodeBlockNodeAST) {
         print(
-            nodeClass = codeBlockNodeAST::class,
+            nodeClass = node::class,
             parameters = emptyMap(),
             children = mapOf(
-                "statements" to codeBlockNodeAST.statements
+                "statements" to node.statements
             )
         )
     }
 
-    override fun visitFunctionCallNode(functionCallNodeAST: FunctionCallNodeAST) {
+    override fun visitFunctionCallNode(node: FunctionCallNodeAST) {
         print(
-            nodeClass = functionCallNodeAST::class,
-            parameters =  mapOf("identifier" to functionCallNodeAST.identifier),
+            nodeClass = node::class,
+            parameters =  mapOf("identifier" to node.identifier),
             children = mapOf(
-                "parameters" to functionCallNodeAST.parameters
+                "parameters" to node.parameters
             )
         )
     }
 
-    override fun visitConstantValueNode(constantValueNodeAST: ConstantValueNodeAST) {
-        when (constantValueNodeAST) {
+    override fun visitConstantValueNode(node: ConstantValueNodeAST) {
+        when (node) {
             is IntegerConstantValueNodeAST -> print(
-                nodeClass = constantValueNodeAST::class,
-                parameters =  mapOf("value" to constantValueNodeAST.value.toString())
+                nodeClass = node::class,
+                parameters =  mapOf("value" to node.value.toString())
             )
             is DecimalConstantValueNodeAST -> print(
-                nodeClass = constantValueNodeAST::class,
-                parameters =  mapOf("value" to constantValueNodeAST.value.toString())
+                nodeClass = node::class,
+                parameters =  mapOf("value" to node.value.toString())
             )
         }
     }
 
-    override fun visitReferenceDeclarationNodeAST(referenceDeclarationNodeAST: ReferenceDeclarationNodeAST) {
+    override fun visitReferenceDeclarationNode(node: ReferenceDeclarationNodeAST) {
         print(
-            nodeClass = referenceDeclarationNodeAST::class,
+            nodeClass = node::class,
             parameters = mapOf(
-                "identifier" to referenceDeclarationNodeAST.identifier,
-                "type" to referenceDeclarationNodeAST.type
-            )
-        )
-    }
-
-    override fun visitReferenceNode(referenceNodeAST: ReferenceNodeAST) {
-        print(
-            nodeClass = referenceNodeAST::class,
-            parameters = mapOf("identifier" to referenceNodeAST.identifier)
-        )
-    }
-
-    override fun visitBinaryOperatorNode(binaryOperatorNodeAST: BinaryOperatorNodeAST) {
-        print(
-            nodeClass = binaryOperatorNodeAST::class,
-            parameters = mapOf("identifier" to binaryOperatorNodeAST.identifier),
+                "identifier" to node.identifier
+            ),
             children = mapOf(
-                "lhs" to listOf(binaryOperatorNodeAST.lhs),
-                "rhs" to listOf(binaryOperatorNodeAST.rhs)
+                "type" to listOf(node.type)
             )
         )
     }
 
-    override fun visitStringNode(constantStringNodeAST: ConstantStringNodeAST) {
+    override fun visitTypeReferenceNode(node: TypeReferenceNodeAST) {
         print(
-            nodeClass = constantStringNodeAST::class,
-            parameters = mapOf("string" to constantStringNodeAST.string)
+            nodeClass = node::class,
+            parameters = mapOf(
+                "identifier" to node.identifier
+            )
+        )
+    }
+
+    override fun visitReferenceNode(node: ReferenceNodeAST) {
+        print(
+            nodeClass = node::class,
+            parameters = mapOf("identifier" to node.identifier)
+        )
+    }
+
+    override fun visitBinaryOperatorNode(node: BinaryOperatorNodeAST) {
+        print(
+            nodeClass = node::class,
+            parameters = mapOf("identifier" to node.identifier),
+            children = mapOf(
+                "lhs" to listOf(node.lhs),
+                "rhs" to listOf(node.rhs)
+            )
+        )
+    }
+
+    override fun visitStringNode(node: ConstantStringNodeAST) {
+        print(
+            nodeClass = node::class,
+            parameters = mapOf("string" to node.string)
         )
     }
 
