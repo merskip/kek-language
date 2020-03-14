@@ -1,13 +1,13 @@
 
-func foo2(a: Boolean) {
+func foo2(a: Boolean) -> Integer {
     1
 }
 
-func foo() {
+func foo() -> Integer {
     2
 }
 
-func bar(a: Integer, b: Integer) {
+func bar(a: Integer, b: Integer) -> Integer {
     if (a == 2) {
         foo() + 2
         if (b == 1) {
@@ -17,6 +17,6 @@ func bar(a: Integer, b: Integer) {
     foo() + 3
 }
 
-func main() {
+func main() -> Integer {
     bar(1, 3) - 1
 }

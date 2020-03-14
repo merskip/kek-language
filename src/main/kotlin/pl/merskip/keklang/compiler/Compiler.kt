@@ -28,10 +28,10 @@ class Compiler(
     }
 
     private fun registerAllFunctions(fileNodeAST: FileNodeAST) {
-        fileNodeAST.nodes.forEach { functionDefinitionNodeAST ->
-            val simpleIdentifier = functionDefinitionNodeAST.identifier
-            val parameters = functionDefinitionNodeAST.getParameters()
-            val returnType = builtInTypes.integerType
+        fileNodeAST.nodes.forEach { functionNode ->
+            val simpleIdentifier = functionNode.identifier
+            val parameters = functionNode.getParameters()
+            val returnType = functionNode.returnType?.identifier?.let { typesRegister.findType(it) } ?: builtInTypes.voidType
             val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
 
             val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
