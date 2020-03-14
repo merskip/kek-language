@@ -4,6 +4,8 @@ import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
+import pl.merskip.keklang.ast.ParserAST
+import pl.merskip.keklang.ast.PrinterNodeAST
 import pl.merskip.keklang.compiler.Compiler
 import pl.merskip.keklang.compiler.IRCompiler
 import pl.merskip.keklang.lexer.Lexer
@@ -62,7 +64,7 @@ fun ApplicationArguments.tryProcessSources(filename: String?, content: String, c
         println(tokens.joinToString("\n") { token -> token.toString() })
     }
 
-    val parserNodeAST = ParserNodeAST(content, tokens)
+    val parserNodeAST = ParserAST(content, tokens)
     val fileNode = parserNodeAST.parse()
 
     if (astDump) {

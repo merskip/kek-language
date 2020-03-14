@@ -1,6 +1,6 @@
-package pl.merskip.keklang.node
+package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.NodeASTVisitor
+import pl.merskip.keklang.ast.NodeASTVisitor
 
 data class IntegerConstantValueNodeAST(
     val value: Long

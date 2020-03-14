@@ -1,9 +1,9 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMValueRef
+import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
-import pl.merskip.keklang.node.*
 
 class Compiler(
     private val irCompiler: IRCompiler

@@ -1,6 +1,8 @@
-package pl.merskip.keklang
+package pl.merskip.keklang.ast
 
-import pl.merskip.keklang.node.*
+import pl.merskip.keklang.Color
+import pl.merskip.keklang.ast.node.*
+import pl.merskip.keklang.colored
 import kotlin.reflect.KClass
 
 class PrinterNodeAST : NodeASTVisitor<Unit> {
@@ -11,16 +13,16 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
     private val indent: String
         get() = " ".repeat(indentLevel * 3)
 
-    fun print(nodeAST: NodeAST): String {
+    fun print(node: ASTNode): String {
         indentLevel = 0
         output = ""
 
-        printNode(nodeAST)
+        printNode(node)
         return output
     }
 
-    private fun printNode(nodeAST: NodeAST) {
-        nodeAST.accept(this)
+    private fun printNode(node: ASTNode) {
+        node.accept(this)
     }
 
     override fun visitFileNode(fileNodeAST: FileNodeAST) {
@@ -124,9 +126,9 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
     }
 
     private fun print(
-        nodeClass: KClass<out NodeAST>,
+        nodeClass: KClass<out ASTNode>,
         parameters: Map<String, String> = emptyMap(),
-        children: Map<String, List<NodeAST>> = emptyMap()
+        children: Map<String, List<ASTNode>> = emptyMap()
     ) {
         output += "$indent[${nodeClass.simpleName?.colored(Color.Blue)}"
 

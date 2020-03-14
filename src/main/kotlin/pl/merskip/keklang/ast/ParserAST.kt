@@ -1,18 +1,19 @@
-package pl.merskip.keklang
+package pl.merskip.keklang.ast
 
+import pl.merskip.keklang.Operator
+import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.lexer.Token
 import pl.merskip.keklang.lexer.UnexpectedTokenException
-import pl.merskip.keklang.node.*
 import java.math.BigDecimal
 
 
-public class ParserNodeAST(
+public class ParserAST(
     private val source: String,
     tokens: List<Token>
 ) {
 
-    private val tokensIter = tokens.withoutWhitespaces().listIterator()
+    private val tokensIter = tokens.filter { it !is Token.Whitespace }.listIterator()
 
     private val operators = listOf(
         Operator("==", 10),
@@ -39,7 +40,7 @@ public class ParserNodeAST(
     private fun parseNextToken(
         minimumPrecedence: Int = 0,
         popStatement: () -> StatementNodeAST = ::throwNoLhsStatement
-    ): NodeAST {
+    ): ASTNode {
         val parsedNode = when (val token = getAnyNextToken()) {
             is Token.Func -> parseFunctionDefinition(token)
             is Token.If -> parseIfCondition(token)
@@ -63,13 +64,13 @@ public class ParserNodeAST(
         throw Exception("No lhs statement in this context")
     }
 
-    private fun parseParenthesis(): NodeAST {
+    private fun parseParenthesis(): ASTNode {
         val nextNode = parseNextToken()
         getNextToken<Token.RightParenthesis>()
         return nextNode
     }
 
-    private fun parseOperatorIfHasHigherPrecedence(minimumPrecedence: Int, parsedNode: NodeAST): NodeAST? {
+    private fun parseOperatorIfHasHigherPrecedence(minimumPrecedence: Int, parsedNode: ASTNode): ASTNode? {
         val operatorToken = getNextToken<Token.Operator>()
         val operator = findOperator(operatorToken)
             ?: throw Exception("Unknown operator: ${operatorToken.text}")
@@ -153,7 +154,7 @@ public class ParserNodeAST(
             .sourceLocation(leftBracket, rightBracket)
     }
 
-    private fun parseReferenceOrFunctionCall(identifierToken: Token.Identifier): NodeAST {
+    private fun parseReferenceOrFunctionCall(identifierToken: Token.Identifier): ASTNode {
         return if (getAnyNextToken() is Token.LeftParenthesis) {
 
             val arguments = mutableListOf<StatementNodeAST>()
@@ -243,15 +244,15 @@ public class ParserNodeAST(
     private fun isAnyNextToken(): Boolean =
         tokensIter.hasNext()
 
-    fun <T: NodeAST> T.sourceLocation(token: Token): T {
+    fun <T: ASTNode> T.sourceLocation(token: Token): T {
         this.sourceLocation = token.sourceLocation
         return this
     }
 
-    fun <T : NodeAST> T.sourceLocation(from: Token, to: Token): T =
+    fun <T : ASTNode> T.sourceLocation(from: Token, to: Token): T =
         sourceLocation(from.sourceLocation, to.sourceLocation)
 
-    fun <T : NodeAST> T.sourceLocation(from: SourceLocation, to: SourceLocation): T {
+    fun <T : ASTNode> T.sourceLocation(from: SourceLocation, to: SourceLocation): T {
         this.sourceLocation = SourceLocation.from(
             from.filename ?: to.filename, source,
             from.startIndex.offset, from.startIndex.distanceTo(to.endIndex)

@@ -1,3 +1,3 @@
-package pl.merskip.keklang.node
+package pl.merskip.keklang.ast.node
 
 abstract class ConstantValueNodeAST : StatementNodeAST()

@@ -7,9 +7,9 @@ import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
+import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.TargetTriple
 import pl.merskip.keklang.compiler.llvm.getTargetTriple
-import pl.merskip.keklang.node.*
 
 
 @Deprecated("", replaceWith = ReplaceWith("pl.merskip.keklang.compiler.Compiler"))
