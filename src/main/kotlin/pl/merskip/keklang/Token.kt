@@ -3,6 +3,7 @@ package pl.merskip.keklang
 sealed class Token(
     val sourceLocation: SourceLocation
 ) {
+    class Unknown(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Whitespace(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Func(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Identifier(sourceLocation: SourceLocation) : Token(sourceLocation)

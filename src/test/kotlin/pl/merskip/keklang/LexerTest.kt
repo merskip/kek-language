@@ -1,73 +1,146 @@
 package pl.merskip.keklang
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
+import pl.merskip.keklang.Token.*
+import pl.merskip.keklang.Token.Number
+import pl.merskip.keklang.Token.Operator
 import kotlin.reflect.KClass
 
 internal class LexerTest {
 
     @Test
     fun `parse tokens`() {
-        val source = """
+        """
             func abc() {
                 123
             }
-        """.trimIndent()
+        """ assertTokens {
+            expect<Func>("func")
+            expectWhitespace()
+            expect<Identifier>("abc")
+            expect<LeftParenthesis>("(")
+            expect<RightParenthesis>(")")
+            expectWhitespace()
+            expect<LeftBracket>("{")
+            expectNextLine(5)
 
-        val tokens = Lexer().parse(null, source).withoutWhitespaces()
+            expect<Number>("123")
+            expectNextLine()
 
-        assertToken(Token.Func::class, "func", 1, 1, tokens[0])
-        assertToken(Token.Identifier::class, "abc", 1, 6, tokens[1])
-        assertToken(Token.LeftParenthesis::class, "(", 1, 9, tokens[2])
-        assertToken(Token.RightParenthesis::class, ")", 1, 10, tokens[3])
-        assertToken(Token.LeftBracket::class, "{", 1, 12, tokens[4])
-        assertToken(Token.Number::class, "123", 2, 5, tokens[5])
-        assertToken(Token.RightBracket::class, "}", 3, 1, tokens[6])
-        assertEquals(7, tokens.size)
+            expect<RightBracket>("}")
+        }
     }
 
     @Test
-    fun `throw on unknown token`() {
-        val source = "a %"
+    fun `parse unknown token`() {
+        "a %" assertTokens {
+            expect<Identifier>("a")
+            expectWhitespace()
+            expect<Unknown>("%")
+        }
+    }
 
-        assertThrows(UnknownTokenException::class.java) {
-            Lexer().parse(null, source)
+    @Test
+    fun `parse simple operator`() {
+        "1 + 2" assertTokens {
+            expect<Number>("1")
+            expectWhitespace()
+            expect<Operator>("+")
+            expectWhitespace()
+            expect<Number>("2")
         }
     }
 
     @Test
     fun `parse operator`() {
-        val source = "1 + 2 - 3 * 4 / 5"
-
-        val tokens = Lexer().parse(null, source).withoutWhitespaces()
-
-        assertToken(Token.Number::class, "1", 1, 1, tokens[0])
-        assertToken(Token.Operator::class, "+", 1, 3, tokens[1])
-        assertToken(Token.Number::class, "2", 1, 5, tokens[2])
-        assertToken(Token.Operator::class, "-", 1, 7, tokens[3])
-        assertToken(Token.Number::class, "3", 1, 9, tokens[4])
-        assertToken(Token.Operator::class, "*", 1, 11, tokens[5])
-        assertToken(Token.Number::class, "4", 1, 13, tokens[6])
-        assertToken(Token.Operator::class, "/", 1, 15, tokens[7])
-        assertToken(Token.Number::class, "5", 1, 17, tokens[8])
+        "0 == 1 + 2 - 3 * 4 / 5" assertTokens {
+            expect<Number>("0")
+            expectWhitespace()
+            expect<Operator>("==")
+            expectWhitespace()
+            expect<Number>("1")
+            expectWhitespace()
+            expect<Operator>("+")
+            expectWhitespace()
+            expect<Number>("2")
+            expectWhitespace()
+            expect<Operator>("-")
+            expectWhitespace()
+            expect<Number>("3")
+            expectWhitespace()
+            expect<Operator>("*")
+            expectWhitespace()
+            expect<Number>("4")
+            expectWhitespace()
+            expect<Operator>("/")
+            expectWhitespace()
+            expect<Number>("5")
+        }
     }
 
-    @Test
-    fun `test no gap in source locations`() {
-        val source = """
-            func foo() {
-                1 * 2 + 3
-            }
-            
-        """.trimIndent()
+    private infix fun String.assertTokens(callback: TokenTester.() -> Unit) {
+        val tokens = Lexer().parse(null, this.trimIndent())
+        val tester = TokenTester(tokens)
+        callback(tester)
+        tester.expectNoMoreTokens()
+    }
 
-        val tokens = Lexer().parse(null, source)
+    private class TokenTester(
+        tokens: List<Token>
+    ) {
 
-        var expectedNextOffset = 0
-        for (token in tokens) {
-            assertEquals(expectedNextOffset, token.sourceLocation.startIndex.offset)
+        private val tokenIter = tokens.iterator()
+        private var expectedNextOffset = 0
+        private var expectedNextColumn = 1
+        private var expectedNextLine = 1
+
+        inline fun <reified T: Token> expect(text: String) {
+            val token = tokenIter.next()
+            assertEquals(T::class, token::class)
+            assertEquals(text, token.text)
+            assertEquals(text.length, token.sourceLocation.length)
+
+            validateSourceLocation(token)
+        }
+
+        fun expectNextLine(length: Int = 1) {
+            val token = expectWhitespace(length)
+            expectedNextColumn = if (length > 1) {
+                assert(token.sourceLocation.startIndex.line < token.sourceLocation.endIndex.line)
+                token.sourceLocation.endIndex.column + 1
+            } else 1
+            expectedNextLine += 1
+        }
+
+        fun expectWhitespace(length: Int = 1): Token {
+            val token = tokenIter.next()
+            assertEquals(Whitespace::class, token::class)
+            assertEquals(length, token.text.length)
+            validateSourceLocation(token)
+            return token
+        }
+
+        fun expectNoMoreTokens() {
+            assertFalse(tokenIter.hasNext())
+        }
+
+        private fun validateSourceLocation(token: Token) {
+            validateOffset(token)
+            validateColumnAndLine(token)
+        }
+
+        private fun validateOffset(token: Token) {
+            assertEquals(expectedNextOffset, token.sourceLocation.startIndex.offset, "Expected offset $expectedNextOffset for $token")
+            assertEquals(expectedNextOffset + token.text.length - 1, token.sourceLocation.endIndex.offset)
             expectedNextOffset = token.sourceLocation.endIndex.offset + 1
+        }
+
+        private fun validateColumnAndLine(token: Token) {
+            assertEquals(expectedNextColumn, token.sourceLocation.startIndex.column, "Expected column $expectedNextColumn for $token")
+            assertEquals(expectedNextLine, token.sourceLocation.startIndex.line, "Expected line $expectedNextLine for $token")
+            expectedNextColumn = token.sourceLocation.endIndex.column + 1
         }
     }
 

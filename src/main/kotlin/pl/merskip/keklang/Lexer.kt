@@ -1,7 +1,5 @@
 package pl.merskip.keklang
 
-import kotlin.math.max
-
 public class Lexer {
 
     private var filename: String? = null
@@ -16,10 +14,6 @@ public class Lexer {
 
         val tokens = mutableListOf<Token>()
         while (true) {
-            getWhitespaceToken()?.let {
-                tokens.add(it)
-            }
-
             val token = readNextToken() ?: break
             tokens.add(token)
         }
@@ -27,14 +21,14 @@ public class Lexer {
     }
 
     private fun readNextToken(): Token? {
-        val char = getNextNonWhitespaceCharacter()
-            ?: return null
+        val char = getNextCharacter() ?: return null
         beginTokenSourceLocation()
 
         return when {
-            isNumberHead(char) -> consumeNumber(char) // Consume [0-9]+
-            isIdentifierHead(char) -> consumeIdentifierOrKeyword(char) // Consume [_a-Z][_a-Z0-9]
-            isOperatorHead(char) -> consumeOperator(char)
+            isWhitespaceHead(char) -> consumeWhitespace() // Consume eg. ' ', \r, \n
+            isNumberHead(char) -> consumeNumber() // Consume [0-9]+
+            isIdentifierHead(char) -> consumeIdentifierOrKeyword() // Consume [_a-Z][_a-Z0-9]
+            isOperatorHead(char) -> consumeOperator(char) // Consume +, -, *, /, ==
             isStringLiteralHead(char) -> consumeStringLiteral()
             char == '(' -> Token.LeftParenthesis(createSourceLocation())
             char == ')' -> Token.RightParenthesis(createSourceLocation())
@@ -43,25 +37,26 @@ public class Lexer {
             char == ',' -> Token.Comma(createSourceLocation())
             char == ';' -> Token.Semicolon(createSourceLocation())
             char == ':' -> Token.Colon(createSourceLocation())
-            else -> throw UnknownTokenException(createSourceLocation())
+            else -> Token.Unknown(createSourceLocation())
         }
+    }
+
+    private fun isWhitespaceHead(char: Char): Boolean {
+        return char.isWhitespace()
+    }
+
+    private fun consumeWhitespace(): Token.Whitespace {
+        consumeCharactersWhile { it.isWhitespace() }
+        return Token.Whitespace(createSourceLocation())
     }
 
     private fun isNumberHead(char: Char): Boolean {
         return char.isDigit()
     }
 
-    private fun consumeNumber(char: Char): Token.Number {
-        var currentChar = char
-        var numberString = ""
-        while (currentChar.isDigit() || currentChar == '.') {
-            numberString += char
-            currentChar = getNextCharacter() ?: break
-        }
-
-        val numberToken = Token.Number(createSourceLocation())
-        backToPreviousCharacter()
-        return numberToken
+    private fun consumeNumber(): Token.Number {
+        consumeCharactersWhile { it.isDigit() || it == '.'}
+        return Token.Number(createSourceLocation())
     }
 
     private fun isIdentifierHead(char: Char): Boolean {
@@ -78,24 +73,13 @@ public class Lexer {
             if (nextChar != '=')
                 throw SourceLocationException("Expected =, but got $nextChar", createSourceLocation())
         }
-        getNextCharacter() // TODO: Fix me
-        val sourceLocation = createSourceLocation()
-        backToPreviousCharacter()
-        return Token.Operator(sourceLocation)
+        return Token.Operator(createSourceLocation())
     }
 
-    private fun consumeIdentifierOrKeyword(char: Char): Token {
-        var currentChar = char
-        var identifierString = ""
-        while (currentChar.isLetterOrDigit() || currentChar == '_') {
-            identifierString += currentChar
-            currentChar = getNextCharacter() ?: break
-        }
-
-        val token = consumeKeyword(identifierString)
+    private fun consumeIdentifierOrKeyword(): Token {
+        val text = consumeCharactersWhile { it.isLetterOrDigit() || it == '_' }
+        return consumeKeyword(text)
             ?: Token.Identifier(createSourceLocation())
-        backToPreviousCharacter()
-        return token
     }
 
     private fun consumeKeyword(text: String): Token? {
@@ -113,40 +97,23 @@ public class Lexer {
         return Token.StringLiteral(createSourceLocation())
     }
 
-    private fun getWhitespaceToken(): Token? {
-        val char = getNextCharacter() ?: return null
-        if (!char.isWhitespace()) {
-            backToPreviousCharacter()
-            return null
-        }
-        beginTokenSourceLocation()
-
-        var text = ""
-        text += char
-        val sourceLocation: SourceLocation
-
+    private fun consumeCharactersWhile(condition: (Char) -> Boolean): String {
+        var text = "" + source.getOrNull(offset)
         while (true) {
-            val currentChar = getNextCharacter()
-            if (currentChar != null && currentChar.isWhitespace()) {
-                text += char
-            } else {
-                sourceLocation = createSourceLocation()
-                backToPreviousCharacter()
-                break
-            }
+            val char = getNextCharacterIf(condition) ?: break
+            text += char
         }
-
-        return Token.Whitespace(sourceLocation)
+        return text
     }
 
-    private fun getNextNonWhitespaceCharacter(): Char? {
-        var char = getNextCharacter() ?: return null
-
-        // Skip whitespaces
-        while (char.isWhitespace())
-            char = getNextCharacter() ?: return null
-
-        return char
+    private fun getNextCharacterIf(condition: (Char) -> Boolean): Char? {
+        val char = getNextCharacter()
+        return if (char != null && condition(char)) {
+            char
+        } else {
+            backToPreviousCharacter()
+            null
+        }
     }
 
     private fun getNextCharacter(): Char? {
@@ -164,8 +131,9 @@ public class Lexer {
     private fun createSourceLocation(): SourceLocation {
         val sourceOffset = sourceLocationOffset
             ?: throw IllegalStateException("Method beginSourceLocation must be called before")
+        sourceLocationOffset = null
 
-        val size = max(offset - sourceOffset, 1)
+        val size = offset - sourceOffset + 1
         return SourceLocation.from(filename, source, sourceOffset, size)
     }
 }
