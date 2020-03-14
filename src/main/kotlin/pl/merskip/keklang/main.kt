@@ -6,6 +6,8 @@ import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.Compiler
 import pl.merskip.keklang.compiler.IRCompiler
+import pl.merskip.keklang.lexer.Lexer
+import pl.merskip.keklang.lexer.SourceLocationException
 import java.io.File
 
 

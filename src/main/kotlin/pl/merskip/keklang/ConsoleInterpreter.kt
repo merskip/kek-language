@@ -1,6 +1,7 @@
 package pl.merskip.keklang
 
 import org.bytedeco.llvm.global.LLVM
+import pl.merskip.keklang.lexer.SourceLocationException
 
 
 class ConsoleInterpreter {

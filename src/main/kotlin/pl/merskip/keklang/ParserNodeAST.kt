@@ -1,5 +1,8 @@
 package pl.merskip.keklang
 
+import pl.merskip.keklang.lexer.SourceLocation
+import pl.merskip.keklang.lexer.Token
+import pl.merskip.keklang.lexer.UnexpectedTokenException
 import pl.merskip.keklang.node.*
 import java.math.BigDecimal
 

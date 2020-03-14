@@ -2,6 +2,7 @@ package pl.merskip.keklang
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import pl.merskip.keklang.lexer.SourceLocation
 
 
 class SourceLocationTest {

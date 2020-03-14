@@ -3,9 +3,11 @@ package pl.merskip.keklang
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
-import pl.merskip.keklang.Token.*
-import pl.merskip.keklang.Token.Number
-import pl.merskip.keklang.Token.Operator
+import pl.merskip.keklang.lexer.Lexer
+import pl.merskip.keklang.lexer.Token
+import pl.merskip.keklang.lexer.Token.*
+import pl.merskip.keklang.lexer.Token.Number
+import pl.merskip.keklang.lexer.Token.Operator
 import kotlin.reflect.KClass
 
 internal class LexerTest {

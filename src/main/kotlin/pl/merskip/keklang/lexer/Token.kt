@@ -1,4 +1,4 @@
-package pl.merskip.keklang
+package pl.merskip.keklang.lexer
 
 sealed class Token(
     val sourceLocation: SourceLocation
