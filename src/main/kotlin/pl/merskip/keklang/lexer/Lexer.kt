@@ -1,5 +1,7 @@
 package pl.merskip.keklang.lexer
 
+import kotlin.math.min
+
 public class Lexer {
 
     private var filename: String? = null
@@ -99,7 +101,8 @@ public class Lexer {
     private fun isStringLiteralHead(char: Char) = char == '"'
 
     private fun consumeStringLiteral(): Token.StringLiteral {
-        while (getNextCharacter() != '"') Unit
+        consumeCharactersWhile { it != '"' }
+        getNextCharacter()
         return Token.StringLiteral(createSourceLocation())
     }
 
@@ -123,6 +126,7 @@ public class Lexer {
     }
 
     private fun getNextCharacter(): Char? {
+        if (offset == source.length) return null
         return source.getOrNull(++offset)
     }
 
@@ -138,7 +142,7 @@ public class Lexer {
         val sourceOffset = sourceLocationOffset ?: throw IllegalStateException("Method beginSourceLocation must be called before")
         sourceLocationOffset = null
 
-        val size = offset - sourceOffset + 1
+        val size = min(offset, source.length - 1) - sourceOffset + 1
         return SourceLocation.from(filename, source, sourceOffset, size)
     }
 }
