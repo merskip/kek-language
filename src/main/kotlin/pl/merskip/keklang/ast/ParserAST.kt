@@ -43,7 +43,7 @@ public class ParserAST(
     ): ASTNode {
         val parsedNode = when (val token = getAnyNextToken()) {
             is Token.Func -> parseFunctionDefinition(token)
-            is Token.If -> parseIfCondition(token)
+            is Token.If -> parseIfElseCondition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
             is Token.LeftParenthesis -> parseParenthesis()
@@ -127,6 +127,25 @@ public class ParserAST(
         val identifier = getNextToken<Token.Identifier>()
         return TypeReferenceNodeAST(identifier.text)
             .sourceLocation(identifier)
+    }
+
+    private fun parseIfElseCondition(ifToken: Token.If): IfElseConditionNodeAST {
+        val ifCondition = parseIfCondition(ifToken)
+        val ifConditions = mutableListOf(ifCondition)
+        var elseBlock: CodeBlockNodeAST? = null
+
+        while (isNextToken<Token.Else>()) {
+            getNextToken<Token.Else>()
+
+            if (isNextToken<Token.If>()) {
+                ifConditions.add(parseIfCondition(getNextToken()))
+            }
+            else {
+                elseBlock = parseCodeBlock()
+                break
+            }
+        }
+        return IfElseConditionNodeAST(ifConditions.toList(), elseBlock)
     }
 
     private fun parseIfCondition(ifToken: Token.If): IfConditionNodeAST {

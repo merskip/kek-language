@@ -52,8 +52,8 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         print(
             nodeClass = node::class,
             children = mapOf(
-                "ifCondition" to listOf(node.ifCondition),
-                "elseNode" to listOfNotNull(node.elseNode?.nodeAST)
+                "ifConditions" to node.ifConditions,
+                "elseBlock" to listOfNotNull(node.elseBlock)
             )
         )
     }

@@ -64,20 +64,41 @@ class IRCompiler(
         )
     }
 
-    fun createIf(conditionValueRef: LLVMValueRef, ifTrueBuilder: () -> LLVMValueRef): LLVMValueRef {
-        val ifTrueBlock = LLVMCreateBasicBlockInContext(context, "ifTrue")
-        val ifAfterBlock = LLVMCreateBasicBlockInContext(context, "ifAfter")
-        val ifBlockValueRef = LLVMBuildCondBr(builder, conditionValueRef, ifTrueBlock, ifAfterBlock)
+    fun <T> createIfElse(conditions: List<T>, ifCondition: (T) -> LLVMValueRef, ifTrue: (T) -> Unit, ifElse: (() -> Unit)?) {
 
-        LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifTrueBlock)
-        LLVMPositionBuilderAtEnd(builder, ifTrueBlock)
-        val ifTrueValueRef = ifTrueBuilder()
-        LLVMBuildBr(builder, ifAfterBlock)
+        val ifElseBlock = if (ifElse != null) LLVMCreateBasicBlockInContext(context, "ifElse") else null
+        val ifEndBlock = LLVMCreateBasicBlockInContext(context, "ifEnd")!!
 
-        LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifAfterBlock)
-        LLVMPositionBuilderAtEnd(builder, ifAfterBlock)
+        val conditionsIter = conditions.listIterator()
+        while (true) {
+            val index = conditionsIter.nextIndex()
+            val id = conditionsIter.next()
+            val conditionValueRef = ifCondition(id)
 
-        return ifBlockValueRef
+            val ifTrueBlock = LLVMCreateBasicBlockInContext(context, "ifTrue$index")
+            val nextElseBlock = if (conditionsIter.hasNext()) LLVMCreateBasicBlockInContext(context, "ifElseIf${index + 1}") else ifElseBlock ?: ifEndBlock
+            LLVMBuildCondBr(builder, conditionValueRef, ifTrueBlock, nextElseBlock)
+
+            LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifTrueBlock)
+            LLVMPositionBuilderAtEnd(builder, ifTrueBlock)
+            ifTrue(id)
+            LLVMBuildBr(builder, ifEndBlock)
+
+            if (nextElseBlock != null && nextElseBlock !== ifEndBlock) {
+                LLVMInsertExistingBasicBlockAfterInsertBlock(builder, nextElseBlock)
+                LLVMPositionBuilderAtEnd(builder, nextElseBlock)
+
+                if (!conditionsIter.hasNext() && ifElse != null) {
+                    ifElse()
+                    LLVMBuildBr(builder, ifEndBlock)
+                }
+            }
+
+            if (!conditionsIter.hasNext()) break
+        }
+
+        LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifEndBlock)
+        LLVMPositionBuilderAtEnd(builder, ifEndBlock)
     }
 
     fun createAdd(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =

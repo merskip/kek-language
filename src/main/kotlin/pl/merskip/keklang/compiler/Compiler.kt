@@ -102,7 +102,7 @@ class Compiler(
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
             is FunctionCallNodeAST -> compileCallFunction(statement)
-            is IfConditionNodeAST -> compileIfCondition(statement)
+            is IfElseConditionNodeAST -> compileIfElseCondition(statement)
             else -> throw Exception("TODO: $statement")
         }
     }
@@ -163,14 +163,22 @@ class Compiler(
         return returnValueRef.toReference(function.returnType)
     }
 
-    private fun compileIfCondition(nodeAST: IfConditionNodeAST): Reference {
-        val condition = compileStatement(nodeAST.condition)
+    private fun compileIfElseCondition(node: IfElseConditionNodeAST): Reference {
+        irCompiler.createIfElse(
+            conditions = node.ifConditions,
+            ifCondition = { compileCondition(it).valueRef },
+            ifTrue = { compileStatement(it.body) },
+            ifElse = if (node.elseBlock != null) {
+                fun() { compileStatement(node.elseBlock) }
+            } else null
+        )
+        return Reference(null, builtInTypes.voidType, LLVMValueRef())
+    }
+
+    private fun compileCondition(node: IfConditionNodeAST): Reference {
+        val condition = compileStatement(node.condition)
         if (!condition.type.isCompatibleWith(builtInTypes.booleanType))
             throw Exception("Conditional expression must be logic expression")
-
-        irCompiler.createIf(condition.valueRef) {
-            compileStatement(nodeAST.body).valueRef
-        }
-        return Reference(null, builtInTypes.voidType, LLVMValueRef())
+        return condition
     }
 }
