@@ -28,6 +28,7 @@ public class Lexer {
 
         return when {
             isWhitespaceHead(char) -> consumeWhitespace() // Consume eg. ' ', \r, \n
+            isLineCommentHead(char) -> consumeLineComment() // Consume # Lorem ipsum\n
             isNumberHead(char) -> consumeNumber() // Consume [0-9]+
             isIdentifierHead(char) -> consumeIdentifierOrKeyword() // Consume [_a-Z][_a-Z0-9]
             isOperatorHead(char) -> consumeOperatorOrArrow(char) // Consume +, -, *, /, == and ->
@@ -50,6 +51,15 @@ public class Lexer {
     private fun consumeWhitespace(): Token.Whitespace {
         consumeCharactersWhile { it.isWhitespace() }
         return Token.Whitespace(createSourceLocation())
+    }
+
+    private fun isLineCommentHead(char: Char): Boolean {
+        return char == '#'
+    }
+
+    private fun consumeLineComment(): Token.LineComment {
+        consumeCharactersWhile { it != '\n' }
+        return Token.LineComment(createSourceLocation())
     }
 
     private fun isNumberHead(char: Char): Boolean {

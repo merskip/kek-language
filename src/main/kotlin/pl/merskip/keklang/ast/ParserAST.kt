@@ -13,7 +13,9 @@ public class ParserAST(
     tokens: List<Token>
 ) {
 
-    private val tokensIter = tokens.filter { it !is Token.Whitespace }.listIterator()
+    private val tokensIter = tokens.filterNot {
+        it is Token.Whitespace || it is Token.LineComment
+    }.listIterator()
 
     private val operators = listOf(
         Operator("==", 10),
