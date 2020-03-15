@@ -73,7 +73,7 @@ public class Lexer {
         if (char == '=') {
             val nextChar = getNextCharacter()
             if (nextChar != '=')
-                throw SourceLocationException("Expected =, but got $nextChar", createSourceLocation())
+                return Token.Unknown(createSourceLocation())
         }
         if (char == '-') {
             if (getNextCharacterIf { it == '>' } != null) {
