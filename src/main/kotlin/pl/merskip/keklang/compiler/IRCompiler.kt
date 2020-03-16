@@ -25,6 +25,12 @@ class IRCompiler(
         target = LLVMGetTarget(module).getTargetTriple()
     }
 
+    fun declareGlobalVariable(uniqueIdentifier: String, type: LLVMTypeRef): LLVMValueRef {
+        val globalVarRef = LLVMAddGlobal(module, type, uniqueIdentifier)
+        return globalVarRef
+    }
+
+
     fun declareFunction(uniqueIdentifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
         val parametersTypeRefPointer =  parameters.map { it.type.typeRef }.toTypeRefPointer()
         val functionTypeRef = LLVMFunctionType(returnType.typeRef, parametersTypeRefPointer, parameters.size, 0)
@@ -45,6 +51,10 @@ class IRCompiler(
 
     fun createReturnValue(valueRef: LLVMValueRef) {
         LLVMBuildRet(builder, valueRef)
+    }
+
+    fun createReturn() {
+        LLVMBuildRetVoid(builder)
     }
 
     fun createUnreachable() {

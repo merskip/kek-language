@@ -13,6 +13,9 @@ fun LLVMContextRef.createInt32() = LLVMInt32TypeInContext(this)!!
 fun LLVMContextRef.createInt64() = LLVMInt64TypeInContext(this)!!
 
 fun LLVMContextRef.createBytePointer() = LLVMPointerType(createInt8(), 0)!!
+fun LLVMContextRef.createOpaqueType(name: String) = LLVMStructCreateNamed(this, name)
+
+fun LLVMContextRef.createPointer(typeRef: LLVMTypeRef) = LLVMPointerType(typeRef, 0)!!
 
 fun LLVMContextRef.createStruct(identifier: String, fields: List<LLVMTypeRef>): LLVMTypeRef {
     val structTypeRef = LLVMStructCreateNamed(this, identifier)

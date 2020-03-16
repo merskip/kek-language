@@ -8,6 +8,8 @@ data class TypeIdentifier(
     val uniqueIdentifier: String
 ) {
 
+    constructor(identifier: String) : this(identifier, identifier)
+
     companion object {
 
         fun create(

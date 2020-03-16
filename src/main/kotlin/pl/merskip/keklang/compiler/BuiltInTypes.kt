@@ -70,6 +70,7 @@ class BuiltInTypes(
         typesRegister.register(stringType)
 
         registerSystemExit()
+        registerSystemPrint()
     }
 
     private fun registerSystemExit() {
@@ -98,12 +99,23 @@ class BuiltInTypes(
 
     private fun registerSystemPrint() {
 
-        // Declare `void exit(int status)` from C Standard Library
-        val externExit = FunctionBuilder.register(typesRegister, irCompiler) {
+        // Declare `FILE *stdout` from C Standard Library
+        val fileTypeRef = irCompiler.context.createOpaqueType("FILE")
+        val fileType = PrimitiveType(TypeIdentifier("FILE"), fileTypeRef)
+        typesRegister.register(fileType)
+
+        val stdout = irCompiler.declareGlobalVariable("stdout", fileTypeRef)
+        typesRegister.register(PrimitiveType(TypeIdentifier("stdout"), fileTypeRef))
+
+        // Declare `int fputs(const char *str, FILE *stream)` from C Standard Library
+        val fputs = FunctionBuilder.register(typesRegister, irCompiler) {
             noOverload(true)
-            simpleIdentifier("exit")
-            parameters("statusCode" to integerType)
-            returnType(voidType)
+            simpleIdentifier("fputs")
+            parameters(
+                "str" to bytePointerType,
+                "stream" to PrimitiveType(TypeIdentifier("FILE"), irCompiler.context.createPointer(fileTypeRef))
+            )
+            returnType(integerType)
         }
 
         // System.print(string: String)
@@ -114,8 +126,8 @@ class BuiltInTypes(
             returnType(voidType)
             inline(true)
             implementation { irCompiler, (string) ->
-                // TODO: Impl
-                irCompiler.createUnreachable()
+                irCompiler.createCallFunction(fputs, listOf(string, stdout))
+                irCompiler.createReturn()
             }
         }
     }
