@@ -4,6 +4,7 @@ import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
+import pl.merskip.keklang.compiler.llvm.createInt32
 import pl.merskip.keklang.compiler.llvm.getTargetTriple
 import pl.merskip.keklang.compiler.llvm.toTypeRefPointer
 import pl.merskip.keklang.compiler.llvm.toValueRefPointer
@@ -25,7 +26,8 @@ class IRCompiler(
     }
 
     fun declareFunction(uniqueIdentifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
-        val functionTypeRef = LLVMFunctionType(returnType.typeRef, parameters.toTypeRefPointer(), parameters.size, 0)
+        val parametersTypeRefPointer =  parameters.map { it.type.typeRef }.toTypeRefPointer()
+        val functionTypeRef = LLVMFunctionType(returnType.typeRef, parametersTypeRefPointer, parameters.size, 0)
         val functionValueRef = LLVMAddFunction(module, uniqueIdentifier, functionTypeRef)
 
         (parameters zip functionValueRef.getFunctionParametersValues())
@@ -99,6 +101,16 @@ class IRCompiler(
 
         LLVMInsertExistingBasicBlockAfterInsertBlock(builder, ifEndBlock)
         LLVMPositionBuilderAtEnd(builder, ifEndBlock)
+    }
+
+    fun createGetPointer(valueRef: LLVMValueRef, indices: List<Int>): LLVMValueRef {
+        val indicesValuesRefs = indices.map { LLVMConstInt(context.createInt32(), it.toLong(), 0) }
+        return LLVMBuildInBoundsGEP(builder, valueRef, indicesValuesRefs.toValueRefPointer(), indices.size, "pointer")
+    }
+
+    fun createString(string: String): LLVMValueRef {
+        val hash = "%02x".format(string.hashCode())
+        return LLVMBuildGlobalString(builder, string, ".str.$hash")
     }
 
     fun createAdd(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =

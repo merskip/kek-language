@@ -2,36 +2,38 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
-import pl.merskip.keklang.compiler.llvm.createBytePointer
-import pl.merskip.keklang.compiler.llvm.createInt1
-import pl.merskip.keklang.compiler.llvm.createInt32
-import pl.merskip.keklang.compiler.llvm.createVoid
+import pl.merskip.keklang.compiler.llvm.*
 
 class BuiltInTypes(
     private val typesRegister: TypesRegister,
     private val irCompiler: IRCompiler
 ) {
 
-    lateinit var voidType: Type
-    lateinit var booleanType: Type
-    lateinit var integerType: Type
-    lateinit var bytePointerType: Type
+    lateinit var voidType: PrimitiveType
+    lateinit var booleanType: PrimitiveType
+    lateinit var byteType: PrimitiveType
+    lateinit var integerType: PrimitiveType
+    lateinit var bytePointerType: PrimitiveType
 
     lateinit var systemType: Type
+    lateinit var stringType: Type
 
     companion object {
         const val VOID = "Void"
         const val BOOLEAN = "Boolean"
+        const val BYTE = "Byte"
         const val INTEGER = "Integer"
         const val BYTE_POINTER = "BytePointer"
 
         const val SYSTEM = "System"
+        const val STRING = "String"
 
         const val ADD_FUNCTION = "add"
         const val SUBTRACT_FUNCTION = "subtract"
         const val MULTIPLE_FUNCTION = "multiple"
         const val IS_EQUAL_TO_FUNCTION = "isEqualTo"
         const val EXIT_FUNCTION = "exit"
+        const val PRINT_FUNCTION = "print"
     }
 
     fun registerTypes(target: TargetTriple) {
@@ -45,6 +47,7 @@ class BuiltInTypes(
             TargetTriple.ArchType.x86, TargetTriple.ArchType.x86_64 -> {
                 voidType = registerType(VOID, irCompiler.context.createVoid())
                 booleanType = registerType(BOOLEAN, irCompiler.context.createInt1())
+                byteType = registerType(BYTE, irCompiler.context.createInt8())
                 integerType = registerType(INTEGER, irCompiler.context.createInt32())
                 bytePointerType = registerType(BYTE_POINTER, irCompiler.context.createBytePointer())
             }
@@ -52,7 +55,7 @@ class BuiltInTypes(
         }
     }
 
-    private fun registerType(simpleIdentifier: String, typeRef: LLVMTypeRef): Type {
+    private fun registerType(simpleIdentifier: String, typeRef: LLVMTypeRef): PrimitiveType {
         val identifier = TypeIdentifier.create(simpleIdentifier)
         val primitiveType = PrimitiveType(identifier, typeRef)
         typesRegister.register(primitiveType)
@@ -62,10 +65,14 @@ class BuiltInTypes(
     private fun registerStandardTypes() {
         systemType = PrimitiveType(TypeIdentifier.create(SYSTEM), irCompiler.context.createVoid())
         typesRegister.register(systemType)
-        registerSystemExit(systemType)
+
+        stringType = PrimitiveType(TypeIdentifier.create(STRING), irCompiler.context.createBytePointer())
+        typesRegister.register(stringType)
+
+        registerSystemExit()
     }
 
-    private fun registerSystemExit(systemType: Type) {
+    private fun registerSystemExit() {
 
         // Declare `void exit(int status)` from C Standard Library
         val externExit = FunctionBuilder.register(typesRegister, irCompiler) {
@@ -84,6 +91,30 @@ class BuiltInTypes(
             inline(true)
             implementation { irCompiler, (exitCode) ->
                 irCompiler.createCallFunction(externExit, listOf(exitCode))
+                irCompiler.createUnreachable()
+            }
+        }
+    }
+
+    private fun registerSystemPrint() {
+
+        // Declare `void exit(int status)` from C Standard Library
+        val externExit = FunctionBuilder.register(typesRegister, irCompiler) {
+            noOverload(true)
+            simpleIdentifier("exit")
+            parameters("statusCode" to integerType)
+            returnType(voidType)
+        }
+
+        // System.print(string: String)
+        FunctionBuilder.register(typesRegister, irCompiler) {
+            calleeType(systemType)
+            simpleIdentifier(PRINT_FUNCTION)
+            parameters("string" to stringType)
+            returnType(voidType)
+            inline(true)
+            implementation { irCompiler, (string) ->
+                // TODO: Impl
                 irCompiler.createUnreachable()
             }
         }

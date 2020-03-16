@@ -103,6 +103,7 @@ class Compiler(
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
             is FunctionCallNodeAST -> compileCallFunction(statement)
             is IfElseConditionNodeAST -> compileIfElseCondition(statement)
+            is ConstantStringNodeAST -> compileConstantString(statement)
             else -> throw Exception("TODO: $statement")
         }
     }
@@ -180,5 +181,11 @@ class Compiler(
         if (!condition.type.isCompatibleWith(builtInTypes.booleanType))
             throw Exception("Conditional expression must be logic expression")
         return condition
+    }
+
+    private fun compileConstantString(node: ConstantStringNodeAST): Reference {
+        val stringValueRef =  irCompiler.createString(node.string)
+        val stringPointerValueRef = irCompiler.createGetPointer(stringValueRef, listOf(0, 0))
+        return stringPointerValueRef.toReference(builtInTypes.stringType, "string")
     }
 }
