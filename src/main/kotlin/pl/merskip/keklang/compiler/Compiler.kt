@@ -6,12 +6,12 @@ import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 
 class Compiler(
-    private val irCompiler: IRCompiler
+    private val irCompiler: IRCompiler,
+    private val typesRegister: TypesRegister
 ) {
 
     val module = irCompiler.module
 
-    private val typesRegister = TypesRegister()
     private val referencesStack = ReferencesStack()
     private val builtInTypes = BuiltInTypes(typesRegister, irCompiler)
 

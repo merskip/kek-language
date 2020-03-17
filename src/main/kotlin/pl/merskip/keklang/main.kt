@@ -8,6 +8,7 @@ import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
 import pl.merskip.keklang.compiler.Compiler
 import pl.merskip.keklang.compiler.IRCompiler
+import pl.merskip.keklang.compiler.TypesRegister
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
 import java.io.File
@@ -90,7 +91,8 @@ fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
         val irCompiler = IRCompiler("kek-lang", targetTriple)
-        val compiler = Compiler(irCompiler)
+        val typeRegister = TypesRegister(typesDump)
+        val compiler = Compiler(irCompiler, typeRegister)
 
         if (isInterpreterMode()) {
             withInterpreter { inputText ->
