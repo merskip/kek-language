@@ -17,10 +17,11 @@ sealed class Token(
     class RightParenthesis(sourceLocation: SourceLocation) : Token(sourceLocation)
     class LeftBracket(sourceLocation: SourceLocation) : Token(sourceLocation)
     class RightBracket(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Comma(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Semicolon(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Colon(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Arrow(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class Dot(sourceLocation: SourceLocation) : Token(sourceLocation) // .
+    class Comma(sourceLocation: SourceLocation) : Token(sourceLocation) // ,
+    class Semicolon(sourceLocation: SourceLocation) : Token(sourceLocation) // ;
+    class Colon(sourceLocation: SourceLocation) : Token(sourceLocation) // :
+    class Arrow(sourceLocation: SourceLocation) : Token(sourceLocation) // ->
 
     val text: String
         get() = sourceLocation.text
