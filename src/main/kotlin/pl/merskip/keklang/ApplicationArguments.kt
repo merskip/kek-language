@@ -40,6 +40,11 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Specify the target triple"
     ).default<String?>(null)
 
+    val runJIT by parser.flagging(
+        "--run-jit",
+        help = "Runs Just-in-time starting from main function."
+    )
+
     val output by parser.storing(
         "-o", "--output",
         help = "Specify the output binary object file."

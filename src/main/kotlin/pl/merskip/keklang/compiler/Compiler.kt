@@ -39,7 +39,7 @@ class Compiler(
             val functionType = Function(identifier, parameters, returnType, typeRef, valueRef)
             typesRegister.register(functionType)
 
-            if (functionType.identifier.simpleIdentifier == "main") {
+            if (functionType.identifier.uniqueIdentifier == "main") {
                 createEntryProgram(functionType)
             }
         }

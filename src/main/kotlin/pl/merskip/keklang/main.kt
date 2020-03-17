@@ -8,7 +8,9 @@ import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
 import pl.merskip.keklang.compiler.Compiler
 import pl.merskip.keklang.compiler.IRCompiler
+import pl.merskip.keklang.compiler.TypeIdentifier
 import pl.merskip.keklang.compiler.TypesRegister
+import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
 import java.io.File
@@ -104,6 +106,11 @@ fun main(args: Array<String>) = mainBody {
                 processSource(filename, content, compiler)
             }
             processModule(compiler.module)
+        }
+
+        if (runJIT) {
+            val mainFunction = typeRegister.findFunction(TypeIdentifier("main._i"))
+            JIT(irCompiler.module).run(mainFunction)
         }
     }
 }
