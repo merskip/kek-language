@@ -10,6 +10,7 @@ interface NodeASTVisitor<T> {
     fun visitIfConditionNode(node: IfConditionNodeAST): T
     fun visitCodeBlockNode(node: CodeBlockNodeAST): T
     fun visitFunctionCallNode(node: FunctionCallNodeAST): T
+    fun visitTypeFunctionCallNode(node: TypeFunctionCallNodeAST): T
     fun visitConstantValueNode(node: ConstantValueNodeAST): T
     fun visitReferenceDeclarationNode(node: ReferenceDeclarationNodeAST): T
     fun visitTypeReferenceNode(node: TypeReferenceNodeAST): T

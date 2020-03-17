@@ -21,7 +21,12 @@ class PrimitiveType(
     typeRef: LLVMTypeRef
 ) : Type(identifier, typeRef) {
 
-    override fun toString() = "P^$identifier=" + LLVM.LLVMPrintTypeToString(typeRef).string
+    override fun toString() = "P^$identifier=${typeRefToString()}"
+
+    private fun typeRefToString(): String {
+        val string = LLVM.LLVMPrintTypeToString(typeRef).string
+        return if (string.contains(' ')) "\"$string\"" else string
+    }
 }
 
 class StructType(

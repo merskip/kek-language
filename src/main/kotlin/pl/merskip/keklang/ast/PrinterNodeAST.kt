@@ -88,6 +88,19 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
+    override fun visitTypeFunctionCallNode(node: TypeFunctionCallNodeAST) {
+        print(
+            nodeClass = node::class,
+            parameters =  mapOf(
+                "typeIdentifier" to node.typeIdentifier,
+                "functionIdentifier" to node.functionIdentifier
+            ),
+            children = mapOf(
+                "parameters" to node.parameters
+            )
+        )
+    }
+
     override fun visitConstantValueNode(node: ConstantValueNodeAST) {
         when (node) {
             is IntegerConstantValueNodeAST -> print(

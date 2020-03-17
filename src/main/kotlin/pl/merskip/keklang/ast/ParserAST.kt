@@ -191,29 +191,46 @@ public class ParserAST(
     }
 
     private fun parseReferenceOrFunctionCall(identifierToken: Token.Identifier): ASTNode {
-        return if (getAnyNextToken() is Token.LeftParenthesis) {
+        return when {
+            isNextToken<Token.LeftParenthesis>() -> {
 
-            val arguments = mutableListOf<StatementNodeAST>()
-            while (true) {
-                if (isNextToken<Token.RightParenthesis>()) break
-
-                val node = parseNextToken()
-                if (node !is StatementNodeAST)
-                    throw Exception("Expected statement node AST, but got ${node::class}")
-                arguments.add(node)
-
-                if (isNextToken<Token.RightParenthesis>()) break
-                getNextToken<Token.Comma>()
+                val (arguments, rightParenthesis) = parseArguments()
+                FunctionCallNodeAST(identifierToken.text, arguments)
+                    .sourceLocation(identifierToken, rightParenthesis)
             }
+            isNextToken<Token.Dot>() -> {
+                getNextToken<Token.Dot>()
 
-            val rightParenthesis = getNextToken<Token.RightParenthesis>()
-            FunctionCallNodeAST(identifierToken.text, arguments.toList())
-                .sourceLocation(identifierToken, rightParenthesis)
-        } else {
-            previousToken()
-            ReferenceNodeAST(identifierToken.text)
-                .sourceLocation(identifierToken)
+                val functionIdentifier = getNextToken<Token.Identifier>()
+
+                val (arguments, rightParenthesis) = parseArguments()
+                TypeFunctionCallNodeAST(identifierToken.text, functionIdentifier.text, arguments)
+                    .sourceLocation(identifierToken, rightParenthesis)
+            }
+            else -> {
+                ReferenceNodeAST(identifierToken.text)
+                    .sourceLocation(identifierToken)
+            }
         }
+    }
+
+    private fun parseArguments(): Pair<List<StatementNodeAST>, Token.RightParenthesis> {
+        getNextToken<Token.LeftParenthesis>()
+
+        val arguments = mutableListOf<StatementNodeAST>()
+        while (true) {
+            if (isNextToken<Token.RightParenthesis>()) break
+
+            val node = parseNextToken()
+            if (node !is StatementNodeAST)
+                throw Exception("Expected statement node AST, but got ${node::class}")
+            arguments.add(node)
+
+            if (isNextToken<Token.RightParenthesis>()) break
+            getNextToken<Token.Comma>()
+        }
+
+        return arguments.toList() to getNextToken()
     }
 
     private fun parseConstantValue(numberToken: Token.Number): ConstantValueNodeAST {
