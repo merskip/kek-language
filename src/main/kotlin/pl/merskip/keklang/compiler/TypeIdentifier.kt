@@ -28,6 +28,7 @@ data class TypeIdentifier(
                 "Integer" -> "_i"
                 "Boolean" -> "_b"
                 "BytePointer" -> "_p"
+                "String" -> "_s"
                 else -> "T$identifier"
             }
     }

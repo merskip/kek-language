@@ -26,13 +26,11 @@ class IRCompiler(
     }
 
     fun declareGlobalVariable(uniqueIdentifier: String, type: LLVMTypeRef): LLVMValueRef {
-        val globalVarRef = LLVMAddGlobal(module, type, uniqueIdentifier)
-        return globalVarRef
+        return LLVMAddGlobal(module, type, uniqueIdentifier)
     }
 
-
     fun declareFunction(uniqueIdentifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
-        val parametersTypeRefPointer =  parameters.map { it.type.typeRef }.toTypeRefPointer()
+        val parametersTypeRefPointer = parameters.map { it.type.typeRef }.toTypeRefPointer()
         val functionTypeRef = LLVMFunctionType(returnType.typeRef, parametersTypeRefPointer, parameters.size, 0)
         val functionValueRef = LLVMAddFunction(module, uniqueIdentifier, functionTypeRef)
 
@@ -116,6 +114,10 @@ class IRCompiler(
     fun createGetPointer(valueRef: LLVMValueRef, indices: List<Int>): LLVMValueRef {
         val indicesValuesRefs = indices.map { LLVMConstInt(context.createInt32(), it.toLong(), 0) }
         return LLVMBuildInBoundsGEP(builder, valueRef, indicesValuesRefs.toValueRefPointer(), indices.size, "pointer")
+    }
+
+    fun createBitCast(valueRef: LLVMValueRef, toTypeRef: LLVMTypeRef): LLVMValueRef {
+        return LLVMBuildBitCast(builder, valueRef, toTypeRef, "")
     }
 
     fun createString(string: String): LLVMValueRef {

@@ -24,9 +24,9 @@ class BuiltInTypes(
         const val BYTE = "Byte"
         const val INTEGER = "Integer"
         const val BYTE_POINTER = "BytePointer"
+        const val STRING = "String"
 
         const val SYSTEM = "System"
-        const val STRING = "String"
 
         const val ADD_FUNCTION = "add"
         const val SUBTRACT_FUNCTION = "subtract"
@@ -50,6 +50,7 @@ class BuiltInTypes(
                 byteType = registerType(BYTE, irCompiler.context.createInt8())
                 integerType = registerType(INTEGER, irCompiler.context.createInt32())
                 bytePointerType = registerType(BYTE_POINTER, irCompiler.context.createBytePointer())
+                stringType = registerType(STRING, irCompiler.context.createBytePointer())
             }
             else -> error("Unsupported arch: ${target.archType}")
         }
@@ -63,11 +64,7 @@ class BuiltInTypes(
     }
 
     private fun registerStandardTypes() {
-        systemType = PrimitiveType(TypeIdentifier.create(SYSTEM), irCompiler.context.createVoid())
-        typesRegister.register(systemType)
-
-        stringType = PrimitiveType(TypeIdentifier.create(STRING), irCompiler.context.createBytePointer())
-        typesRegister.register(stringType)
+        systemType = registerType(SYSTEM, irCompiler.context.createVoid())
 
         registerSystemExit()
         registerSystemPrint()
@@ -112,7 +109,7 @@ class BuiltInTypes(
             noOverload(true)
             simpleIdentifier("fputs")
             parameters(
-                "str" to bytePointerType,
+                "str" to stringType,
                 "stream" to PrimitiveType(TypeIdentifier("FILE"), irCompiler.context.createPointer(fileTypeRef))
             )
             returnType(integerType)

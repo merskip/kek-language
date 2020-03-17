@@ -2,6 +2,7 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import pl.merskip.keklang.ast.node.*
+import pl.merskip.keklang.compiler.llvm.createBytePointer
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 
@@ -101,6 +102,7 @@ class Compiler(
             is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
+            is TypeFunctionCallNodeAST -> compileCallTypeFunction(statement)
             is FunctionCallNodeAST -> compileCallFunction(statement)
             is IfElseConditionNodeAST -> compileIfElseCondition(statement)
             is ConstantStringNodeAST -> compileConstantString(statement)
@@ -145,9 +147,21 @@ class Compiler(
         return compileCallFunction(invokeFunction, listOf(lhs, rhs))
     }
 
+    private fun compileCallTypeFunction(nodeAST: TypeFunctionCallNodeAST): Reference {
+        val arguments = nodeAST.parameters.map { compileStatement(it) }
+        val argumentsTypes = arguments.map { it.type }
+
+        val type = typesRegister.findType(nodeAST.typeIdentifier)
+        val function = typesRegister.findFunction(type, nodeAST.functionIdentifier, argumentsTypes)
+
+        return compileCallFunction(function, arguments)
+    }
+
     private fun compileCallFunction(nodeAST: FunctionCallNodeAST): Reference {
         val arguments = nodeAST.parameters.map { compileStatement(it) }
-        val function = typesRegister.findFunction(TypeIdentifier.create(nodeAST.identifier, arguments.map { it.type }))
+        val argumentsTypes = arguments.map { it.type }
+
+        val function = typesRegister.findFunction(TypeIdentifier.create(nodeAST.identifier, argumentsTypes))
 
         return compileCallFunction(function, arguments)
     }
@@ -185,7 +199,7 @@ class Compiler(
 
     private fun compileConstantString(node: ConstantStringNodeAST): Reference {
         val stringValueRef =  irCompiler.createString(node.string)
-        val stringPointerValueRef = irCompiler.createGetPointer(stringValueRef, listOf(0, 0))
+        val stringPointerValueRef = irCompiler.createBitCast(stringValueRef, irCompiler.context.createBytePointer())
         return stringPointerValueRef.toReference(builtInTypes.stringType, "string")
     }
 }
