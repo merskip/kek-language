@@ -1,9 +1,9 @@
 package pl.merskip.keklang.compiler
 
 data class TargetTriple(
-    val archType: ArchType,
-    val vendor: VendorType,
-    val operatingSystem: OSType,
+    val archType: ArchType?,
+    val vendor: VendorType?,
+    val operatingSystem: OSType?,
     val environment: EnvironmentType?
 ) {
 

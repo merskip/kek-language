@@ -2,6 +2,7 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.llvm.*
 
 class BuiltInTypes(
@@ -50,7 +51,7 @@ class BuiltInTypes(
                 byteType = registerType(BYTE, irCompiler.context.createInt8())
                 integerType = registerType(INTEGER, irCompiler.context.createInt32())
                 bytePointerType = registerType(BYTE_POINTER, irCompiler.context.createBytePointer())
-                stringType = registerType(STRING, irCompiler.context.createBytePointer())
+                stringType = registerType(STRING, LLVM.LLVMPointerType(LLVM.LLVMInt8Type(), 0)!!)
             }
             else -> error("Unsupported arch: ${target.archType}")
         }

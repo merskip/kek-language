@@ -79,13 +79,15 @@ fun ApplicationArguments.tryProcessSources(filename: String?, content: String, c
 
 fun ApplicationArguments.processModule(module: LLVMModuleRef) {
 
-    if (llvmIRDump) {
-        println(LLVM.LLVMPrintModuleToString(module).string.colorizeLLVMIR())
-    }
+
 
     output?.let { outputFilename ->
         val backendCompiler = BackendCompiler(module)
         backendCompiler.compile(outputFilename.withExtensionIfNoExists(".o"), asmDump, bitcode)
+    }
+
+    if (llvmIRDump) {
+        println(LLVM.LLVMPrintModuleToString(module).string.colorizeLLVMIR())
     }
 }
 

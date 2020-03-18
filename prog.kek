@@ -1,5 +1,5 @@
 
 func main() -> Integer {
-   # System.print("Hello world!")
+    System.print("Hello world!")
     0
 }

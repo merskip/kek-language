@@ -2,7 +2,6 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import pl.merskip.keklang.ast.node.*
-import pl.merskip.keklang.compiler.llvm.createBytePointer
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 
@@ -199,7 +198,7 @@ class Compiler(
 
     private fun compileConstantString(node: ConstantStringNodeAST): Reference {
         val stringValueRef =  irCompiler.createString(node.string)
-        val stringPointerValueRef = irCompiler.createBitCast(stringValueRef, irCompiler.context.createBytePointer())
-        return stringPointerValueRef.toReference(builtInTypes.stringType, "string")
+//        val stringPointerValueRef = irCompiler.createBitCast(stringValueRef, irCompiler.context.createBytePointer())
+        return stringValueRef.toReference(builtInTypes.stringType, "string")
     }
 }

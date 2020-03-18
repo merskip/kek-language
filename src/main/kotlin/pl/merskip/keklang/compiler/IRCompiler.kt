@@ -122,7 +122,7 @@ class IRCompiler(
 
     fun createString(string: String): LLVMValueRef {
         val hash = "%02x".format(string.hashCode())
-        return LLVMBuildGlobalString(builder, string, ".str.$hash")
+        return LLVMBuildGlobalStringPtr(builder, string, ".str.$hash")
     }
 
     fun createAdd(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
