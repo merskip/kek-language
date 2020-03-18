@@ -1,7 +1,9 @@
 package pl.merskip.keklang.jit
 
 import org.bytedeco.javacpp.BytePointer
+import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMExecutionEngineRef
+import org.bytedeco.llvm.LLVM.LLVMGenericValueRef
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.compiler.Function
@@ -23,11 +25,7 @@ class JIT(
         }
 
         println("Executing JIT...")
-
-        print("a= ")
-        val a = LLVMCreateGenericValueOfInt(LLVMInt32Type(), readLine()!!.toLong(), 0)
-
-        val result = LLVMRunFunction(engine, mainFunction.valueRef, 1, a)
+        val result = LLVMRunFunction(engine, mainFunction.valueRef, 0, PointerPointer<LLVMGenericValueRef>())
         println("Result: " + LLVMGenericValueToInt(result, 0))
     }
 }

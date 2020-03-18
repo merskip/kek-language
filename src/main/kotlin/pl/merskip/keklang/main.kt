@@ -109,7 +109,7 @@ fun main(args: Array<String>) = mainBody {
         }
 
         if (runJIT) {
-            val mainFunction = typeRegister.findFunction(TypeIdentifier("main._i"))
+            val mainFunction = typeRegister.findFunction(TypeIdentifier("main"))
             JIT(irCompiler.module).run(mainFunction)
         }
     }
