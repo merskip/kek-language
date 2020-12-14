@@ -23,12 +23,13 @@ class BackendCompiler(
         LLVM.LLVMAddJumpThreadingPass(passManager)
         LLVM.LLVMRunPassManager(passManager, module)
 
-        val targetTriple = LLVM.LLVMGetDefaultTargetTriple()
-        LLVM.LLVMSetTarget(module, targetTriple)
+        val targetTriple = LLVM.LLVMGetTarget(module).string
         val target = LLVM.LLVMGetFirstTarget()
 
+        println("Target-Triple: $targetTriple")
+
         val targetMachine = LLVM.LLVMCreateTargetMachine(
-            target, targetTriple.string,
+            target, targetTriple,
             "generic", "",
             LLVM.LLVMCodeGenLevelNone, LLVM.LLVMRelocDefault, LLVM.LLVMCodeModelDefault
         )
@@ -58,7 +59,7 @@ class BackendCompiler(
         }
 
         val executableFile = filename.withExtension("")
-        val process = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", "_kek_start", "-o", executableFile, objectFile, "-lc")
+        val process = ProcessBuilder("wsl.exe", "--exec", "gcc", "-o", executableFile, objectFile)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()

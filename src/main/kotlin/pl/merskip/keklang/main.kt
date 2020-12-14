@@ -32,8 +32,10 @@ fun withInterpreter(callback: (inputText: String) -> Unit) {
 }
 
 fun withReadSources(sources: List<String>, callback: (filename: String, content: String) -> Unit) {
+    println("Compiling sources...")
     sources.forEach { filename ->
         val file = File(filename)
+        println("Compiling ${file.absolutePath}...")
         val content = file.readText()
         callback(filename, content)
     }
@@ -78,12 +80,11 @@ fun ApplicationArguments.tryProcessSources(filename: String?, content: String, c
 }
 
 fun ApplicationArguments.processModule(module: LLVMModuleRef) {
-
-
-
     output?.let { outputFilename ->
+        val outputFile = outputFilename.withExtensionIfNoExists(".o")
+        println("Output file: $outputFile")
         val backendCompiler = BackendCompiler(module)
-        backendCompiler.compile(outputFilename.withExtensionIfNoExists(".o"), asmDump, bitcode)
+        backendCompiler.compile(outputFile, asmDump, bitcode)
     }
 
     if (llvmIRDump) {
