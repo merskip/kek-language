@@ -1,17 +1,16 @@
 package pl.merskip.keklang
 
 import org.bytedeco.javacpp.BytePointer
-import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import java.util.concurrent.TimeUnit
+
 
 class BackendCompiler(
     private val module: LLVMModuleRef
 ) {
 
     fun compile(filename: String, dumpAssembler: Boolean, generateBitcode: Boolean) {
-
 
         if (generateBitcode) {
             LLVM.LLVMWriteBitcodeToFile(module, filename.withExtension(".bc"))
@@ -29,9 +28,10 @@ class BackendCompiler(
         LLVM.LLVMRunPassManager(passManager, module)
 
         val targetTriple = LLVM.LLVMGetTarget(module).string
-        val target = LLVM.LLVMGetFirstTarget()
+        val target = LLVM.LLVMGetTargetFromName("x86-64") // TODO: Get From Target-Triple
 
         println("Target-Triple: $targetTriple")
+        println("Target: " + LLVM.LLVMGetTargetDescription(target).string)
 
         val targetMachine = LLVM.LLVMCreateTargetMachine(
             target, targetTriple,
@@ -53,10 +53,12 @@ class BackendCompiler(
         }
 
         val objectFile = filename.withExtension(".o")
-        val errorMessage = PointerPointer<BytePointer>(512L)
+        val errorMessage = BytePointer()
+        println("Emitting machine code to $objectFile...")
         if (LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer(objectFile), LLVM.LLVMObjectFile, errorMessage) != 0) {
-            println("Failed target machine to file")
-            println(BytePointer(errorMessage).string)
+            println("(!) Failed target machine to file")
+            println("Error message: " + BytePointer(errorMessage).string)
+            return
         }
 
         if (generateBitcode) {
