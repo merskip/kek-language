@@ -12,6 +12,11 @@ class BackendCompiler(
 
     fun compile(filename: String, dumpAssembler: Boolean, generateBitcode: Boolean) {
 
+
+        if (generateBitcode) {
+            LLVM.LLVMWriteBitcodeToFile(module, filename.withExtension(".bc"))
+        }
+
         LLVM.LLVMInitializeAllTargetInfos()
         LLVM.LLVMInitializeAllTargets()
         LLVM.LLVMInitializeAllTargetMCs()
@@ -59,7 +64,7 @@ class BackendCompiler(
         }
 
         val executableFile = filename.withExtension("")
-        val process = ProcessBuilder("wsl.exe", "--exec", "gcc", "-o", executableFile, objectFile)
+        val process = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", "_kek_start", "-o", executableFile, objectFile)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()

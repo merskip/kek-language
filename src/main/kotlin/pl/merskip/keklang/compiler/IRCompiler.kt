@@ -60,7 +60,7 @@ class IRCompiler(
     }
 
     fun createConstantIntegerValue(value: Long, type: Type): LLVMValueRef {
-        return LLVMConstInt(type.typeRef, value, 0)
+        return LLVMConstInt(type.typeRef, value, 1)
     }
 
     fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef =
