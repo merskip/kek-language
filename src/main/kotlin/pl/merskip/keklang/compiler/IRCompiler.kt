@@ -1,6 +1,7 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.javacpp.BytePointer
+import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
@@ -136,6 +137,58 @@ class IRCompiler(
 
     fun createIsEqual(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
         LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
+
+    fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
+        val target = LLVMGetTarget(module).getTargetTriple()
+        when (target.archType) {
+            TargetTriple.ArchType.x86_64 -> {
+                val registersNames = listOf("rax", "rdi", "rsi", "rdx", "r10", "r8", "r9")
+                val registersParameters = listOf(
+                    LLVMConstInt(LLVMInt64TypeInContext(context), number, 1),
+                    *parameters
+                )
+
+                val instructions = mutableListOf<String>()
+                val inputsRegister = mutableListOf<String>()
+                registersParameters.forEachIndexed { index, _ ->
+                    val register = registersNames[index]
+                    instructions += "movq \$${index + 1}, %$register"
+                    inputsRegister += "{$register}"
+                }
+                instructions += "syscall"
+                instructions += "movq %rax, $0"
+                return createAssembler(
+                    instructions,
+                    outputConstraints = listOf("={rax}"),
+                    inputConstraints = inputsRegister,
+                    input = registersParameters
+                )
+            }
+            else -> error("Unsupported arch: ${target.archType}")
+        }
+    }
+
+    fun createAssembler(
+        instructions: List<String>,
+        input: List<LLVMValueRef> = emptyList(),
+        outputConstraints: List<String> = emptyList(),
+        inputConstraints: List<String> = emptyList(),
+        clobberConstraints: List<String> = emptyList()
+    ): LLVMValueRef {
+        val assemblerCode = instructions.joinToString("; ")
+        val constraints = listOf(outputConstraints, inputConstraints, clobberConstraints)
+            .flatten().joinToString(",")
+
+        val returnType = LLVMInt64TypeInContext(context)
+        val functionType = LLVMFunctionType(returnType, PointerPointer<LLVMTypeRef>(), 0, 1)
+        val asmValue = LLVMGetInlineAsm(
+            functionType,
+            BytePointer(assemblerCode), assemblerCode.length.toLong(),
+            BytePointer(constraints), constraints.length.toLong(),
+            1, 0, LLVMInlineAsmDialectATT
+        )
+        return LLVMBuildCall(builder, asmValue, PointerPointer<LLVMValueRef>(*input.toTypedArray()), input.size, "asm")
+    }
 
     fun verifyFunction(function: Function): Boolean {
         if (LLVMVerifyFunction(function.valueRef, LLVMPrintMessageAction) != 0) {
