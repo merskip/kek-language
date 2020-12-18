@@ -1,9 +1,7 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.LLVMContextRef
-import org.bytedeco.llvm.LLVM.LLVMMetadataRef
-import org.bytedeco.llvm.LLVM.LLVMModuleRef
+import org.bytedeco.llvm.LLVM.*
 import org.bytedeco.llvm.global.LLVM.*
 
 class DIBuilder(
@@ -87,6 +85,51 @@ class DIBuilder(
             flags,
             isOptimized.toInt()
         )
+    }
+
+    fun createParameterVariable(
+        scope: LLVMMetadataRef,
+        name: String,
+        argumentIndex: Int,
+        file: LLVMMetadataRef,
+        lineNumber: Int,
+        type: LLVMMetadataRef,
+        alwaysPreserve: Boolean,
+        flags: Int
+    ): LLVMMetadataRef {
+        return LLVMDIBuilderCreateParameterVariable(
+            diBuilder,
+            scope,
+            name,
+            name.length.toLong(),
+            argumentIndex,
+            file,
+            lineNumber,
+            type,
+            alwaysPreserve.toInt(),
+            flags
+        )
+    }
+
+    fun createInsertDeclare(
+        value: LLVMValueRef,
+        variableInfo: LLVMMetadataRef,
+        expression: LLVMMetadataRef,
+        location: LLVMMetadataRef,
+        block: LLVMBasicBlockRef
+    ): LLVMValueRef {
+        return LLVMDIBuilderInsertDeclareAtEnd(
+            diBuilder,
+            value,
+            variableInfo,
+            expression,
+            location,
+            block
+        )
+    }
+
+    fun createExpression(): LLVMMetadataRef {
+        return LLVMDIBuilderCreateExpression(diBuilder, longArrayOf(), 0L)
     }
 
     fun createLexicalBlock(

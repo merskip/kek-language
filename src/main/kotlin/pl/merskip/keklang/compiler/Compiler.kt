@@ -3,6 +3,8 @@ package pl.merskip.keklang.compiler
 import org.bytedeco.llvm.LLVM.LLVMMetadataRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
+import org.bytedeco.llvm.global.LLVM.LLVMDILocalVariableMetadataKind
+import org.bytedeco.llvm.global.LLVM.LLVMMetadataAsValue
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
@@ -124,7 +126,37 @@ class Compiler(
             referencesStack.setDebugScope(debugFunction)
             irCompiler.setFunctionDebugSubprogram(function, debugFunction)
 
-            irCompiler.beginFunctionEntry(function)
+            val entryBlock = irCompiler.beginFunctionEntry(function)
+
+            parameters.zip(debugParameters).withIndex().forEach {
+                val (parameter, debugParameter) = it.value
+                val debugVariable = diBuilder.createParameterVariable(
+                    referencesStack.getDebugScope(),
+                    parameter.identifier,
+                    it.index,
+                    fileRef,
+                    nodeAST.sourceLocation.startIndex.line,
+                    debugParameter,
+                    true,
+                    0
+                )
+                val parameterReference = referencesStack.getReference(parameter.identifier)
+                val parameterAlloca = irCompiler.createAlloca(parameter.identifier + "_alloca", parameter.type.typeRef)
+                irCompiler.createStore(parameterAlloca, parameterReference.valueRef)
+
+                diBuilder.createInsertDeclare(
+                    parameterAlloca,
+                    debugVariable,
+                    diBuilder.createExpression(),
+                    diBuilder.createDebugLocation(
+                        nodeAST.sourceLocation.startIndex.line,
+                        nodeAST.sourceLocation.startIndex.column,
+                        referencesStack.getDebugScope()
+                    ),
+                    entryBlock
+                )
+            }
+
             val returnValue = compileStatement(nodeAST.body)
 
             if (!function.returnType.isCompatibleWith(returnValue.type))
@@ -141,11 +173,13 @@ class Compiler(
         }
 
     private fun compileStatement(statement: StatementNodeAST): Reference {
-        irCompiler.setCurrentDebugLocation(diBuilder.createDebugLocation(
-            statement.sourceLocation.startIndex.line,
-            statement.sourceLocation.startIndex.column,
-            referencesStack.getDebugScope()
-        ))
+        irCompiler.setCurrentDebugLocation(
+            diBuilder.createDebugLocation(
+                statement.sourceLocation.startIndex.line,
+                statement.sourceLocation.startIndex.column,
+                referencesStack.getDebugScope()
+            )
+        )
         return when (statement) {
             is ReferenceNodeAST -> referencesStack.getReference(statement.identifier)
             is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
@@ -202,12 +236,6 @@ class Compiler(
 
         val type = typesRegister.findType(nodeAST.typeIdentifier)
         val function = typesRegister.findFunction(type, nodeAST.functionIdentifier, argumentsTypes)
-
-//        irCompiler.setCurrentDebugLocation(diBuilder.createDebugLocation(
-//            nodeAST.sourceLocation.startIndex.line,
-//            nodeAST.sourceLocation.startIndex.column,
-//            referencesStack.getDebugScope()
-//        ))
         return compileCallFunction(function, arguments)
     }
 
@@ -216,12 +244,6 @@ class Compiler(
         val argumentsTypes = arguments.map { it.type }
 
         val function = typesRegister.findFunction(TypeIdentifier.create(nodeAST.identifier, argumentsTypes))
-
-//        irCompiler.setCurrentDebugLocation(diBuilder.createDebugLocation(
-//            nodeAST.sourceLocation.startIndex.line,
-//            nodeAST.sourceLocation.startIndex.column,
-//            referencesStack.getDebugScope()
-//        ))
         return compileCallFunction(function, arguments)
     }
 
@@ -257,8 +279,7 @@ class Compiler(
     }
 
     private fun compileConstantString(node: ConstantStringNodeAST): Reference {
-        val stringValueRef =  irCompiler.createString(node.string)
-//        val stringPointerValueRef = irCompiler.createBitCast(stringValueRef, irCompiler.context.createBytePointer())
+        val stringValueRef = irCompiler.createString(node.string)
         return stringValueRef.toReference(builtInTypes.stringType, "string")
     }
 }
