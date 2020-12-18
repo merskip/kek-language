@@ -1,12 +1,16 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.llvm.LLVM.LLVMMetadataRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
+import java.io.File
 
 class Compiler(
     private val irCompiler: IRCompiler,
+    private val diBuilder: DIBuilder,
     private val typesRegister: TypesRegister
 ) {
 
@@ -14,16 +18,37 @@ class Compiler(
 
     private val referencesStack = ReferencesStack()
     private val builtInTypes = BuiltInTypes(typesRegister, irCompiler)
+    lateinit var fileRef: LLVMMetadataRef
 
     init {
         builtInTypes.registerTypes(irCompiler.target)
     }
 
     fun compile(fileNodeAST: FileNodeAST) {
+
+        val sourceFile = fileNodeAST.sourceLocation.file ?: File.createTempFile("kek-lang", "temp-file")
+        fileRef = diBuilder.createFile(sourceFile.name, ".")
+
+        diBuilder.createCompileUnit(
+            sourceLanguage = DIBuilder.SourceLanguage.C,
+            file = fileRef,
+            producer = "KeK Language Compiler",
+            isOptimized = true,
+            flags = "",
+            runtimeVersion = 0,
+            splitName = null,
+            emissionKind = DIBuilder.EmissionKind.Full,
+            DWOId = 1,
+            splitDebugInlining = true,
+            debugInfoForProfiling = true
+        )
+
         registerAllFunctions(fileNodeAST)
         fileNodeAST.nodes.forEach {
             compileFunctionBody(it)
         }
+
+        diBuilder.finalize()
         irCompiler.verifyModule()
     }
 
@@ -35,12 +60,12 @@ class Compiler(
             val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
 
             val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-            val functionType = Function(identifier, parameters, returnType, typeRef, valueRef)
-            typesRegister.register(functionType)
+            val function = Function(identifier, parameters, returnType, typeRef, valueRef)
 
-            if (functionType.identifier.uniqueIdentifier == "main") {
-                createEntryProgram(functionType)
+            if (function.identifier.uniqueIdentifier == "main") {
+                createEntryProgram(function)
             }
+            typesRegister.register(function)
         }
     }
 
@@ -78,14 +103,34 @@ class Compiler(
                 referencesStack.addReference(parameter.identifier, parameter.type, value)
             }
 
+            val debugParameters = parameters.map { parameter ->
+                val sizeInBits = LLVM.LLVMGetIntTypeWidth(parameter.type.typeRef)
+                diBuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), DIBuilder.Encoding.Signed, 0)
+            }
+            val debugSubroutineType = diBuilder.createSubroutineType(fileRef, debugParameters, 0)
+            val debugFunction = diBuilder.createFunction(
+                scope = fileRef,
+                name = nodeAST.identifier,
+                linkageName = null,
+                file = fileRef,
+                type = debugSubroutineType,
+                lineNumber = nodeAST.sourceLocation.startIndex.line,
+                isLocalToUnit = true,
+                isDefinition = true,
+                scopeLine = nodeAST.sourceLocation.startIndex.line,
+                flags = 0,
+                isOptimized = true
+            )
+            referencesStack.setDebugScope(debugFunction)
+            irCompiler.setFunctionDebugSubprogram(function, debugFunction)
+
             irCompiler.beginFunctionEntry(function)
             val returnValue = compileStatement(nodeAST.body)
 
             if (!function.returnType.isCompatibleWith(returnValue.type))
                 throw Exception("Mismatch types. Expected return ${function.returnType.identifier}, but got ${returnValue.type.identifier}")
-            irCompiler.createReturnValue(returnValue.valueRef)
 
-            irCompiler.verifyFunction(function)
+            irCompiler.createReturnValue(returnValue.valueRef)
         }
     }
 
@@ -96,6 +141,11 @@ class Compiler(
         }
 
     private fun compileStatement(statement: StatementNodeAST): Reference {
+        irCompiler.setCurrentDebugLocation(diBuilder.createDebugLocation(
+            statement.sourceLocation.startIndex.line,
+            statement.sourceLocation.startIndex.column,
+            referencesStack.getDebugScope()
+        ))
         return when (statement) {
             is ReferenceNodeAST -> referencesStack.getReference(statement.identifier)
             is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
@@ -153,6 +203,11 @@ class Compiler(
         val type = typesRegister.findType(nodeAST.typeIdentifier)
         val function = typesRegister.findFunction(type, nodeAST.functionIdentifier, argumentsTypes)
 
+//        irCompiler.setCurrentDebugLocation(diBuilder.createDebugLocation(
+//            nodeAST.sourceLocation.startIndex.line,
+//            nodeAST.sourceLocation.startIndex.column,
+//            referencesStack.getDebugScope()
+//        ))
         return compileCallFunction(function, arguments)
     }
 
@@ -162,6 +217,11 @@ class Compiler(
 
         val function = typesRegister.findFunction(TypeIdentifier.create(nodeAST.identifier, argumentsTypes))
 
+//        irCompiler.setCurrentDebugLocation(diBuilder.createDebugLocation(
+//            nodeAST.sourceLocation.startIndex.line,
+//            nodeAST.sourceLocation.startIndex.column,
+//            referencesStack.getDebugScope()
+//        ))
         return compileCallFunction(function, arguments)
     }
 

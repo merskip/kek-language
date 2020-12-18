@@ -73,7 +73,7 @@ class FunctionBuilder {
             implementation(irCompiler, parametersValues)
         }
 
-        irCompiler.verifyFunction(function)
+//        irCompiler.verifyFunction(function)
         return function
     }
 }

@@ -49,6 +49,7 @@ class BackendCompiler(
 
         if (dumpAssembler) {
             val error = BytePointer(512L)
+            LLVM.LLVMSetTargetMachineAsmVerbosity(targetMachine, 1)
             LLVM.LLVMTargetMachineEmitToFile(targetMachine, module, BytePointer(filename.withExtension(".asm")), LLVM.LLVMAssemblyFile, error)
         }
 

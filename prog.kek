@@ -1,5 +1,11 @@
 
+func sayHello() -> Integer {
+    System.print("Hello world!   \n")
+    System.print("Witaj świecie!\n")
+    0 # Just return any value
+}
+
 func main() -> Integer {
-    System.print("***** ***!\n")
-    0
+    sayHello()
+    0 # Exit program with success
 }

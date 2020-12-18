@@ -2,6 +2,8 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.PointerPointer
+import org.bytedeco.llvm.LLVM.LLVMDIBuilderRef
+import org.bytedeco.llvm.LLVM.LLVMMetadataRef
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
@@ -10,6 +12,7 @@ import pl.merskip.keklang.compiler.llvm.getTargetTriple
 import pl.merskip.keklang.compiler.llvm.toTypeRefPointer
 import pl.merskip.keklang.compiler.llvm.toValueRefPointer
 import pl.merskip.keklang.getFunctionParametersValues
+import kotlin.random.Random
 
 class IRCompiler(
     moduleId: String,
@@ -20,10 +23,53 @@ class IRCompiler(
     val module = LLVMModuleCreateWithNameInContext(moduleId, context)!!
     val builder = LLVMCreateBuilder()
     val target: TargetTriple
+//    val diBuilder: LLVMDIBuilderRef
+//    val fileRef: LLVMMetadataRef
+//    val unitRef: LLVMMetadataRef
+//    var currentFunctionLocRef: LLVMMetadataRef? = null
 
     init {
         LLVMSetTarget(module, targetTriple ?: LLVMGetDefaultTargetTriple().string)
         target = LLVMGetTarget(module).getTargetTriple()
+
+
+//
+//        diBuilder = LLVMCreateDIBuilder(module)
+//        fileRef = LLVMDIBuilderCreateFile(
+//            diBuilder,
+//            "prog.kek", "prog.kek".length.toLong(),
+//            "/mnt/d/Workspace/KeK-Language/", "/mnt/d/Workspace/KeK-Language/".length.toLong()
+//        )
+//        unitRef = LLVMDIBuilderCreateCompileUnit(
+//            diBuilder,
+//            LLVMDWARFSourceLanguageC,
+//            fileRef,
+//            "Kek-Language Compiler", "Kek-Language Compiler".length.toLong(),
+//            0,
+//            "", 0L,
+//            0,
+//            null, 0L,
+//            LLVMDWARFEmissionFull,
+//            1,
+//            0,
+//1
+//        )
+
+        LLVMAddModuleFlag(
+            module, LLVMModuleFlagBehaviorWarning,
+            "Debug Info Version", "Debug Info Version".length.toLong(),
+            LLVMValueAsMetadata(
+                LLVMConstInt(LLVMInt32TypeInContext(context), LLVMDebugMetadataVersion().toLong(), 0)
+            )
+        )
+
+        LLVMAddModuleFlag(
+            module, LLVMModuleFlagBehaviorWarning,
+            "Dwarf Version", "Dwarf Version".length.toLong(),
+            LLVMValueAsMetadata(
+                LLVMConstInt(LLVMInt32TypeInContext(context), 2L, 0)
+            )
+        )
     }
 
     fun declareGlobalVariable(uniqueIdentifier: String, type: LLVMTypeRef): LLVMValueRef {
@@ -40,23 +86,77 @@ class IRCompiler(
                 LLVMSetValueName(value, parameter.identifier)
             }
 
+//        val functionType = LLVMDIBuilderCreateTypedef(
+//            diBuilder, null, returnType.identifier.uniqueIdentifier, returnType.identifier.uniqueIdentifier.length.toLong(),
+//            fileRef, 1, fileRef, 0
+//        );
+//
+//        val functionType = LLVMDIBuilderCreateSubroutineType(diBuilder, fileRef, LLVMDIBuilderCreateNullPtrType(diBuilder), 0, LLVMDIFlagZero)
+//
+//        currentFunctionLocRef = LLVMDIBuilderCreateFunction(
+//            diBuilder,
+//            fileRef,
+//            uniqueIdentifier,
+//            uniqueIdentifier.length.toLong(),
+//            null,
+//            0L,
+//            fileRef,
+//            2,
+//            functionType,
+//            0,
+//            1,
+//            1,
+//            0,
+//            0
+//        )
+//
+//        LLVMSetSubprogram(functionValueRef, currentFunctionLocRef)
+
         return Pair(functionTypeRef, functionValueRef)
     }
 
     fun beginFunctionEntry(function: Function) {
+
         val entryBlock = LLVMAppendBasicBlockInContext(context, function.valueRef, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)
     }
 
     fun createReturnValue(valueRef: LLVMValueRef) {
+//        LLVMSetCurrentDebugLocation2(
+//            builder, LLVMDIBuilderCreateDebugLocation(
+//                context,
+//                4,
+//                3,
+//                currentFunctionLocRef!!,
+//                null
+//            )
+//        )
         LLVMBuildRet(builder, valueRef)
     }
 
     fun createReturn() {
+//                LLVMSetCurrentDebugLocation2(
+//            builder, LLVMDIBuilderCreateDebugLocation(
+//                context,
+//                4,
+//                3,
+//                currentFunctionLocRef!!,
+//                null
+//            )
+//        )
         LLVMBuildRetVoid(builder)
     }
 
     fun createUnreachable() {
+//        LLVMSetCurrentDebugLocation2(
+//            builder, LLVMDIBuilderCreateDebugLocation(
+//                context,
+//                4,
+//                3,
+//                currentFunctionLocRef!!,
+//                null
+//            )
+//        )
         LLVMBuildUnreachable(builder)
     }
 
@@ -68,11 +168,24 @@ class IRCompiler(
         createCallFunction(function.valueRef, if (function.returnType.isVoid) null else function.identifier.simpleIdentifier, arguments)
 
     fun createCallFunction(functionValueRef: LLVMValueRef, simpleIdentifier: String? = null, arguments: List<LLVMValueRef>): LLVMValueRef {
-        return LLVMBuildCall(
+
+        val id = simpleIdentifier?.let { "${it}_call" }.orEmpty()
+//        LLVMSetCurrentDebugLocation2(
+//            builder, LLVMDIBuilderCreateDebugLocation(
+//                context,
+//                3,
+//                4,
+//                currentFunctionLocRef!!,
+//                null
+//            )
+//        )
+        val callRef = LLVMBuildCall(
             builder, functionValueRef,
             arguments.toValueRefPointer(), arguments.size,
             simpleIdentifier?.let { "${it}_call" }.orEmpty()
         )
+//        LLVMSetCurrentDebugLocation2(builder, null)
+        return callRef
     }
 
     fun <T> createIfElse(conditions: List<T>, ifCondition: (T) -> LLVMValueRef, ifTrue: (T) -> Unit, ifElse: (() -> Unit)?) {
@@ -187,7 +300,26 @@ class IRCompiler(
             BytePointer(constraints), constraints.length.toLong(),
             1, 0, LLVMInlineAsmDialectATT
         )
-        return LLVMBuildCall(builder, asmValue, PointerPointer<LLVMValueRef>(*input.toTypedArray()), input.size, "asm")
+//        LLVMSetCurrentDebugLocation2(
+//            builder, LLVMDIBuilderCreateDebugLocation(
+//                context,
+//                4,
+//                3,
+//                currentFunctionLocRef!!,
+//                null
+//            )
+//        )
+        val call =  LLVMBuildCall(builder, asmValue, PointerPointer<LLVMValueRef>(*input.toTypedArray()), input.size, "asm")
+//        LLVMSetCurrentDebugLocation2(builder, null)
+        return  call
+    }
+
+    fun setCurrentDebugLocation(location: LLVMMetadataRef?) {
+        LLVMSetCurrentDebugLocation2(builder, location)
+    }
+
+    fun setFunctionDebugSubprogram(function: Function, subprogram: LLVMMetadataRef?) {
+        LLVMSetSubprogram(function.valueRef, subprogram)
     }
 
     fun verifyFunction(function: Function): Boolean {

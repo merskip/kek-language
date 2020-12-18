@@ -5,10 +5,12 @@ import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.lexer.Token
 import pl.merskip.keklang.lexer.UnexpectedTokenException
+import java.io.File
 import java.math.BigDecimal
 
 
 public class ParserAST(
+    private val file: File?,
     private val source: String,
     tokens: List<Token>
 ) {
@@ -36,7 +38,9 @@ public class ParserAST(
 
             functions.add(node)
         }
-        return FileNodeAST(functions.toList())
+        return FileNodeAST(functions.toList()).apply {
+            sourceLocation = SourceLocation.from(file, source, 0, source.length)
+        }
     }
 
     private fun parseNextToken(
@@ -307,7 +311,7 @@ public class ParserAST(
 
     fun <T : ASTNode> T.sourceLocation(from: SourceLocation, to: SourceLocation): T {
         this.sourceLocation = SourceLocation.from(
-            from.filename ?: to.filename, source,
+            from.file ?: to.file, source,
             from.startIndex.offset, from.startIndex.distanceTo(to.endIndex)
         )
         return this

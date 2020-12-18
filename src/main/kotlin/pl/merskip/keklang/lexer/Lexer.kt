@@ -1,5 +1,6 @@
 package pl.merskip.keklang.lexer
 
+import java.io.File
 import kotlin.math.min
 
 public class Lexer {
@@ -154,6 +155,6 @@ public class Lexer {
         sourceLocationOffset = null
 
         val size = min(offset, source.length - 1) - sourceOffset + 1
-        return SourceLocation.from(filename, source, sourceOffset, size)
+        return SourceLocation.from(filename?.let { File(it) } , source, sourceOffset, size)
     }
 }

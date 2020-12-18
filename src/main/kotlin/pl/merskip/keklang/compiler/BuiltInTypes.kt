@@ -94,7 +94,7 @@ class BuiltInTypes(
             returnType(voidType)
             implementation { irCompiler, (string) ->
                 val stdoutFileDescription = LLVM.LLVMConstInt(integerType.typeRef, 1, 1)
-                val stringLength = LLVM.LLVMConstInt(integerType.typeRef, 13, 1)//LLVM.LLVMGetOperand(string, 2)
+                val stringLength = LLVM.LLVMConstInt(integerType.typeRef, 16, 1)//LLVM.LLVMGetOperand(string, 2)
                 irCompiler.createSysCall(1, stdoutFileDescription, string, stringLength)
                 irCompiler.createReturn()
             }

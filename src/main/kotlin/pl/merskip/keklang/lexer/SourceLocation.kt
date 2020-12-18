@@ -1,9 +1,10 @@
 package pl.merskip.keklang.lexer
 
+import java.io.File
 import kotlin.math.abs
 
 data class SourceLocation(
-    val filename: String?,
+    val file: File?,
     val text: String,
     val startIndex: Index,
     val endIndex: Index,
@@ -24,11 +25,11 @@ data class SourceLocation(
 
     companion object {
 
-        fun from(filename: String?, source: String, offset: Int, length: Int): SourceLocation {
+        fun from(file: File?, source: String, offset: Int, length: Int): SourceLocation {
             val text = source.substring(offset, offset + length)
             val startIndex = calculateIndex(source, offset)
             val endIndex = calculateIndex(source, offset + length - 1)
-            return SourceLocation(filename, text, startIndex, endIndex, length)
+            return SourceLocation(file, text, startIndex, endIndex, length)
         }
 
         private fun calculateIndex(source: String, offset: Int): Index {

@@ -6,10 +6,7 @@ import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
-import pl.merskip.keklang.compiler.Compiler
-import pl.merskip.keklang.compiler.IRCompiler
-import pl.merskip.keklang.compiler.TypeIdentifier
-import pl.merskip.keklang.compiler.TypesRegister
+import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
@@ -44,8 +41,7 @@ fun withReadSources(sources: List<String>, callback: (filename: String, content:
 fun ApplicationArguments.processSource(filename: String?, content: String, compiler: Compiler) {
     try {
         tryProcessSources(filename, content, compiler)
-    }
-    catch (exception: SourceLocationException) {
+    } catch (exception: SourceLocationException) {
         assert(exception.sourceLocation.startIndex.line == exception.sourceLocation.endIndex.line)
 
         content.lineSequence()
@@ -69,7 +65,7 @@ fun ApplicationArguments.tryProcessSources(filename: String?, content: String, c
         println(tokens.joinToString("\n") { token -> token.toString() })
     }
 
-    val parserNodeAST = ParserAST(content, tokens)
+    val parserNodeAST = ParserAST(filename?.let { File(it).absoluteFile }, content, tokens)
     val fileNode = parserNodeAST.parse()
 
     if (astDump) {
@@ -96,8 +92,9 @@ fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
         val irCompiler = IRCompiler("kek-lang", targetTriple)
+        val diBuilder = DIBuilder(irCompiler.context, irCompiler.module)
         val typeRegister = TypesRegister(typesDump)
-        val compiler = Compiler(irCompiler, typeRegister)
+        val compiler = Compiler(irCompiler, diBuilder, typeRegister)
 
         if (isInterpreterMode()) {
             withInterpreter { inputText ->
