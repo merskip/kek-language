@@ -1,4 +1,4 @@
-package pl.merskip.keklang.llvm
+package pl.merskip.keklang.llvm.type
 
 @Suppress("unused")
 enum class AttributeIndex(val rawValue: Int) {

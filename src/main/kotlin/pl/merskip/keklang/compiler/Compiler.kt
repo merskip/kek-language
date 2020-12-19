@@ -1,20 +1,20 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMMetadataRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.node.*
-import pl.merskip.keklang.llvm.DIBuilder
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
-import pl.merskip.keklang.llvm.EmissionKind
-import pl.merskip.keklang.llvm.Encoding
-import pl.merskip.keklang.llvm.SourceLanguage
+import pl.merskip.keklang.llvm.DebugInformationBuilder
+import pl.merskip.keklang.llvm.type.EmissionKind
+import pl.merskip.keklang.llvm.type.Encoding
+import pl.merskip.keklang.llvm.type.SourceLanguage
 import java.io.File
+import pl.merskip.keklang.llvm.File as DebugFile
 
 class Compiler(
     private val irCompiler: IRCompiler,
-    private val diBuilder: DIBuilder,
+    private val debugDuilder: DebugInformationBuilder,
     private val typesRegister: TypesRegister
 ) {
 
@@ -22,7 +22,7 @@ class Compiler(
 
     private val referencesStack = ReferencesStack()
     private val builtInTypes = BuiltInTypes(typesRegister, irCompiler)
-    lateinit var fileRef: LLVMMetadataRef
+    lateinit var debugFile: DebugFile
 
     init {
         builtInTypes.registerTypes(irCompiler.target)
@@ -31,11 +31,11 @@ class Compiler(
     fun compile(fileNodeAST: FileNodeAST) {
 
         val sourceFile = fileNodeAST.sourceLocation.file ?: File.createTempFile("kek-lang", "temp-file")
-        fileRef = diBuilder.createFile(sourceFile.name, ".")
+        debugFile = debugDuilder.createFile(sourceFile.name, ".")
 
-        diBuilder.createCompileUnit(
+        debugDuilder.createCompileUnit(
             sourceLanguage = SourceLanguage.C,
-            file = fileRef,
+            file = debugFile,
             producer = "KeK Language Compiler",
             isOptimized = true,
             flags = "",
@@ -52,7 +52,7 @@ class Compiler(
             compileFunctionBody(it)
         }
 
-        diBuilder.finalize()
+        debugDuilder.finalize()
         irCompiler.verifyModule()
     }
 
@@ -109,14 +109,14 @@ class Compiler(
 
             val debugParameters = parameters.map { parameter ->
                 val sizeInBits = LLVM.LLVMGetIntTypeWidth(parameter.type.typeRef)
-                diBuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), Encoding.Signed, 0)
+                debugDuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), Encoding.Signed, 0)
             }
-            val debugSubroutineType = diBuilder.createSubroutineType(fileRef, debugParameters, 0)
-            val debugFunction = diBuilder.createFunction(
-                scope = fileRef,
+            val debugSubroutineType = debugDuilder.createSubroutineType(debugFile, debugParameters, 0)
+            val debugFunction = debugDuilder.createFunction(
+                scope = debugFile,
                 name = nodeAST.identifier,
                 linkageName = null,
-                file = fileRef,
+                file = debugFile,
                 type = debugSubroutineType,
                 lineNumber = nodeAST.sourceLocation.startIndex.line,
                 isLocalToUnit = true,
@@ -132,11 +132,11 @@ class Compiler(
 
             parameters.zip(debugParameters).withIndex().forEach {
                 val (parameter, debugParameter) = it.value
-                val debugVariable = diBuilder.createParameterVariable(
+                val debugVariable = debugDuilder.createParameterVariable(
                     referencesStack.getDebugScope(),
                     parameter.identifier,
                     it.index,
-                    fileRef,
+                    debugFile,
                     nodeAST.sourceLocation.startIndex.line,
                     debugParameter,
                     true,
@@ -146,11 +146,11 @@ class Compiler(
                 val parameterAlloca = irCompiler.createAlloca(parameter.identifier + "_alloca", parameter.type.typeRef)
                 irCompiler.createStore(parameterAlloca, parameterReference.valueRef)
 
-                diBuilder.createInsertDeclare(
+                debugDuilder.createInsertDeclare(
                     parameterAlloca,
                     debugVariable,
-                    diBuilder.createExpression(),
-                    diBuilder.createDebugLocation(
+                    debugDuilder.createExpression(),
+                    debugDuilder.createDebugLocation(
                         nodeAST.sourceLocation.startIndex.line,
                         nodeAST.sourceLocation.startIndex.column,
                         referencesStack.getDebugScope()
@@ -176,7 +176,7 @@ class Compiler(
 
     private fun compileStatement(statement: StatementNodeAST): Reference {
         irCompiler.setCurrentDebugLocation(
-            diBuilder.createDebugLocation(
+            debugDuilder.createDebugLocation(
                 statement.sourceLocation.startIndex.line,
                 statement.sourceLocation.startIndex.column,
                 referencesStack.getDebugScope()

@@ -1,4 +1,4 @@
-package pl.merskip.keklang.llvm
+package pl.merskip.keklang.llvm.type
 
 @Suppress("unused", "SpellCheckingInspection")
 enum class CallConvention(val rawValue: Int) {

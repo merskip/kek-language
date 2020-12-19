@@ -1,4 +1,4 @@
-package pl.merskip.keklang.llvm
+package pl.merskip.keklang.llvm.type
 
 @Suppress("unused")
 enum class RealPredicate(val rawValue: Int) {
