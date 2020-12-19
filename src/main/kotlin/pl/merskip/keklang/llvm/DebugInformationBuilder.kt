@@ -151,7 +151,7 @@ class DebugInformationBuilder(
         argumentIndex: Int,
         file: File,
         lineNumber: Int,
-        type: Type,
+        type: DebugType,
         alwaysPreserve: Boolean,
         flags: Int
     ): LocalVariable {
@@ -239,7 +239,7 @@ class DebugInformationBuilder(
      */
     fun createSubroutineType(
         file: File,
-        parametersTypes: List<Type>,
+        parametersTypes: List<DebugType>,
         flags: Int
     ): SubroutineType {
         val parametersTypesPointer = PointerPointer<LLVMMetadataRef>(

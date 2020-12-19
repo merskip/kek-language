@@ -52,7 +52,7 @@ class LLVMCompiler(
             LLVMInt64TypeInContext(context)
         )
         val returnType = LLVMVoidTypeInContext(context)
-        val functionType = LLVMFunctionType(returnType, parameters.toPointer(), parameters.size, 0)
+        val functionType = LLVMFunctionType(returnType, parameters.toPointerPointer(), parameters.size, 0)
         val functionValue = LLVMAddFunction(module, ".kek.sys.exit", functionType)
 
         val entryBlock = LLVMAppendBasicBlockInContext(context, functionValue, "entry")

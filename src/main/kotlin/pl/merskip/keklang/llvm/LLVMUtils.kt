@@ -5,7 +5,7 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 
-fun Array<LLVMTypeRef>.toPointer() = PointerPointer<LLVMTypeRef>(*this)
+fun Array<LLVMTypeRef>.toPointerPointer() = PointerPointer<LLVMTypeRef>(*this)
 
 fun LLVMValueRef.getFunctionParameterValue(index: Int) = getFunctionParametersValues()[index]
 

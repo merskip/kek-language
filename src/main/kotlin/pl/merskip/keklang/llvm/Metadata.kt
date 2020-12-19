@@ -30,17 +30,17 @@ class Subprogram(
 
 // Type
 
-abstract class Type(
+abstract class DebugType(
     reference: LLVMMetadataRef
 ) : Metadata(reference)
 
 class SubroutineType(
     reference: LLVMMetadataRef
-) : Type(reference)
+) : DebugType(reference)
 
 class BasicType(
     reference: LLVMMetadataRef
-) : Type(reference)
+) : DebugType(reference)
 
 // Variable
 

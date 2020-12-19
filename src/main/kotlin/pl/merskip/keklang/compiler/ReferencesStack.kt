@@ -1,7 +1,7 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMValueRef
-import pl.merskip.keklang.llvm.Scope as DebugScope
+import pl.merskip.keklang.llvm.LocalScope
 
 class ReferencesStack {
 
@@ -11,7 +11,7 @@ class ReferencesStack {
 
     class Scope(
         val references: MutableList<Reference> = mutableListOf(),
-        var debugScope: DebugScope? = null
+        var debugScope: LocalScope? = null
     )
 
     fun createScope(block: () -> Unit) {
@@ -45,7 +45,7 @@ class ReferencesStack {
         throw IllegalArgumentException("Not found reference to $identifier")
     }
 
-    fun setDebugScope(debugScope: DebugScope?) {
+    fun setDebugScope(debugScope: LocalScope?) {
         currentScope.debugScope = debugScope
     }
 

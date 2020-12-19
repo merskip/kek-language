@@ -126,7 +126,7 @@ class Compiler(
                 isOptimized = true
             )
             referencesStack.setDebugScope(debugFunction)
-            irCompiler.setFunctionDebugSubprogram(function, debugFunction)
+            irCompiler.setFunctionDebugSubprogram(function, debugFunction.reference)
 
             val entryBlock = irCompiler.beginFunctionEntry(function)
 
@@ -146,7 +146,7 @@ class Compiler(
                 val parameterAlloca = irCompiler.createAlloca(parameter.identifier + "_alloca", parameter.type.typeRef)
                 irCompiler.createStore(parameterAlloca, parameterReference.valueRef)
 
-                debugDuilder.createInsertDeclare(
+                debugDuilder.insertDeclareAtEnd(
                     parameterAlloca,
                     debugVariable,
                     debugDuilder.createExpression(),
@@ -180,7 +180,7 @@ class Compiler(
                 statement.sourceLocation.startIndex.line,
                 statement.sourceLocation.startIndex.column,
                 referencesStack.getDebugScope()
-            )
+            ).reference
         )
         return when (statement) {
             is ReferenceNodeAST -> referencesStack.getReference(statement.identifier)

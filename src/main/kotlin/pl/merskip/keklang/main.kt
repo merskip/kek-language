@@ -6,11 +6,14 @@ import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
-import pl.merskip.keklang.llvm.DIBuilder
-import pl.merskip.keklang.compiler.*
+import pl.merskip.keklang.compiler.Compiler
+import pl.merskip.keklang.compiler.IRCompiler
+import pl.merskip.keklang.compiler.TypeIdentifier
+import pl.merskip.keklang.compiler.TypesRegister
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
+import pl.merskip.keklang.llvm.DebugInformationBuilder
 import java.io.File
 
 
@@ -93,7 +96,7 @@ fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
         val irCompiler = IRCompiler("kek-lang", targetTriple)
-        val diBuilder = DIBuilder(irCompiler.context, irCompiler.module)
+        val diBuilder = DebugInformationBuilder(irCompiler.context, irCompiler.module)
         val typeRegister = TypesRegister(typesDump)
         val compiler = Compiler(irCompiler, diBuilder, typeRegister)
 
