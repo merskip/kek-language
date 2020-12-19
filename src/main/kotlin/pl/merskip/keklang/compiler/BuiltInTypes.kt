@@ -45,7 +45,7 @@ class BuiltInTypes(
 
     private fun registerPrimitiveTypes(target: TargetTriple) {
         when (target.archType) {
-            TargetTriple.ArchType.x86, TargetTriple.ArchType.x86_64 -> {
+            TargetTriple.ArchType.X86, TargetTriple.ArchType.X86_64 -> {
                 voidType = registerType(VOID, irCompiler.context.createVoid())
                 booleanType = registerType(BOOLEAN, irCompiler.context.createInt1())
                 byteType = registerType(BYTE, irCompiler.context.createInt8())

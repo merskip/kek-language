@@ -133,7 +133,7 @@ class LLVMCompiler(
     private fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
         val target = LLVMGetTarget(module).getTargetTriple()
         when (target.archType) {
-            TargetTriple.ArchType.x86_64 -> {
+            TargetTriple.ArchType.X86_64 -> {
                 val paramsRegisters = listOf("%rdi", "%rsi", "%rdx")
 
                 val asm = mutableListOf("movq $0, %rax")

@@ -2,7 +2,10 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.*
+import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
+import org.bytedeco.llvm.LLVM.LLVMMetadataRef
+import org.bytedeco.llvm.LLVM.LLVMTypeRef
+import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.compiler.llvm.createInt32
 import pl.merskip.keklang.compiler.llvm.getTargetTriple
@@ -185,7 +188,7 @@ class IRCompiler(
     fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
         val target = LLVMGetTarget(module).getTargetTriple()
         when (target.archType) {
-            TargetTriple.ArchType.x86_64 -> {
+            TargetTriple.ArchType.X86_64 -> {
                 val registersNames = listOf("rax", "rdi", "rsi", "rdx", "r10", "r8", "r9")
                 val registersParameters = listOf(
                     LLVMConstInt(LLVMInt64TypeInContext(context), number, 1),

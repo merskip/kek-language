@@ -7,61 +7,61 @@ data class TargetTriple(
     val environment: EnvironmentType?
 ) {
 
-    @Suppress("unused", "EnumEntryName", "SpellCheckingInspection")
+    @Suppress("unused", "SpellCheckingInspection")
     enum class ArchType {
-        arm,
-        armeb,
-        aarch64,
-        aarch64_be,
-        aarch64_32,
-        arc,
-        avr,
-        bpfel,
-        bpfeb,
-        hexagon,
-        mips,
-        mipsel,
-        mips64,
-        mips64el,
-        msp430,
-        ppc,
-        ppc64,
-        ppc64le,
-        r600,
-        amdgcn,
-        riscv32,
-        riscv64,
-        sparc,
-        sparcv9,
-        sparcel,
-        systemz,
-        tce,
-        tcele,
-        thumb,
-        thumbeb,
-        x86,
-        x86_64,
-        xcore,
-        nvptx,
-        nvptx64,
-        le32,
-        le64,
-        amdil,
-        amdil64,
-        hsail,
-        hsail64,
-        spir,
-        spir64,
-        kalimba,
-        shave,
-        lanai,
-        wasm32,
-        wasm64,
-        renderscript32,
-        renderscript64a
+        ARM,
+        ARMEB,
+        AARCH64,
+        AARCH64_BE,
+        AARCH64_32,
+        ARC,
+        AVR,
+        BPFEL,
+        BPFEB,
+        HEXAGON,
+        MIPS,
+        MIPSEL,
+        MIPS64,
+        MIPS64EL,
+        MSP430,
+        PPC,
+        PPC64,
+        PPC64LE,
+        R600,
+        AMDGCN,
+        RISCV32,
+        RISCV64,
+        SPARC,
+        SPARCV9,
+        SPARCEL,
+        SYSTEMZ,
+        TCE,
+        TCELE,
+        THUMB,
+        THUMBEB,
+        X86,
+        X86_64,
+        XCORE,
+        NVPTX,
+        NVPTX64,
+        LE32,
+        LE64,
+        AMDIL,
+        AMDIL64,
+        HSAIL,
+        HSAIL64,
+        SPIR,
+        SPIR64,
+        KALIMBA,
+        SHAVE,
+        LANAI,
+        WASM32,
+        WASM64,
+        RENDERSCRIPT32,
+        RENDERSCRIPT64A
     }
 
-    @Suppress("unused", "EnumEntryName", "SpellCheckingInspection")
+    @Suppress("unused", "SpellCheckingInspection")
     enum class VendorType {
         Apple,
         PC,
@@ -81,7 +81,7 @@ data class TargetTriple(
         OpenEmbedded
     }
 
-    @Suppress("unused", "EnumEntryName", "SpellCheckingInspection")
+    @Suppress("unused", "SpellCheckingInspection")
     enum class OSType {
         Ananas,
         CloudABI,
@@ -120,7 +120,7 @@ data class TargetTriple(
         Emscripten
     }
 
-    @Suppress("unused", "EnumEntryName", "SpellCheckingInspection")
+    @Suppress("unused", "SpellCheckingInspection")
     enum class EnvironmentType {
         GNU,
         GNUABIN32,
