@@ -15,6 +15,14 @@ abstract class Value(
     fun setName(name: String) {
         LLVMSetValueName2(reference, name, name.length.toLong())
     }
+
+    companion object {
+        fun empty(): Value =
+            object : Value(LLVMValueRef()) {}
+
+        fun just(reference: LLVMValueRef) =
+            object : Value(reference) {}
+    }
 }
 
 class Instruction(reference: LLVMValueRef) : Value(reference)

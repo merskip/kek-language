@@ -1,11 +1,11 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 import pl.merskip.keklang.llvm.DebugInformationBuilder
+import pl.merskip.keklang.llvm.Value
 import pl.merskip.keklang.llvm.type.EmissionKind
 import pl.merskip.keklang.llvm.type.Encoding
 import pl.merskip.keklang.llvm.type.SourceLanguage
@@ -14,13 +14,13 @@ import pl.merskip.keklang.llvm.File as DebugFile
 
 class Compiler(
     private val irCompiler: IRCompiler,
-    private val debugDuilder: DebugInformationBuilder,
+    private val debugBuilder: DebugInformationBuilder,
     private val typesRegister: TypesRegister
 ) {
 
     val module = irCompiler.module
 
-    private val referencesStack = ReferencesStack()
+    private val scopesStack = ScopesStack()
     private val builtInTypes = BuiltInTypes(typesRegister, irCompiler)
     lateinit var debugFile: DebugFile
 
@@ -31,9 +31,9 @@ class Compiler(
     fun compile(fileNodeAST: FileNodeAST) {
 
         val sourceFile = fileNodeAST.sourceLocation.file ?: File.createTempFile("kek-lang", "temp-file")
-        debugFile = debugDuilder.createFile(sourceFile.name, ".")
+        debugFile = debugBuilder.createFile(sourceFile.name, ".")
 
-        debugDuilder.createCompileUnit(
+        debugBuilder.createCompileUnit(
             sourceLanguage = SourceLanguage.C,
             file = debugFile,
             producer = "KeK Language Compiler",
@@ -52,7 +52,7 @@ class Compiler(
             compileFunctionBody(it)
         }
 
-        debugDuilder.finalize()
+        debugBuilder.finalize()
         irCompiler.verifyModule()
     }
 
@@ -101,18 +101,18 @@ class Compiler(
         val identifier = TypeIdentifier.create(nodeAST.identifier, parameters.map { it.type })
         val function = typesRegister.findFunction(identifier)
 
-        referencesStack.createScope {
+        scopesStack.createScope {
             val functionParametersValues = function.valueRef.getFunctionParametersValues()
             (function.parameters zip functionParametersValues).forEach { (parameter, value) ->
-                referencesStack.addReference(parameter.identifier, parameter.type, value)
+                scopesStack.current.addReference(parameter.identifier, parameter.type, Value.just(value))
             }
 
             val debugParameters = parameters.map { parameter ->
                 val sizeInBits = LLVM.LLVMGetIntTypeWidth(parameter.type.typeRef)
-                debugDuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), Encoding.Signed, 0)
+                debugBuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), Encoding.Signed, 0)
             }
-            val debugSubroutineType = debugDuilder.createSubroutineType(debugFile, debugParameters, 0)
-            val debugFunction = debugDuilder.createFunction(
+            val debugSubroutineType = debugBuilder.createSubroutineType(debugFile, debugParameters, 0)
+            val debugFunction = debugBuilder.createFunction(
                 scope = debugFile,
                 name = nodeAST.identifier,
                 linkageName = null,
@@ -125,15 +125,15 @@ class Compiler(
                 flags = 0,
                 isOptimized = true
             )
-            referencesStack.setDebugScope(debugFunction)
+            scopesStack.current.debugScope = debugFunction
             irCompiler.setFunctionDebugSubprogram(function, debugFunction.reference)
 
             val entryBlock = irCompiler.beginFunctionEntry(function)
 
             parameters.zip(debugParameters).withIndex().forEach {
                 val (parameter, debugParameter) = it.value
-                val debugVariable = debugDuilder.createParameterVariable(
-                    referencesStack.getDebugScope(),
+                val debugVariable = debugBuilder.createParameterVariable(
+                    scopesStack.current.debugScope!!,
                     parameter.identifier,
                     it.index,
                     debugFile,
@@ -142,18 +142,18 @@ class Compiler(
                     true,
                     0
                 )
-                val parameterReference = referencesStack.getReference(parameter.identifier)
+                val parameterReference = scopesStack.current.getReferenceOrNull(parameter.identifier)!!
                 val parameterAlloca = irCompiler.createAlloca(parameter.identifier + "_alloca", parameter.type.typeRef)
-                irCompiler.createStore(parameterAlloca, parameterReference.valueRef)
+                irCompiler.createStore(parameterAlloca, parameterReference.value.reference)
 
-                debugDuilder.insertDeclareAtEnd(
+                debugBuilder.insertDeclareAtEnd(
                     parameterAlloca,
                     debugVariable,
-                    debugDuilder.createExpression(),
-                    debugDuilder.createDebugLocation(
+                    debugBuilder.createExpression(),
+                    debugBuilder.createDebugLocation(
                         nodeAST.sourceLocation.startIndex.line,
                         nodeAST.sourceLocation.startIndex.column,
-                        referencesStack.getDebugScope()
+                        scopesStack.current.debugScope!!
                     ),
                     entryBlock
                 )
@@ -164,7 +164,7 @@ class Compiler(
             if (!function.returnType.isCompatibleWith(returnValue.type))
                 throw Exception("Mismatch types. Expected return ${function.returnType.identifier}, but got ${returnValue.type.identifier}")
 
-            irCompiler.createReturnValue(returnValue.valueRef)
+            irCompiler.createReturnValue(returnValue.value.reference)
         }
     }
 
@@ -176,14 +176,14 @@ class Compiler(
 
     private fun compileStatement(statement: StatementNodeAST): Reference {
         irCompiler.setCurrentDebugLocation(
-            debugDuilder.createDebugLocation(
+            debugBuilder.createDebugLocation(
                 statement.sourceLocation.startIndex.line,
                 statement.sourceLocation.startIndex.column,
-                referencesStack.getDebugScope()
+                scopesStack.current.debugScope!!
             ).reference
         )
         return when (statement) {
-            is ReferenceNodeAST -> referencesStack.getReference(statement.identifier)
+            is ReferenceNodeAST -> scopesStack.current.getReferenceOrNull(statement.identifier)!!
             is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
@@ -257,20 +257,20 @@ class Compiler(
                 throw Exception("Mismatch types. Expected parameter ${functionParameter.type.identifier}, but got ${passedArgument.type.identifier}")
         }
 
-        val returnValueRef = irCompiler.createCallFunction(function, arguments.map { it.valueRef })
+        val returnValueRef = irCompiler.createCallFunction(function, arguments.map { it.value.reference })
         return returnValueRef.toReference(function.returnType)
     }
 
     private fun compileIfElseCondition(node: IfElseConditionNodeAST): Reference {
         irCompiler.createIfElse(
             conditions = node.ifConditions,
-            ifCondition = { compileCondition(it).valueRef },
+            ifCondition = { compileCondition(it).value.reference },
             ifTrue = { compileStatement(it.body) },
             ifElse = if (node.elseBlock != null) {
                 fun() { compileStatement(node.elseBlock) }
             } else null
         )
-        return Reference(null, builtInTypes.voidType, LLVMValueRef())
+        return Reference("", builtInTypes.voidType, Value.empty())
     }
 
     private fun compileCondition(node: IfConditionNodeAST): Reference {
