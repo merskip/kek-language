@@ -44,7 +44,11 @@ fun withReadSources(sources: List<String>, callback: (filename: String, content:
 
 fun ApplicationArguments.processSource(filename: String?, content: String, compiler: Compiler) {
     try {
-        tryProcessSources(filename, content, compiler)
+        val file = when {
+            filename != null -> File(filename)
+            else -> File("")
+        }
+        tryProcessSources(file, content, compiler)
     } catch (exception: SourceLocationException) {
         assert(exception.sourceLocation.startIndex.line == exception.sourceLocation.endIndex.line)
 
@@ -62,14 +66,14 @@ fun ApplicationArguments.processSource(filename: String?, content: String, compi
     }
 }
 
-fun ApplicationArguments.tryProcessSources(filename: String?, content: String, compiler: Compiler) {
-    val tokens = Lexer().parse(filename, content)
+fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler: Compiler) {
+    val tokens = Lexer(file, content).parse()
 
     if (tokensDump) {
         println(tokens.joinToString("\n") { token -> token.toString() })
     }
 
-    val parserNodeAST = ParserAST(filename?.let { File(it).absoluteFile }, content, tokens)
+    val parserNodeAST = ParserAST(file, content, tokens)
     val fileNode = parserNodeAST.parse()
 
     if (astDump) {

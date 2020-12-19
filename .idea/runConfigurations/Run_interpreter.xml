@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run interpreter" type="JetRunConfigurationType" factoryName="Kotlin">
-    <module name="KeK-Language.main" />
+  <configuration default="false" name="Run interpreter" type="JetRunConfigurationType">
+    <module name="kek-language.main" />
     <option name="VM_PARAMETERS" value="" />
     <option name="PROGRAM_PARAMETERS" value="--dump-ast --dump-llvm-ir --dump-asm --bitcode --output prog.o" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />

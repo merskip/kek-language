@@ -9,8 +9,8 @@ import java.io.File
 import java.math.BigDecimal
 
 
-public class ParserAST(
-    private val file: File?,
+class ParserAST(
+    private val file: File,
     private val source: String,
     tokens: List<Token>
 ) {

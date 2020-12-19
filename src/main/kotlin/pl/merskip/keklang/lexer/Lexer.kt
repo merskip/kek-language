@@ -3,16 +3,15 @@ package pl.merskip.keklang.lexer
 import java.io.File
 import kotlin.math.min
 
-public class Lexer {
+class Lexer(
+    private val file: File,
+    private val source: String
+) {
 
-    private var filename: String? = null
-    private lateinit var source: String
     private var offset: Int = 0
     private var sourceLocationOffset: Int? = null
 
-    fun parse(filename: String?, source: String): List<Token> {
-        this.filename = filename
-        this.source = source
+    fun parse(): List<Token> {
         this.offset = -1
 
         val tokens = mutableListOf<Token>()
@@ -155,6 +154,6 @@ public class Lexer {
         sourceLocationOffset = null
 
         val size = min(offset, source.length - 1) - sourceOffset + 1
-        return SourceLocation.from(filename?.let { File(it) } , source, sourceOffset, size)
+        return SourceLocation.from(file, source, sourceOffset, size)
     }
 }
