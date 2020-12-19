@@ -6,6 +6,7 @@ import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
+import pl.merskip.keklang.llvm.DIBuilder
 import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer

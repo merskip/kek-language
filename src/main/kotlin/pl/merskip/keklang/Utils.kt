@@ -11,3 +11,5 @@ fun <T> List<T>.addingEnd(element: T): List<T> {
     list.add(element)
     return list.toList()
 }
+
+fun Boolean.toInt() = if (this) 1 else 0

@@ -3,11 +3,13 @@ package pl.merskip.keklang.compiler
 import org.bytedeco.llvm.LLVM.LLVMMetadataRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
-import org.bytedeco.llvm.global.LLVM.LLVMDILocalVariableMetadataKind
-import org.bytedeco.llvm.global.LLVM.LLVMMetadataAsValue
 import pl.merskip.keklang.ast.node.*
+import pl.merskip.keklang.llvm.DIBuilder
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
+import pl.merskip.keklang.llvm.EmissionKind
+import pl.merskip.keklang.llvm.Encoding
+import pl.merskip.keklang.llvm.SourceLanguage
 import java.io.File
 
 class Compiler(
@@ -32,14 +34,14 @@ class Compiler(
         fileRef = diBuilder.createFile(sourceFile.name, ".")
 
         diBuilder.createCompileUnit(
-            sourceLanguage = DIBuilder.SourceLanguage.C,
+            sourceLanguage = SourceLanguage.C,
             file = fileRef,
             producer = "KeK Language Compiler",
             isOptimized = true,
             flags = "",
             runtimeVersion = 0,
             splitName = null,
-            emissionKind = DIBuilder.EmissionKind.Full,
+            emissionKind = EmissionKind.Full,
             DWOId = 1,
             splitDebugInlining = true,
             debugInfoForProfiling = true
@@ -107,7 +109,7 @@ class Compiler(
 
             val debugParameters = parameters.map { parameter ->
                 val sizeInBits = LLVM.LLVMGetIntTypeWidth(parameter.type.typeRef)
-                diBuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), DIBuilder.Encoding.Signed, 0)
+                diBuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), Encoding.Signed, 0)
             }
             val debugSubroutineType = diBuilder.createSubroutineType(fileRef, debugParameters, 0)
             val debugFunction = diBuilder.createFunction(
