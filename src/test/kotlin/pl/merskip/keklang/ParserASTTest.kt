@@ -178,7 +178,7 @@ internal class ParserASTTest {
         assertConstValue(2, multipleOperator.rhs)
     }
 
-    private fun parse(source: String): FileNodeAST {
+    private fun parse(source: String): FileASTNode {
         val tokens = Lexer().parse(null, source)
         return ParserAST(source, tokens).parse()
     }

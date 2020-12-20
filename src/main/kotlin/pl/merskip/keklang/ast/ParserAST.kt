@@ -27,7 +27,7 @@ class ParserAST(
         Operator("/", 200)
     )
 
-    public fun parse(): FileNodeAST {
+    public fun parse(): FileASTNode {
         val functions = mutableListOf<FunctionDefinitionNodeAST>()
         while (true) {
             if (!isAnyNextToken()) break
@@ -38,7 +38,7 @@ class ParserAST(
 
             functions.add(node)
         }
-        return FileNodeAST(functions.toList()).apply {
+        return FileASTNode(functions.toList()).apply {
             sourceLocation = SourceLocation.from(file, source, 0, source.length)
         }
     }

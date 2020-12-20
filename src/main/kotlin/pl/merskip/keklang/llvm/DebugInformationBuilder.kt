@@ -9,10 +9,10 @@ import pl.merskip.keklang.llvm.type.SourceLanguage
 import pl.merskip.keklang.toInt
 
 class DebugInformationBuilder(
-    private val context: LLVMContextRef,
-    module: LLVMModuleRef
+    private val context: Context,
+    module: Module
 ) {
-    private val diBuilder = LLVMCreateDIBuilder(module)
+    private val diBuilder = LLVMCreateDIBuilder(module.reference)
 
     /**
      * Construct any deferred debug info descriptors
@@ -223,7 +223,7 @@ class DebugInformationBuilder(
         inlinedAt: Scope? = null
     ): Location {
         return LLVMDIBuilderCreateDebugLocation(
-            context,
+            context.reference,
             line,
             column,
             scope.reference,

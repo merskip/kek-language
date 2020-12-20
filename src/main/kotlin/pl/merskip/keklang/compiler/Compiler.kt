@@ -28,9 +28,9 @@ class Compiler(
         builtInTypes.registerTypes(irCompiler.target)
     }
 
-    fun compile(fileNodeAST: FileNodeAST) {
+    fun compile(fileASTNode: FileASTNode) {
 
-        val sourceFile = fileNodeAST.sourceLocation.file ?: File.createTempFile("kek-lang", "temp-file")
+        val sourceFile = fileASTNode.sourceLocation.file
         debugFile = debugBuilder.createFile(sourceFile.name, ".")
 
         debugBuilder.createCompileUnit(
@@ -47,8 +47,8 @@ class Compiler(
             debugInfoForProfiling = true
         )
 
-        registerAllFunctions(fileNodeAST)
-        fileNodeAST.nodes.forEach {
+        registerAllFunctions(fileASTNode)
+        fileASTNode.nodes.forEach {
             compileFunctionBody(it)
         }
 
@@ -56,8 +56,8 @@ class Compiler(
         irCompiler.verifyModule()
     }
 
-    private fun registerAllFunctions(fileNodeAST: FileNodeAST) {
-        fileNodeAST.nodes.forEach { functionNode ->
+    private fun registerAllFunctions(fileASTNode: FileASTNode) {
+        fileASTNode.nodes.forEach { functionNode ->
             val simpleIdentifier = functionNode.identifier
             val parameters = functionNode.getParameters()
             val returnType = functionNode.returnType?.identifier?.let { typesRegister.findType(it) } ?: builtInTypes.voidType

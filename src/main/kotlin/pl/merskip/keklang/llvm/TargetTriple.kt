@@ -1,4 +1,4 @@
-package pl.merskip.keklang.compiler
+package pl.merskip.keklang.llvm
 
 data class TargetTriple(
     val archType: ArchType?,

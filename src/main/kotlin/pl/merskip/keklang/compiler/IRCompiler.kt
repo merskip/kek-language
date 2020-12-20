@@ -12,6 +12,7 @@ import pl.merskip.keklang.compiler.llvm.getTargetTriple
 import pl.merskip.keklang.compiler.llvm.toTypeRefPointer
 import pl.merskip.keklang.compiler.llvm.toValueRefPointer
 import pl.merskip.keklang.getFunctionParametersValues
+import pl.merskip.keklang.llvm.TargetTriple
 
 class IRCompiler(
     moduleId: String,

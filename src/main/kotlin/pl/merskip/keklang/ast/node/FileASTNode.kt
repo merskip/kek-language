@@ -2,7 +2,7 @@ package pl.merskip.keklang.ast.node
 
 import pl.merskip.keklang.ast.NodeASTVisitor
 
-data class FileNodeAST(
+data class FileASTNode(
     val nodes: List<FunctionDefinitionNodeAST>
 ) : ASTNode() {
 

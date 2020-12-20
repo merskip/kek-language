@@ -1,8 +1,8 @@
 package pl.merskip.keklang.compiler.llvm
 
 import org.bytedeco.javacpp.BytePointer
-import pl.merskip.keklang.compiler.TargetTriple
-import pl.merskip.keklang.compiler.TargetTriple.*
+import pl.merskip.keklang.llvm.TargetTriple
+import pl.merskip.keklang.llvm.TargetTriple.*
 
 fun BytePointer.getTargetTriple(): TargetTriple {
     val chunks = string.split("-")

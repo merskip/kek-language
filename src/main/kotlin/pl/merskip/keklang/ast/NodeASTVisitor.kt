@@ -4,7 +4,7 @@ import pl.merskip.keklang.ast.node.*
 
 interface NodeASTVisitor<T> {
 
-    fun visitFileNode(node: FileNodeAST): T
+    fun visitFileNode(node: FileASTNode): T
     fun visitFunctionDefinitionNode(node: FunctionDefinitionNodeAST): T
     fun visitIfElseConditionNode(node: IfElseConditionNodeAST): T
     fun visitIfConditionNode(node: IfConditionNodeAST): T

@@ -6,14 +6,14 @@ import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
-import pl.merskip.keklang.compiler.Compiler
-import pl.merskip.keklang.compiler.IRCompiler
-import pl.merskip.keklang.compiler.TypeIdentifier
-import pl.merskip.keklang.compiler.TypesRegister
+import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
+import pl.merskip.keklang.llvm.Context
 import pl.merskip.keklang.llvm.DebugInformationBuilder
+import pl.merskip.keklang.llvm.IRInstructionsBuilder
+import pl.merskip.keklang.llvm.Module
 import java.io.File
 
 
@@ -42,7 +42,7 @@ fun withReadSources(sources: List<String>, callback: (filename: String, content:
     }
 }
 
-fun ApplicationArguments.processSource(filename: String?, content: String, compiler: Compiler) {
+fun ApplicationArguments.processSource(filename: String?, content: String, compiler: CompilerV2) {
     try {
         val file = when {
             filename != null -> File(filename)
@@ -66,7 +66,7 @@ fun ApplicationArguments.processSource(filename: String?, content: String, compi
     }
 }
 
-fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler: Compiler) {
+fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler: CompilerV2) {
     val tokens = Lexer(file, content).parse()
 
     if (tokensDump) {
@@ -80,7 +80,7 @@ fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler
         println(PrinterNodeAST().print(fileNode))
     }
 
-    compiler.compile(fileNode)
+    compiler.compile(listOf(fileNode))
 }
 
 fun ApplicationArguments.processModule(module: LLVMModuleRef) {
@@ -99,26 +99,28 @@ fun ApplicationArguments.processModule(module: LLVMModuleRef) {
 fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
-        val irCompiler = IRCompiler("kek-lang", targetTriple)
-        val diBuilder = DebugInformationBuilder(irCompiler.context, irCompiler.module)
+        val context = Context(LLVM.LLVMContextCreate())
+        val module = Module(LLVM.LLVMModuleCreateWithNameInContext("kek-lang", context.reference))
+        val irCompiler = IRInstructionsBuilder(context)
+        val diBuilder = DebugInformationBuilder(context, module)
         val typeRegister = TypesRegister(typesDump)
-        val compiler = Compiler(irCompiler, diBuilder, typeRegister)
+        val compiler = CompilerV2(context, module, irCompiler, diBuilder, typeRegister)
 
         if (isInterpreterMode()) {
             withInterpreter { inputText ->
                 processSource(null, inputText, compiler)
-                processModule(compiler.module)
+                processModule(compiler.module.reference)
             }
         } else {
             withReadSources(sources) { filename, content ->
                 processSource(filename, content, compiler)
             }
-            processModule(compiler.module)
+            processModule(compiler.module.reference)
         }
 
         if (runJIT) {
             val mainFunction = typeRegister.findFunction(TypeIdentifier("main"))
-            JIT(irCompiler.module).run(mainFunction)
+            JIT(compiler.module.reference).run(mainFunction)
         }
     }
 }

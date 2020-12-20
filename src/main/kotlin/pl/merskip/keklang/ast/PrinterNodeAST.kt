@@ -25,7 +25,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         node.accept(this)
     }
 
-    override fun visitFileNode(node: FileNodeAST) {
+    override fun visitFileNode(node: FileASTNode) {
         print(
             nodeClass = node::class,
             children = mapOf(
