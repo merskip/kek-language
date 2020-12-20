@@ -6,7 +6,9 @@ import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
-import pl.merskip.keklang.compiler.*
+import pl.merskip.keklang.compiler.CompilerV2
+import pl.merskip.keklang.compiler.TypeIdentifier
+import pl.merskip.keklang.compiler.TypesRegister
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
@@ -99,8 +101,8 @@ fun ApplicationArguments.processModule(module: LLVMModuleRef) {
 fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
-        val context = Context(LLVM.LLVMContextCreate())
-        val module = Module(LLVM.LLVMModuleCreateWithNameInContext("kek-lang", context.reference))
+        val context = Context()
+        val module = Module("kek-lang", context)
         val irCompiler = IRInstructionsBuilder(context)
         val diBuilder = DebugInformationBuilder(context, module)
         val typeRegister = TypesRegister(typesDump)
