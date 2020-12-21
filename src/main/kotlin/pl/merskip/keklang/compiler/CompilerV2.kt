@@ -1,25 +1,27 @@
 package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.ast.node.FileASTNode
-import pl.merskip.keklang.llvm.Context
-import pl.merskip.keklang.llvm.DebugInformationBuilder
-import pl.merskip.keklang.llvm.IRInstructionsBuilder
-import pl.merskip.keklang.llvm.Module
+import pl.merskip.keklang.logger.Logger
 
 class CompilerV2(
-    val context: Context,
-    val module: Module,
-    instructionsBuilder: IRInstructionsBuilder,
-    debugBuilder: DebugInformationBuilder,
-    val typesRegister: TypesRegister
+    val context: CompilerContext
 ) {
 
-    private val functionDefinitionCompiler = FunctionDefinitionASTNodeCompiler(instructionsBuilder, debugBuilder)
-    private val fileNodeCompiler = FileASTNodeCompiler(instructionsBuilder, debugBuilder, functionDefinitionCompiler)
+    private val logger = Logger(this::class)
+
+    init {
+        context.addNodeCompiler(FunctionDefinitionASTNodeCompiler(context))
+        context.addNodeCompiler(FileASTNodeCompiler(context))
+        BuiltInTypes
+    }
 
     fun compile(filesNodes: List<FileASTNode>) {
-        for (fileNode in filesNodes) {
-            fileNodeCompiler.compile(fileNode)
+        try {
+            for (fileNode in filesNodes) {
+                context.compile(fileNode)
+            }
+        } catch (e: Exception) {
+            logger.error("Failed compile", e)
         }
     }
 }

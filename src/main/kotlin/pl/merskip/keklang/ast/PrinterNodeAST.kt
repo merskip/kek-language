@@ -170,7 +170,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         if (parameters.isNotEmpty()) {
             output += " "
             output += parameters.map {
-                it.key + "=" + it.value.escapeParamValue().colored(Color.BrightBlack)
+                it.key + "=" + it.value.escapeParamValue().colored(Color.White)
             }.joinToString(" ")
         }
 

@@ -9,7 +9,6 @@ import pl.merskip.keklang.llvm.Value
 import pl.merskip.keklang.llvm.type.EmissionKind
 import pl.merskip.keklang.llvm.type.Encoding
 import pl.merskip.keklang.llvm.type.SourceLanguage
-import java.io.File
 import pl.merskip.keklang.llvm.File as DebugFile
 
 class Compiler(
@@ -21,7 +20,7 @@ class Compiler(
     val module = irCompiler.module
 
     private val scopesStack = ScopesStack()
-    private val builtInTypes = BuiltInTypes(typesRegister, irCompiler)
+    private lateinit var builtInTypes: BuiltInTypes // placeholdere
     lateinit var debugFile: DebugFile
 
     init {
@@ -74,26 +73,26 @@ class Compiler(
     }
 
     private fun createEntryProgram(mainFunction: Function) {
-        FunctionBuilder.register(typesRegister, irCompiler) {
-            noOverload(true)
-            simpleIdentifier("_kek_start")
-            parameters()
-            returnType(builtInTypes.voidType)
-            implementation { irCompiler, _ ->
-
-                // Call main()
-                val returnCode = irCompiler.createCallFunction(mainFunction, emptyList())
-
-                // Call System.exit(Integer)
-                val systemExit = typesRegister.findFunction(
-                    calleeType = builtInTypes.systemType,
-                    simpleIdentifier = BuiltInTypes.EXIT_FUNCTION,
-                    parameters = listOf(builtInTypes.integerType)
-                )
-                irCompiler.createCallFunction(systemExit, listOf(returnCode))
-                irCompiler.createUnreachable()
-            }
-        }
+//        FunctionBuilder.register(typesRegister, irCompiler) {
+//            noOverload(true)
+//            simpleIdentifier("_kek_start")
+//            parameters()
+//            returnType(builtInTypes.voidType)
+//            implementation { irCompiler, _ ->
+//
+//                // Call main()
+//                val returnCode = irCompiler.createCallFunction(mainFunction, emptyList())
+//
+//                // Call System.exit(Integer)
+//                val systemExit = typesRegister.findFunction(
+//                    calleeType = builtInTypes.systemType,
+//                    simpleIdentifier = BuiltInTypes.EXIT_FUNCTION,
+//                    parameters = listOf(builtInTypes.integerType)
+//                )
+//                irCompiler.createCallFunction(systemExit, listOf(returnCode))
+//                irCompiler.createUnreachable()
+//            }
+//        }
     }
 
     private fun compileFunctionBody(nodeAST: FunctionDefinitionNodeAST) {

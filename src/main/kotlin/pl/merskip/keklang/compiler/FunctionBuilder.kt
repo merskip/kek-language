@@ -1,8 +1,6 @@
 package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.LLVM.LLVMValueRef
-import pl.merskip.keklang.compiler.llvm.setPrivateAndAlwaysInline
-import pl.merskip.keklang.getFunctionParametersValues
 
 typealias Implementation = (IRCompiler, List<LLVMValueRef>) -> Unit
 
@@ -18,11 +16,11 @@ class FunctionBuilder {
 
     companion object {
 
-        fun register(typesRegister: TypesRegister, irCompiler: IRCompiler, builder: FunctionBuilder.() -> Unit): Function {
+        fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): Function {
             val functionBuilder = FunctionBuilder()
             builder(functionBuilder)
-            val function = functionBuilder.build(irCompiler)
-            typesRegister.register(function)
+            val function = functionBuilder.build(context)
+            context.typesRegister.register(function)
             return function
         }
     }
@@ -51,29 +49,30 @@ class FunctionBuilder {
     fun implementation(implementation: Implementation) =
         apply { this.implementation = implementation }
 
-    fun build(irCompiler: IRCompiler): Function {
-        if (noOverload && calleeType != null)
-            throw IllegalStateException("Forbidden is set the extern function and callee type")
-
-        val identifier =
-            if (!noOverload) TypeIdentifier.create(simpleIdentifier, parameters.map { it.type }, calleeType)
-            else TypeIdentifier(simpleIdentifier, simpleIdentifier)
-        val parameters = if (calleeType == null) parameters else TypeFunction.createParameters(calleeType!!, parameters)
-        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-        val function =
-            if (calleeType == null) Function(identifier, parameters, returnType, typeRef, valueRef)
-            else TypeFunction(calleeType!!, identifier, parameters, returnType, typeRef, valueRef)
-
-        if (inline)
-            function.valueRef.setPrivateAndAlwaysInline(irCompiler.context)
-
-        implementation?.let { implementation ->
-            val parametersValues = function.valueRef.getFunctionParametersValues()
-            irCompiler.beginFunctionEntry(function)
-            implementation(irCompiler, parametersValues)
-        }
-
-//        irCompiler.verifyFunction(function)
-        return function
+    fun build(context: CompilerContext): Function {
+        error("")
+//        if (noOverload && calleeType != null)
+//            throw IllegalStateException("Forbidden is set the extern function and callee type")
+//
+//        val identifier =
+//            if (!noOverload) TypeIdentifier.create(simpleIdentifier, parameters.map { it.type }, calleeType)
+//            else TypeIdentifier(simpleIdentifier, simpleIdentifier)
+//        val parameters = if (calleeType == null) parameters else TypeFunction.createParameters(calleeType!!, parameters)
+//        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
+//        val function =
+//            if (calleeType == null) Function(identifier, parameters, returnType, typeRef, valueRef)
+//            else TypeFunction(calleeType!!, identifier, parameters, returnType, typeRef, valueRef)
+//
+//        if (inline)
+//            function.valueRef.setPrivateAndAlwaysInline(irCompiler.context)
+//
+//        implementation?.let { implementation ->
+//            val parametersValues = function.valueRef.getFunctionParametersValues()
+//            irCompiler.beginFunctionEntry(function)
+//            implementation(irCompiler, parametersValues)
+//        }
+//
+////        irCompiler.verifyFunction(function)
+//        return function
     }
 }

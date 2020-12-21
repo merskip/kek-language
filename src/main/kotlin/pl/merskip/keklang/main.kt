@@ -6,6 +6,7 @@ import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
+import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.CompilerV2
 import pl.merskip.keklang.compiler.TypeIdentifier
 import pl.merskip.keklang.compiler.TypesRegister
@@ -35,10 +36,8 @@ fun withInterpreter(callback: (inputText: String) -> Unit) {
 }
 
 fun withReadSources(sources: List<String>, callback: (filename: String, content: String) -> Unit) {
-    println("Compiling sources...")
     sources.forEach { filename ->
         val file = File(filename)
-        println("Compiling ${file.absolutePath}...")
         val content = file.readText()
         callback(filename, content)
     }
@@ -103,26 +102,31 @@ fun main(args: Array<String>) = mainBody {
 
         val context = Context()
         val module = Module("kek-lang", context)
-        val irCompiler = IRInstructionsBuilder(context)
-        val diBuilder = DebugInformationBuilder(context, module)
-        val typeRegister = TypesRegister(typesDump)
-        val compiler = CompilerV2(context, module, irCompiler, diBuilder, typeRegister)
+        val compiler = CompilerV2(
+            CompilerContext(
+                context,
+                module,
+                TypesRegister(),
+                IRInstructionsBuilder(context),
+                DebugInformationBuilder(context, module)
+            )
+        )
 
         if (isInterpreterMode()) {
             withInterpreter { inputText ->
                 processSource(null, inputText, compiler)
-                processModule(compiler.module.reference)
+                processModule(compiler.context.module.reference)
             }
         } else {
             withReadSources(sources) { filename, content ->
                 processSource(filename, content, compiler)
             }
-            processModule(compiler.module.reference)
+            processModule(compiler.context.module.reference)
         }
 
         if (runJIT) {
-            val mainFunction = typeRegister.findFunction(TypeIdentifier("main"))
-            JIT(compiler.module.reference).run(mainFunction)
+            val mainFunction = compiler.context.typesRegister.findFunction(TypeIdentifier("main"))
+            JIT(compiler.context.module.reference).run(mainFunction)
         }
     }
 }

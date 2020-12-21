@@ -1,8 +1,10 @@
 package pl.merskip.keklang.compiler
 
-class TypesRegister(
-    val dump: Boolean // TODO: Impl via Logger
-) {
+import pl.merskip.keklang.logger.Logger
+
+class TypesRegister {
+
+    private val logger = Logger(this::class)
 
     private val types = mutableListOf<Type>()
 
@@ -10,8 +12,7 @@ class TypesRegister(
         if (types.any { it.identifier == type.identifier })
             error("Duplicated type for identifier: ${type.identifier}")
         types.add(type)
-        if (dump)
-            println("Registered type: $type")
+        logger.verbose("Registered type: $type")
     }
 
     fun findType(simpleIdentifier: String) = findType(TypeIdentifier.create(simpleIdentifier))

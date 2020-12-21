@@ -38,9 +38,9 @@ class ConsoleInterpreter {
     }
 
     private fun printWelcome() {
-        println("Welcome to Kek-Language!".colored(Color.BrightBlack))
-        println(LLVM.lto_get_version().string.colored(Color.BrightWhite))
-        println("Type 'q' or 'quit' to exit".colored(Color.BrightWhite))
+        println("Welcome to Kek-Language!".colored(Color.White))
+        println(LLVM.lto_get_version().string.colored(Color.White))
+        println("Type 'q' or 'quit' to exit".colored(Color.White))
         println()
     }
 
