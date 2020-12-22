@@ -10,16 +10,16 @@ class TypesRegister {
 
     fun register(type: Type) {
         if (types.any { it.identifier == type.identifier })
-            error("Duplicated type for identifier: ${type.identifier}")
+            throw RegisteringTypeAlreadyExistsException(type)
         types.add(type)
-        logger.verbose("Registered type: $type")
+        logger.verbose("Registered type: ${type.getDebugDescription()} ")
     }
 
     fun findType(simpleIdentifier: String) = findType(TypeIdentifier.create(simpleIdentifier))
 
     fun findType(identifier: TypeIdentifier): Type {
         return types.firstOrNull { it.identifier == identifier }
-            ?: error("Not found type with identifier: $identifier")
+            ?: throw NotFoundTypeWithIdentifier(identifier)
     }
 
     fun findFunction(calleeType: Type?, simpleIdentifier: String, parameters: List<Type>): Function =
@@ -28,6 +28,12 @@ class TypesRegister {
     fun findFunction(identifier: TypeIdentifier): Function {
         return types.mapNotNull { it as? Function }
             .firstOrNull { it.identifier == identifier }
-            ?: error("Not found function with identifier: $identifier")
+            ?: throw NotFoundFunctionWithIdentifier(identifier)
     }
+
+    class RegisteringTypeAlreadyExistsException(type: Type) : Exception("Registering type already exists: $type")
+
+    class NotFoundTypeWithIdentifier(identifier: TypeIdentifier): Exception("Not found type with identifier: $identifier")
+
+    class NotFoundFunctionWithIdentifier(identifier: TypeIdentifier): Exception("Not found function with identifier: $identifier")
 }

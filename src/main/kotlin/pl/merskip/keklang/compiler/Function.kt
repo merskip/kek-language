@@ -17,7 +17,7 @@ open class Function(
         val type: Type
     )
 
-    override fun toString() = "F^${identifier.simpleIdentifier}(${toParametersString()}) -> $returnType"
+    override fun getDebugDescription() = "F^${identifier.simpleIdentifier}(${toParametersString()}) -> $returnType"
 
     protected fun toParametersString() = parameters.joinToString(", ") { "${it.identifier}: ${it.type}" }
 }
@@ -38,7 +38,7 @@ class TypeFunction(
         }
     }
 
-    override fun toString() = "M^${calleeType.identifier.simpleIdentifier}.${identifier.simpleIdentifier}(${toParametersString()}) -> $returnType"
+    override fun getDebugDescription() = "M^${calleeType.identifier.simpleIdentifier}.${identifier.simpleIdentifier}(${toParametersString()}) -> $returnType"
 
     companion object {
 

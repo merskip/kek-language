@@ -13,7 +13,7 @@ abstract class Type(
     fun isCompatibleWith(otherType: Type): Boolean =
         identifier == otherType.identifier
 
-    abstract override fun toString(): String
+    abstract fun getDebugDescription(): String
 }
 
 class PrimitiveType(
@@ -21,7 +21,7 @@ class PrimitiveType(
     typeRef: LLVMTypeRef
 ) : Type(identifier, typeRef) {
 
-    override fun toString() = "P^$identifier=${typeRefToString()}"
+    override fun getDebugDescription() = "$identifier=Primitive(${typeRefToString()})"
 
     private fun typeRefToString(): String {
         val string = LLVM.LLVMPrintTypeToString(typeRef).string
@@ -35,5 +35,5 @@ class StructType(
     typeRef: LLVMTypeRef
 ) : Type(identifier, typeRef) {
 
-    override fun toString() = "S^$identifier{" + fields.joinToString(", ") { it.toString() } + "}"
+    override fun getDebugDescription() = "S^$identifier{" + fields.joinToString(", ") { it.toString() } + "}"
 }
