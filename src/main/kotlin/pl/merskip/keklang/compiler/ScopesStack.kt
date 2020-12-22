@@ -1,7 +1,7 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.llvm.LocalScope
-import pl.merskip.keklang.llvm.Value
+import pl.merskip.keklang.llvm.LLVMLocalScopeMetadata
+import pl.merskip.keklang.llvm.LLVMValue
 
 class ScopesStack {
 
@@ -11,12 +11,12 @@ class ScopesStack {
         get() = scopes.last()
 
     inner class Scope(
-        var debugScope: LocalScope? = null
+        var debugScope: LLVMLocalScopeMetadata? = null
     ) {
 
         private val references: MutableList<Reference> = mutableListOf()
 
-        fun addReference(identifier: String, type: Type, value: Value) {
+        fun addReference(identifier: String, type: Type, value: LLVMValue) {
             if (current.references.any { it.identifier == identifier })
                 throw IllegalStateException("Already exists reference to \"$identifier\" in this scope.")
             current.references.add(Reference(identifier, type, value))

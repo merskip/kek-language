@@ -8,8 +8,8 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.ast.node.*
-import pl.merskip.keklang.llvm.Module
-import pl.merskip.keklang.llvm.TargetTriple
+import pl.merskip.keklang.llvm.LLVMModule
+import pl.merskip.keklang.llvm.enum.ArchType
 
 
 @Deprecated("", replaceWith = ReplaceWith("pl.merskip.keklang.compiler.Compiler"))
@@ -131,9 +131,9 @@ class LLVMCompiler(
     }
 
     private fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
-        val target = Module(module).getTargetTriple()
+        val target = LLVMModule(module).getTargetTriple()
         when (target.archType) {
-            TargetTriple.ArchType.X86_64 -> {
+            ArchType.X86_64 -> {
                 val paramsRegisters = listOf("%rdi", "%rsi", "%rdx")
 
                 val asm = mutableListOf("movq $0, %rax")

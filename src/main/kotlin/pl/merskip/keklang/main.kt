@@ -97,8 +97,8 @@ fun ApplicationArguments.processModule(module: LLVMModuleRef) {
 fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
-        val context = Context()
-        val module = Module("kek-lang", context, targetTriple?.let { TargetTriple.fromString(it) })
+        val context = LLVMContext()
+        val module = LLVMModule("kek-lang", context, targetTriple?.let { LLVMTargetTriple.fromString(it) })
         val compiler = CompilerV2(
             CompilerContext(
                 context,

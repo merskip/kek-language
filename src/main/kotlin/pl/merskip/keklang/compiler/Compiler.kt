@@ -5,11 +5,12 @@ import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.llvm.toReference
 import pl.merskip.keklang.getFunctionParametersValues
 import pl.merskip.keklang.llvm.DebugInformationBuilder
-import pl.merskip.keklang.llvm.Value
-import pl.merskip.keklang.llvm.type.EmissionKind
-import pl.merskip.keklang.llvm.type.Encoding
-import pl.merskip.keklang.llvm.type.SourceLanguage
-import pl.merskip.keklang.llvm.File as DebugFile
+import pl.merskip.keklang.llvm.LLVMType
+import pl.merskip.keklang.llvm.LLVMValue
+import pl.merskip.keklang.llvm.enum.EmissionKind
+import pl.merskip.keklang.llvm.enum.Encoding
+import pl.merskip.keklang.llvm.enum.SourceLanguage
+import pl.merskip.keklang.llvm.LLVMFileMetadata as DebugFile
 
 class Compiler(
     private val irCompiler: IRCompiler,
@@ -24,7 +25,7 @@ class Compiler(
     lateinit var debugFile: DebugFile
 
     init {
-        builtInTypes.registerTypes(irCompiler.target)
+        builtInTypes.registerFor(irCompiler.target)
     }
 
     fun compile(fileASTNode: FileASTNode) {
@@ -63,7 +64,7 @@ class Compiler(
             val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
 
             val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-            val function = Function(identifier, parameters, returnType, typeRef, valueRef)
+            val function = Function(identifier, parameters, returnType, LLVMType.just(typeRef), valueRef)
 
             if (function.identifier.uniqueIdentifier == "main") {
                 createEntryProgram(function)
@@ -103,11 +104,11 @@ class Compiler(
         scopesStack.createScope {
             val functionParametersValues = function.valueRef.getFunctionParametersValues()
             (function.parameters zip functionParametersValues).forEach { (parameter, value) ->
-                scopesStack.current.addReference(parameter.identifier, parameter.type, Value.just(value))
+                scopesStack.current.addReference(parameter.identifier, parameter.type, LLVMValue.just(value))
             }
 
             val debugParameters = parameters.map { parameter ->
-                val sizeInBits = LLVM.LLVMGetIntTypeWidth(parameter.type.typeRef)
+                val sizeInBits = LLVM.LLVMGetIntTypeWidth(parameter.type.type.reference)
                 debugBuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), Encoding.Signed, 0)
             }
             val debugSubroutineType = debugBuilder.createSubroutineType(debugFile, debugParameters, 0)
@@ -142,7 +143,7 @@ class Compiler(
                     0
                 )
                 val parameterReference = scopesStack.current.getReferenceOrNull(parameter.identifier)!!
-                val parameterAlloca = irCompiler.createAlloca(parameter.identifier + "_alloca", parameter.type.typeRef)
+                val parameterAlloca = irCompiler.createAlloca(parameter.identifier + "_alloca", parameter.type.type.reference)
                 irCompiler.createStore(parameterAlloca, parameterReference.value.reference)
 
                 debugBuilder.insertDeclareAtEnd(
@@ -269,7 +270,7 @@ class Compiler(
                 fun() { compileStatement(node.elseBlock) }
             } else null
         )
-        return Reference("", builtInTypes.voidType, Value.empty())
+        return Reference("", builtInTypes.voidType, LLVMValue.empty())
     }
 
     private fun compileCondition(node: IfConditionNodeAST): Reference {

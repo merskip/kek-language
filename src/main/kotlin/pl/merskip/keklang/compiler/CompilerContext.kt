@@ -1,15 +1,15 @@
 package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.ast.node.ASTNode
-import pl.merskip.keklang.llvm.Context
 import pl.merskip.keklang.llvm.DebugInformationBuilder
 import pl.merskip.keklang.llvm.IRInstructionsBuilder
-import pl.merskip.keklang.llvm.Module
+import pl.merskip.keklang.llvm.LLVMContext
+import pl.merskip.keklang.llvm.LLVMModule
 import java.lang.reflect.ParameterizedType
 
 class CompilerContext(
-    val context: Context,
-    val module: Module,
+    val context: LLVMContext,
+    val module: LLVMModule,
     val typesRegister: TypesRegister,
     val instructionsBuilder: IRInstructionsBuilder,
     val debugBuilder: DebugInformationBuilder

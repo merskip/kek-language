@@ -1,9 +1,9 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.llvm.Value
+import pl.merskip.keklang.llvm.LLVMValue
 
 class Reference(
     val identifier: String,
     val type: Type,
-    val value: Value
+    val value: LLVMValue
 )

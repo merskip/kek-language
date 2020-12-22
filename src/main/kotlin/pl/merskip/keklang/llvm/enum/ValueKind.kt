@@ -1,0 +1,30 @@
+package pl.merskip.keklang.llvm.enum
+
+@Suppress("unused")
+enum class ValueKind(val rawValue: Int) {
+    Argument(0),
+    BasicBlock(1),
+    MemoryUse(2),
+    MemoryDef(3),
+    MemoryPhi(4),
+    Function(5),
+    GlobalAlias(6),
+    GlobalIFunc(7),
+    GlobalVariable(8),
+    BlockAddress(9),
+    ConstantExpr(10),
+    ConstantArray(11),
+    ConstantStruct(12),
+    ConstantVector(13),
+    UndefValue(14),
+    ConstantAggregateZero(15),
+    ConstantDataArray(16),
+    ConstantDataVector(17),
+    ConstantInt(18),
+    ConstantFP(19),
+    ConstantPointerNull(20),
+    ConstantTokenNone(21),
+    MetadataAsValue(22),
+    InlineAsm(23),
+    Instruction(24),
+}

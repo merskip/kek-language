@@ -11,8 +11,9 @@ import pl.merskip.keklang.compiler.llvm.createInt32
 import pl.merskip.keklang.compiler.llvm.toTypeRefPointer
 import pl.merskip.keklang.compiler.llvm.toValueRefPointer
 import pl.merskip.keklang.getFunctionParametersValues
-import pl.merskip.keklang.llvm.Module
-import pl.merskip.keklang.llvm.TargetTriple
+import pl.merskip.keklang.llvm.LLVMModule
+import pl.merskip.keklang.llvm.LLVMTargetTriple
+import pl.merskip.keklang.llvm.enum.ArchType
 
 class IRCompiler(
     moduleId: String,
@@ -22,11 +23,11 @@ class IRCompiler(
     val context = LLVMContextCreate()
     val module = LLVMModuleCreateWithNameInContext(moduleId, context)!!
     val builder = LLVMCreateBuilder()
-    val target: TargetTriple
+    val target: LLVMTargetTriple
 
     init {
         LLVMSetTarget(module, targetTriple ?: LLVMGetDefaultTargetTriple().string)
-        target = TargetTriple.fromString(LLVMGetTarget(module).string)
+        target = LLVMTargetTriple.fromString(LLVMGetTarget(module).string)
 
         LLVMAddModuleFlag(
             module, LLVMModuleFlagBehaviorWarning,
@@ -50,8 +51,8 @@ class IRCompiler(
     }
 
     fun declareFunction(uniqueIdentifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
-        val parametersTypeRefPointer = parameters.map { it.type.typeRef }.toTypeRefPointer()
-        val functionTypeRef = LLVMFunctionType(returnType.typeRef, parametersTypeRefPointer, parameters.size, 0)
+        val parametersTypeRefPointer = parameters.map { it.type.type.reference }.toTypeRefPointer()
+        val functionTypeRef = LLVMFunctionType(returnType.type.reference, parametersTypeRefPointer, parameters.size, 0)
         val functionValueRef = LLVMAddFunction(module, uniqueIdentifier, functionTypeRef)
 
         (parameters zip functionValueRef.getFunctionParametersValues())
@@ -96,7 +97,7 @@ class IRCompiler(
     }
 
     fun createConstantIntegerValue(value: Long, type: Type): LLVMValueRef {
-        return LLVMConstInt(type.typeRef, value, 1)
+        return LLVMConstInt(type.type.reference, value, 1)
     }
 
     fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef =
@@ -187,9 +188,9 @@ class IRCompiler(
         LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
 
     fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
-        val target = Module(module).getTargetTriple()
+        val target = LLVMModule(module).getTargetTriple()
         when (target.archType) {
-            TargetTriple.ArchType.X86_64 -> {
+            ArchType.X86_64 -> {
                 val registersNames = listOf("rax", "rdi", "rsi", "rdx", "r10", "r8", "r9")
                 val registersParameters = listOf(
                     LLVMConstInt(LLVMInt64TypeInContext(context), number, 1),

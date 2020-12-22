@@ -4,11 +4,16 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.llvm.*
-import pl.merskip.keklang.llvm.TargetTriple
+import pl.merskip.keklang.llvm.LLVMTargetTriple
+import pl.merskip.keklang.llvm.LLVMType
+import pl.merskip.keklang.llvm.enum.ArchType
+import pl.merskip.keklang.logger.Logger
 
 class BuiltInTypes(
     val context: CompilerContext
 ) {
+
+    private val logger = Logger(this::class)
 
     lateinit var voidType: PrimitiveType
     lateinit var booleanType: PrimitiveType
@@ -37,15 +42,17 @@ class BuiltInTypes(
         const val PRINT_FUNCTION = "print"
     }
 
-    fun registerTypes(target: TargetTriple) {
+    fun registerFor(target: LLVMTargetTriple) {
+
         registerPrimitiveTypes(target)
 //        registerStandardTypes()
 //        registerOperatorsFunctions()
     }
 
-    private fun registerPrimitiveTypes(target: TargetTriple) {
+    private fun registerPrimitiveTypes(target: LLVMTargetTriple) {
+        logger.debug("Registering primitive types")
         when (target.archType) {
-            TargetTriple.ArchType.X86, TargetTriple.ArchType.X86_64 -> {
+            ArchType.X86, ArchType.X86_64 -> {
                 voidType = registerType(VOID, context.context.reference.createVoid())
                 booleanType = registerType(BOOLEAN, context.context.reference.createInt1())
                 byteType = registerType(BYTE, context.context.reference.createInt8())
@@ -59,7 +66,7 @@ class BuiltInTypes(
 
     private fun registerType(simpleIdentifier: String, typeRef: LLVMTypeRef): PrimitiveType {
         val identifier = TypeIdentifier.create(simpleIdentifier)
-        val primitiveType = PrimitiveType(identifier, typeRef)
+        val primitiveType = PrimitiveType(identifier, LLVMType.just(typeRef))
         context.typesRegister.register(primitiveType)
         return primitiveType
     }
@@ -93,8 +100,8 @@ class BuiltInTypes(
             parameters("string" to stringType)
             returnType(voidType)
             implementation { irCompiler, (string) ->
-                val stdoutFileDescription = LLVM.LLVMConstInt(integerType.typeRef, 1, 1)
-                val stringLength = LLVM.LLVMConstInt(integerType.typeRef, 16, 1)//LLVM.LLVMGetOperand(string, 2)
+                val stdoutFileDescription = LLVM.LLVMConstInt(integerType.type.reference, 1, 1)
+                val stringLength = LLVM.LLVMConstInt(integerType.type.reference, 16, 1)//LLVM.LLVMGetOperand(string, 2)
                 irCompiler.createSysCall(1, stdoutFileDescription, string, stringLength)
                 irCompiler.createReturn()
             }

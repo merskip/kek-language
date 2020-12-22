@@ -1,16 +1,18 @@
 package pl.merskip.keklang.llvm
 
 import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.*
+import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
+import org.bytedeco.llvm.LLVM.LLVMMetadataRef
+import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
-import pl.merskip.keklang.llvm.type.EmissionKind
-import pl.merskip.keklang.llvm.type.Encoding
-import pl.merskip.keklang.llvm.type.SourceLanguage
+import pl.merskip.keklang.llvm.enum.EmissionKind
+import pl.merskip.keklang.llvm.enum.Encoding
+import pl.merskip.keklang.llvm.enum.SourceLanguage
 import pl.merskip.keklang.toInt
 
 class DebugInformationBuilder(
-    private val context: Context,
-    module: Module
+    private val context: LLVMContext,
+    module: LLVMModule
 ) {
     private val diBuilder = LLVMCreateDIBuilder(module.reference)
 
@@ -45,7 +47,7 @@ class DebugInformationBuilder(
      */
     fun createCompileUnit(
         sourceLanguage: SourceLanguage,
-        file: File,
+        file: LLVMFileMetadata,
         producer: String,
         isOptimized: Boolean,
         flags: String,
@@ -55,7 +57,7 @@ class DebugInformationBuilder(
         DWOId: Int,
         splitDebugInlining: Boolean,
         debugInfoForProfiling: Boolean
-    ): CompileUnit {
+    ): LLVMCompileUnitMetadata {
         return LLVMDIBuilderCreateCompileUnit(
             diBuilder,
             sourceLanguage.rawValue,
@@ -70,7 +72,7 @@ class DebugInformationBuilder(
             DWOId,
             splitDebugInlining.toInt(),
             debugInfoForProfiling.toInt()
-        ).let { CompileUnit(it) }
+        ).let { LLVMCompileUnitMetadata(it) }
     }
 
     /**
@@ -81,12 +83,12 @@ class DebugInformationBuilder(
     fun createFile(
         filename: String,
         directory: String
-    ): File {
+    ): LLVMFileMetadata {
         return LLVMDIBuilderCreateFile(
             diBuilder,
             filename, filename.length.toLong(),
             directory, directory.length.toLong()
-        ).let { File(it) }
+        ).let { LLVMFileMetadata(it) }
     }
 
     /**
@@ -104,12 +106,12 @@ class DebugInformationBuilder(
      * @param isOptimized True if optimization is ON
      */
     fun createFunction(
-        scope: Scope,
+        scope: LLVMScopeMetadata,
         name: String,
         linkageName: String?,
-        file: File,
+        file: LLVMFileMetadata,
         lineNumber: Int,
-        type: SubroutineType,
+        type: LLVMSubroutineTypeMetadata,
         isLocalToUnit: Boolean,
         isDefinition: Boolean,
         scopeLine: Int,
@@ -146,15 +148,15 @@ class DebugInformationBuilder(
      * @param flags Flags
      */
     fun createParameterVariable(
-        scope: LocalScope,
+        scope: LLVMLocalScopeMetadata,
         name: String,
         argumentIndex: Int,
-        file: File,
+        file: LLVMFileMetadata,
         lineNumber: Int,
-        type: DebugType,
+        type: LLVMTypeMetadata,
         alwaysPreserve: Boolean,
         flags: Int
-    ): LocalVariable {
+    ): LLVMLocalVariableMetadata {
         return LLVMDIBuilderCreateParameterVariable(
             diBuilder,
             scope.reference,
@@ -166,7 +168,7 @@ class DebugInformationBuilder(
             type.reference,
             alwaysPreserve.toInt(),
             flags
-        ).let { LocalVariable((it)) }
+        ).let { LLVMLocalVariableMetadata((it)) }
     }
 
     /**
@@ -180,9 +182,9 @@ class DebugInformationBuilder(
      */
     fun insertDeclareAtEnd(
         storage: LLVMValueRef,
-        variable: LocalVariable,
-        expression: Expression,
-        location: Location,
+        variable: LLVMLocalVariableMetadata,
+        expression: LLVMExpressionMetadata,
+        location: LLVMLocationMetadata,
         block: LLVMBasicBlockRef
     ): LLVMValueRef {
         return LLVMDIBuilderInsertDeclareAtEnd(
@@ -198,12 +200,12 @@ class DebugInformationBuilder(
     /**
      * Creates a new empty expression
      */
-    fun createExpression(): Expression {
+    fun createExpression(): LLVMExpressionMetadata {
         return LLVMDIBuilderCreateExpression(
             diBuilder,
             longArrayOf(),
             0L
-        ).let { Expression(it) }
+        ).let { LLVMExpressionMetadata(it) }
     }
 
     /**
@@ -219,16 +221,16 @@ class DebugInformationBuilder(
     fun createDebugLocation(
         line: Int,
         column: Int,
-        scope: LocalScope,
-        inlinedAt: Scope? = null
-    ): Location {
+        scope: LLVMLocalScopeMetadata,
+        inlinedAt: LLVMScopeMetadata? = null
+    ): LLVMLocationMetadata {
         return LLVMDIBuilderCreateDebugLocation(
             context.reference,
             line,
             column,
             scope.reference,
             inlinedAt?.reference
-        ).let { Location(it) }
+        ).let { LLVMLocationMetadata(it) }
     }
 
     /**
@@ -238,10 +240,10 @@ class DebugInformationBuilder(
      * @param flags E.g.: \c LLVMDIFlagLValueReference. These flags are used to emit dwarf attributes.
      */
     fun createSubroutineType(
-        file: File,
-        parametersTypes: List<DebugType>,
+        file: LLVMFileMetadata,
+        parametersTypes: List<LLVMTypeMetadata>,
         flags: Int
-    ): SubroutineType {
+    ): LLVMSubroutineTypeMetadata {
         val parametersTypesPointer = PointerPointer<LLVMMetadataRef>(
             *parametersTypes.map { it.reference }.toTypedArray()
         )
@@ -251,7 +253,7 @@ class DebugInformationBuilder(
             parametersTypesPointer,
             parametersTypes.size,
             flags
-        ).let { SubroutineType(it) }
+        ).let { LLVMSubroutineTypeMetadata(it) }
     }
 
     /**
@@ -266,7 +268,7 @@ class DebugInformationBuilder(
         sizeInBits: Long,
         encoding: Encoding,
         flags: Int
-    ): BasicType {
+    ): LLVMBasicTypeMetadata {
         return LLVMDIBuilderCreateBasicType(
             diBuilder,
             name,
@@ -274,6 +276,6 @@ class DebugInformationBuilder(
             sizeInBits,
             encoding.rawValue,
             flags
-        ).let { BasicType(it) }
+        ).let { LLVMBasicTypeMetadata(it) }
     }
 }

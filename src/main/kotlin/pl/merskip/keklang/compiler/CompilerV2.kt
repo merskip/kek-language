@@ -12,7 +12,7 @@ class CompilerV2(
     init {
         context.addNodeCompiler(FunctionDefinitionASTNodeCompiler(context))
         context.addNodeCompiler(FileASTNodeCompiler(context))
-        BuiltInTypes(context).registerTypes(context.module.getTargetTriple())
+        BuiltInTypes(context).registerFor(context.module.getTargetTriple())
     }
 
     fun compile(filesNodes: List<FileASTNode>) {

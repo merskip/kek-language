@@ -1,14 +1,14 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import pl.merskip.keklang.addingBegin
+import pl.merskip.keklang.llvm.LLVMType
 
 open class Function(
     identifier: TypeIdentifier,
     val parameters: List<Parameter>,
     val returnType: Type,
-    typeRef: LLVMTypeRef,
+    typeRef: LLVMType,
     val valueRef: LLVMValueRef
 ) : Type(identifier, typeRef) {
 
@@ -27,7 +27,7 @@ class TypeFunction(
     identifier: TypeIdentifier,
     parameters: List<Parameter>,
     returnType: Type,
-    typeRef: LLVMTypeRef,
+    typeRef: LLVMType,
     valueRef: LLVMValueRef
 ) : Function(identifier, parameters, returnType, typeRef, valueRef) {
 

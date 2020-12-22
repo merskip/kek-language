@@ -1,16 +1,16 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMTypeRef
-import org.bytedeco.llvm.global.LLVM
+import pl.merskip.keklang.llvm.LLVMType
 
 abstract class Type(
     val identifier: TypeIdentifier,
-    val typeRef: LLVMTypeRef
+    val type: LLVMType
 ) {
 
-    val isVoid: Boolean = LLVM.LLVMGetTypeKind(typeRef) == LLVM.LLVMVoidTypeKind
+    val isVoid: Boolean
+        get() = type.isVoid()
 
-    fun isCompatibleWith(otherType: Type): Boolean =
+    fun <T: Type> isCompatibleWith(otherType: T): Boolean =
         identifier == otherType.identifier
 
     abstract fun getDebugDescription(): String
@@ -18,21 +18,16 @@ abstract class Type(
 
 class PrimitiveType(
     identifier: TypeIdentifier,
-    typeRef: LLVMTypeRef
-) : Type(identifier, typeRef) {
+    type: LLVMType
+) : Type(identifier, type) {
 
-    override fun getDebugDescription() = "$identifier=Primitive(${typeRefToString()})"
-
-    private fun typeRefToString(): String {
-        val string = LLVM.LLVMPrintTypeToString(typeRef).string
-        return if (string.contains(' ')) "\"$string\"" else string
-    }
+    override fun getDebugDescription() = "$identifier=Primitive($type)"
 }
 
 class StructType(
     identifier: TypeIdentifier,
     val fields: List<Type>,
-    typeRef: LLVMTypeRef
+    typeRef: LLVMType
 ) : Type(identifier, typeRef) {
 
     override fun getDebugDescription() = "S^$identifier{" + fields.joinToString(", ") { it.toString() } + "}"
