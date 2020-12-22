@@ -8,10 +8,10 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.compiler.llvm.createInt32
-import pl.merskip.keklang.compiler.llvm.getTargetTriple
 import pl.merskip.keklang.compiler.llvm.toTypeRefPointer
 import pl.merskip.keklang.compiler.llvm.toValueRefPointer
 import pl.merskip.keklang.getFunctionParametersValues
+import pl.merskip.keklang.llvm.Module
 import pl.merskip.keklang.llvm.TargetTriple
 
 class IRCompiler(
@@ -26,7 +26,7 @@ class IRCompiler(
 
     init {
         LLVMSetTarget(module, targetTriple ?: LLVMGetDefaultTargetTriple().string)
-        target = LLVMGetTarget(module).getTargetTriple()
+        target = TargetTriple.fromString(LLVMGetTarget(module).string)
 
         LLVMAddModuleFlag(
             module, LLVMModuleFlagBehaviorWarning,
@@ -187,7 +187,7 @@ class IRCompiler(
         LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
 
     fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
-        val target = LLVMGetTarget(module).getTargetTriple()
+        val target = Module(module).getTargetTriple()
         when (target.archType) {
             TargetTriple.ArchType.X86_64 -> {
                 val registersNames = listOf("rax", "rdi", "rsi", "rdx", "r10", "r8", "r9")

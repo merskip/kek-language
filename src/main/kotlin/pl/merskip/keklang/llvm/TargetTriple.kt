@@ -144,4 +144,29 @@ data class TargetTriple(
         Simulator,
         MacABI
     }
+
+
+    override fun toString(): String {
+        return listOfNotNull(archType, vendor, operatingSystem, environment).joinToString("-") { it.name }
+    }
+
+    companion object {
+        fun fromString(string: String): TargetTriple {
+            val chunks = string.split("-")
+            try {
+                return TargetTriple(
+                    findValueWithIgnoreCase<ArchType>(chunks[0]),
+                    findValueWithIgnoreCase<VendorType>(chunks[1]),
+                    findValueWithIgnoreCase<OSType>(chunks[2]),
+                    findValueWithIgnoreCase<EnvironmentType>(chunks.getOrNull(3))
+                )
+            } catch (e: Exception) {
+                throw IllegalArgumentException("Failed parse \"$string\" into target triple", e)
+            }
+        }
+
+        private inline fun <reified E : Enum<E>> findValueWithIgnoreCase(value: String?): E? =
+            enumValues<E>().firstOrNull { it.name.equals(value, true) }
+
+    }
 }

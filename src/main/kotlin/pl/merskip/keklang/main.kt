@@ -13,10 +13,7 @@ import pl.merskip.keklang.compiler.TypesRegister
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
-import pl.merskip.keklang.llvm.Context
-import pl.merskip.keklang.llvm.DebugInformationBuilder
-import pl.merskip.keklang.llvm.IRInstructionsBuilder
-import pl.merskip.keklang.llvm.Module
+import pl.merskip.keklang.llvm.*
 import java.io.File
 
 
@@ -101,7 +98,7 @@ fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
         val context = Context()
-        val module = Module("kek-lang", context)
+        val module = Module("kek-lang", context, targetTriple?.let { TargetTriple.fromString(it) })
         val compiler = CompilerV2(
             CompilerContext(
                 context,
