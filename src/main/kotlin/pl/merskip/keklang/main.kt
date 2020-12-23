@@ -104,7 +104,7 @@ fun main(args: Array<String>) = mainBody {
                 context,
                 module,
                 TypesRegister(),
-                IRInstructionsBuilder(context),
+                IRInstructionsBuilder(context, module.getTargetTriple()),
                 DebugInformationBuilder(context, module)
             )
         )

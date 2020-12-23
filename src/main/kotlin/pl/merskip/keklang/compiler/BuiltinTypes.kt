@@ -74,7 +74,7 @@ class BuiltinTypes(
             parameters("exitCode" to integerType)
             returnType(voidType)
             implementation { (exitCode) ->
-//                compilerContext.instructionsBuilder.createSysCall(60, exitCode)
+                compilerContext.instructionsBuilder.createSystemCall(60, listOf(exitCode), "syscall_exit")
                 compilerContext.instructionsBuilder.createUnreachable()
             }
         }

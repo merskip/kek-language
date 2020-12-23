@@ -18,6 +18,10 @@ abstract class LLVMValue(
         LLVMSetValueName2(reference, name, name.length.toLong())
     }
 
+    fun getType(): LLVMType {
+        return LLVMType.just(LLVMGlobalGetValueType(reference))
+    }
+
     protected fun getContext(): LLVMContext {
         val moduleRef = LLVMGetGlobalParent(reference)
         val contextRef = LLVMGetModuleContext(moduleRef)

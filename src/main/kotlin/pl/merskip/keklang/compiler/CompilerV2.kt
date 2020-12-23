@@ -19,7 +19,6 @@ class CompilerV2(
         for (fileNode in filesNodes) {
             compilerContext.compile(fileNode)
         }
-
         compilerContext.module.verify()
     }
 

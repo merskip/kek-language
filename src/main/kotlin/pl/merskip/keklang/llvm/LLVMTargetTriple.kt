@@ -12,6 +12,22 @@ data class LLVMTargetTriple(
     val environment: EnvironmentType?
 ) {
 
+    fun isMatch(archType: ArchType? = null,
+                vendor: VendorType? = null,
+                operatingSystem: OperatingSystem? = null,
+                environment: EnvironmentType? = null
+    ): Boolean {
+        if (archType != null && this.archType != archType)
+            return false
+        if (vendor != null && this.vendor != vendor)
+            return false
+        if (operatingSystem != null && this.operatingSystem != operatingSystem)
+            return false
+        if (environment != null && this.environment != operatingSystem)
+            return false
+        return true
+    }
+
     override fun toString(): String {
         return listOfNotNull(archType, vendor, operatingSystem, environment).joinToString("-") { it.name }.toLowerCase()
     }

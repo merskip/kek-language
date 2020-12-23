@@ -71,6 +71,10 @@ class FunctionBuilder {
             value = functionValue
         )
 
+        functionValue.getParametersValues().zip(parameters).forEach { (parameterValue, functionParameter) ->
+            parameterValue.setName(functionParameter.name)
+        }
+
         if (implementation != null) {
             compilerContext.instructionsBuilder.appendBasicBlockAtEnd(functionValue, "entry")
             implementation?.invoke(functionValue.getParametersValues())

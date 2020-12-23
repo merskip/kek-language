@@ -1,13 +1,16 @@
 package pl.merskip.keklang.llvm
 
 import org.bytedeco.llvm.global.LLVM.*
+import pl.merskip.keklang.llvm.enum.ArchType
+import pl.merskip.keklang.llvm.enum.OperatingSystem
 import pl.merskip.keklang.toPointerPointer
 
 /**
  * Intermediate representation instructions (LLVM IR) builder
  */
 class IRInstructionsBuilder(
-    private val context: LLVMContext
+    private val context: LLVMContext,
+    private val targetTriple: LLVMTargetTriple
 ) {
 
     private val irBuilder = LLVMCreateBuilderInContext(context.reference)
@@ -73,6 +76,90 @@ class IRInstructionsBuilder(
                 name
             )
         )
+    }
+
+    /**
+     * Creates a system call fitted to set target triple
+     */
+    fun createSystemCall(
+        number: Long,
+        parameters: List<LLVMValue>,
+        name: String
+    ): LLVMInstructionValue {
+        if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
+            val registerType = context.createIntegerType(64)
+            val inputRegisters = listOf("rax", "rdi", "rsi", "rdx", "r10", "r8", "r9")
+
+            val usedInputRegister = mutableListOf<String>()
+            val inputValues = listOf(
+                LLVMConstantIntegerValue(registerType, number, false),
+                *parameters.toTypedArray()
+            )
+
+            val instructions = mutableListOf<String>()
+
+            // Set parameters in input registers
+            inputValues.forEachIndexed { index, _ ->
+                val register = inputRegisters[index]
+                instructions += "mov \$${index + 1}, %$register" // Starts from $1, because of the result is $0
+                usedInputRegister += "{$register}"
+            }
+            // Cal system call
+            instructions += "syscall"
+
+            // Get result
+            instructions += "mov %rax, $0"
+
+            return createAssembler(
+                input = inputValues,
+                outputType = registerType,
+                instructions = instructions,
+                outputConstraints = listOf("={rax}"),
+                inputConstraints = usedInputRegister,
+                clobberConstraints = emptyList(),
+                name = name
+            )
+        } else {
+            throw Exception("Unsupported target triple: $targetTriple")
+        }
+    }
+
+    /**
+     * Create a 'call <outputType> asm "<instructions>", "=<outputConstraints>,<inputConstraints>,~<clobberConstraints>"(<input>)
+     * @param input A list of input values
+     * @param outputType Specify of a value type in the result
+     * @param instructions Instructions of assembler code in AT&T dialect
+     * @param outputConstraints Specify output constraints, starts with '='
+     * @param inputConstraints Specify input constraints
+     * @param clobberConstraints Specify clobber constraints, starts with '~'
+     * @see [https://llvm.org/docs/LangRef.html#inline-assembler-expressions]
+     */
+    fun createAssembler(
+        input: List<LLVMValue>,
+        outputType: LLVMType,
+        instructions: List<String>,
+        outputConstraints: List<String>,
+        inputConstraints: List<String>,
+        clobberConstraints: List<String>,
+        name: String
+    ): LLVMInstructionValue {
+        val assemblerCode = instructions.joinToString("; ")
+        val constraints = listOf(outputConstraints, inputConstraints, clobberConstraints)
+            .flatten().joinToString(",")
+
+        val inlineAssemblerValueRef = LLVMGetInlineAsm(
+            LLVMFunctionType(
+                parameters = emptyList(),
+                isVariadicArguments = true,
+                result = outputType
+            ).reference,
+            assemblerCode.toByteArray(), assemblerCode.length.toLong(),
+            constraints.toByteArray(), constraints.length.toLong(),
+            1,
+            0,
+            LLVMInlineAsmDialectATT
+        )
+        return LLVMInstructionValue(LLVMBuildCall(irBuilder, inlineAssemblerValueRef, input.toPointerPointer(), input.size, name))
     }
 
     /**
