@@ -91,7 +91,10 @@ class IRInstructionsBuilder(
         return basicBlock
     }
 
-    fun moveAtEnd(basicBlock: LLVMBasicBlockValue) {
+    /**
+     * Moves the position of builder after passed basic block
+     */
+    private fun moveAtEnd(basicBlock: LLVMBasicBlockValue) {
         LLVMPositionBuilderAtEnd(irBuilder, basicBlock.basicBlockReference)
     }
 }
