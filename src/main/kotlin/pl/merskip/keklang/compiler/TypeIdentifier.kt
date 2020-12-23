@@ -1,44 +1,48 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.addingBegin
-
 
 data class TypeIdentifier(
-    val simpleIdentifier: String,
-    val uniqueIdentifier: String
+    val simple: String,
+    val mangled: String
 ) {
 
-    constructor(identifier: String) : this(identifier, identifier)
+    constructor(identifier: String) : this(identifier, identifier.mangled())
 
     companion object {
 
-        fun create(
-            simpleIdentifier: String,
-            parameters: List<Type> = emptyList(),
-            calleeType: Type? = null
+        fun function(
+            onType: Type?,
+            simple: String,
+            parameters: List<Type>,
+            returnType: Type
         ): TypeIdentifier {
-            val allParameters = if (calleeType != null) parameters.addingBegin(calleeType) else parameters
-            val mangledParameters = allParameters.map { it.mangled() }.toTypedArray()
-            val uniqueIdentifier = listOfNotNull(calleeType?.identifier, simpleIdentifier, *mangledParameters).joinToString(".")
-            return TypeIdentifier(simpleIdentifier, uniqueIdentifier)
+            val mangledIdentifier = listOfNotNull(
+                onType?.identifier?.mangled,
+                simple.mangled(isType = false),
+                parameters.joinToString { it.identifier.mangled },
+                returnType.identifier.mangled
+            ).joinToString("_")
+            return TypeIdentifier(simple, mangledIdentifier)
         }
 
-        private fun Type.mangled(): String =
-            when (identifier.uniqueIdentifier) {
-                "Integer" -> "_i"
-                "Boolean" -> "_b"
-                "BytePointer" -> "_p"
-                "String" -> "_s"
-                else -> "T$identifier"
+        private fun String.mangled(isType: Boolean = true): String =
+            when (this) {
+                "Void" -> "v"
+                "Integer" -> "i"
+                "Byte" -> "w"
+                "Boolean" -> "b"
+                "BytePointer" -> "p"
+                "String" -> "s"
+                else -> if (isType) "T$length$this" else "$length$this"
             }
     }
 
     override fun equals(other: Any?): Boolean {
         if (other !is TypeIdentifier) return false
-        return uniqueIdentifier == other.uniqueIdentifier
+        return mangled == other.mangled
     }
 
-    override fun hashCode() = uniqueIdentifier.hashCode()
+    override fun hashCode() = mangled.hashCode()
 
-    override fun toString() = uniqueIdentifier
+    override fun toString() = simple
 }

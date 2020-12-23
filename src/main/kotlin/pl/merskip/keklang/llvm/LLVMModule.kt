@@ -1,5 +1,6 @@
 package pl.merskip.keklang.llvm
 
+import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM.*
 
@@ -7,14 +8,17 @@ class LLVMModule(
     val reference: LLVMModuleRef
 ) {
 
+     var isValid: Boolean = false
+         private set
+
     constructor(name: String, context: LLVMContext, targetTriple: LLVMTargetTriple?)
             : this(LLVMModuleCreateWithNameInContext(name, context.reference)) {
         if (targetTriple != null) LLVMSetTarget(reference, targetTriple.toString())
         else LLVMSetTarget(reference, LLVMGetDefaultTargetTriple())
     }
 
-    fun addFunction(name: String, type: LLVMFunctionType): LLVMFunction {
-        return LLVMFunction(LLVMAddFunction(reference, name, type.reference))
+    fun addFunction(name: String, type: LLVMFunctionType): LLVMFunctionValue {
+        return LLVMFunctionValue(LLVMAddFunction(reference, name, type.reference))
     }
 
     fun getTargetTriple(): LLVMTargetTriple {
@@ -22,7 +26,21 @@ class LLVMModule(
         return LLVMTargetTriple.fromString(targetTriple)
     }
 
+    fun dump() {
+        LLVMDumpModule(reference)
+    }
+
+    fun verify() {
+        isValid = false
+        val message = BytePointer()
+        if (LLVMVerifyModule(reference, LLVMReturnStatusAction, message) != 0)
+            throw FailedVerifyModule(message.disposable.string)
+        isValid = true
+    }
+
     fun dispose() {
         LLVMDisposeModule(reference)
     }
+
+    class FailedVerifyModule(message: String) : Exception(message)
 }

@@ -4,24 +4,23 @@ import pl.merskip.keklang.ast.node.FileASTNode
 import pl.merskip.keklang.logger.Logger
 
 class CompilerV2(
-    val context: CompilerContext
+    val compilerContext: CompilerContext
 ) {
 
     private val logger = Logger(this::class)
 
     init {
-        context.addNodeCompiler(FunctionDefinitionASTNodeCompiler(context))
-        context.addNodeCompiler(FileASTNodeCompiler(context))
-        BuiltInTypes(context).registerFor(context.module.getTargetTriple())
+        compilerContext.addNodeCompiler(FunctionDefinitionASTNodeCompiler(compilerContext))
+        compilerContext.addNodeCompiler(FileASTNodeCompiler(compilerContext))
+        BuiltinTypes(compilerContext).register()
     }
 
     fun compile(filesNodes: List<FileASTNode>) {
-        try {
-            for (fileNode in filesNodes) {
-                context.compile(fileNode)
-            }
-        } catch (e: Exception) {
-            logger.error("Failed compile", e)
+        for (fileNode in filesNodes) {
+            compilerContext.compile(fileNode)
         }
+
+        compilerContext.module.verify()
     }
+
 }

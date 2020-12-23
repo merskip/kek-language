@@ -15,55 +15,55 @@ class IRInstructionsBuilder(
     /**
      * Create a 'ret void' instruction
      */
-    fun createReturnVoid(): LLVMInstruction {
-        return LLVMInstruction(LLVMBuildRetVoid(irBuilder))
+    fun createReturnVoid(): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildRetVoid(irBuilder))
     }
 
     /**
      * Create a 'ret <value>' instruction
      */
-    fun createReturn(value: LLVMValue): LLVMInstruction {
-        return LLVMInstruction(LLVMBuildRet(irBuilder, value.reference))
+    fun createReturn(value: LLVMValue): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildRet(irBuilder, value.reference))
     }
 
     /**
      * Create a 'unreachable' instruction
      */
-    fun createUnreachable(): LLVMInstruction {
-        return LLVMInstruction((LLVMBuildUnreachable(irBuilder)))
+    fun createUnreachable(): LLVMInstructionValue {
+        return LLVMInstructionValue((LLVMBuildUnreachable(irBuilder)))
     }
 
     /**
      * Create a 'alloca <type>' instruction
      */
-    fun createAlloca(type: LLVMType, name: String): LLVMInstruction {
-        return LLVMInstruction(LLVMBuildAlloca(irBuilder, type.reference, name))
+    fun createAlloca(type: LLVMType, name: String): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildAlloca(irBuilder, type.reference, name))
     }
 
     /**
      * Create a 'store <value>, <storage>' instruction
      */
-    fun createStore(storage: LLVMValue, value: LLVMValue): LLVMInstruction {
-        return LLVMInstruction(LLVMBuildStore(irBuilder, value.reference, storage.reference))
+    fun createStore(storage: LLVMValue, value: LLVMValue): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildStore(irBuilder, value.reference, storage.reference))
     }
 
     /**
      * Create a 'load <type>, <storage>' instruction
      */
-    fun createLoad(storage: LLVMValue, type: LLVMType, name: String): LLVMInstruction {
-        return LLVMInstruction(LLVMBuildLoad2(irBuilder, type.reference, storage.reference, name))
+    fun createLoad(storage: LLVMValue, type: LLVMType, name: String): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildLoad2(irBuilder, type.reference, storage.reference, name))
     }
 
     /**
      * Create a 'call <result> @<function>(<parameters>)' instruction
      */
     fun createCall(
-        function: LLVMFunction,
+        function: LLVMFunctionValue,
         functionType: LLVMFunctionType,
         arguments: List<LLVMValue>,
         name: String
-    ): LLVMInstruction {
-        return LLVMInstruction(
+    ): LLVMInstructionValue {
+        return LLVMInstructionValue(
             LLVMBuildCall2(
                 irBuilder,
                 functionType.reference,
@@ -85,7 +85,13 @@ class IRInstructionsBuilder(
     /**
      * Append a basic block to the end of a function
      */
-    fun appendBasicBlockAtEnd(function: LLVMFunction, name: String): LLVMBasicBlock {
-        return LLVMBasicBlock(LLVMAppendBasicBlockInContext(context.reference, function.reference, name))
+    fun appendBasicBlockAtEnd(function: LLVMFunctionValue, name: String): LLVMBasicBlockValue {
+        val basicBlock = LLVMBasicBlockValue(LLVMAppendBasicBlockInContext(context.reference, function.reference, name))
+        moveAtEnd(basicBlock)
+        return basicBlock
+    }
+
+    fun moveAtEnd(basicBlock: LLVMBasicBlockValue) {
+        LLVMPositionBuilderAtEnd(irBuilder, basicBlock.basicBlockReference)
     }
 }

@@ -57,14 +57,14 @@ class IRCompiler(
 
         (parameters zip functionValueRef.getFunctionParametersValues())
             .forEach { (parameter, value) ->
-                LLVMSetValueName(value, parameter.identifier)
+                LLVMSetValueName(value, parameter.name)
             }
 
         return Pair(functionTypeRef, functionValueRef)
     }
 
     fun beginFunctionEntry(function: Function): LLVMBasicBlockRef {
-        val entryBlock = LLVMAppendBasicBlockInContext(context, function.valueRef, "entry")
+        val entryBlock = LLVMAppendBasicBlockInContext(context, function.value.reference, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)
         return entryBlock
     }
@@ -101,7 +101,7 @@ class IRCompiler(
     }
 
     fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef =
-        createCallFunction(function.valueRef, if (function.returnType.isVoid) null else function.identifier.simpleIdentifier, arguments)
+        createCallFunction(function.value.reference, if (function.returnType.isVoid) null else function.identifier.simple, arguments)
 
     fun createCallFunction(functionValueRef: LLVMValueRef, simpleIdentifier: String? = null, arguments: List<LLVMValueRef>): LLVMValueRef {
 
@@ -255,11 +255,11 @@ class IRCompiler(
     }
 
     fun setFunctionDebugSubprogram(function: Function, subprogram: LLVMMetadataRef?) {
-        LLVMSetSubprogram(function.valueRef, subprogram)
+        LLVMSetSubprogram(function.value.reference, subprogram)
     }
 
     fun verifyFunction(function: Function): Boolean {
-        if (LLVMVerifyFunction(function.valueRef, LLVMPrintMessageAction) != 0) {
+        if (LLVMVerifyFunction(function.value.reference, LLVMPrintMessageAction) != 0) {
             LLVMDumpModule(module)
             return false
         }

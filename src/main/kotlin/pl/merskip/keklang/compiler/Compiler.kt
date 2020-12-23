@@ -1,14 +1,10 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.llvm.toReference
-import pl.merskip.keklang.getFunctionParametersValues
 import pl.merskip.keklang.llvm.DebugInformationBuilder
-import pl.merskip.keklang.llvm.LLVMType
 import pl.merskip.keklang.llvm.LLVMValue
 import pl.merskip.keklang.llvm.enum.EmissionKind
-import pl.merskip.keklang.llvm.enum.Encoding
 import pl.merskip.keklang.llvm.enum.SourceLanguage
 import pl.merskip.keklang.llvm.LLVMFileMetadata as DebugFile
 
@@ -21,11 +17,11 @@ class Compiler(
     val module = irCompiler.module
 
     private val scopesStack = ScopesStack()
-    private lateinit var builtInTypes: BuiltInTypes // placeholdere
+    private lateinit var builtinTypes: BuiltinTypes // placeholdere
     lateinit var debugFile: DebugFile
 
     init {
-        builtInTypes.registerFor(irCompiler.target)
+//        builtinTypes.registerFor(irCompiler.target)
     }
 
     fun compile(fileASTNode: FileASTNode) {
@@ -57,20 +53,20 @@ class Compiler(
     }
 
     private fun registerAllFunctions(fileASTNode: FileASTNode) {
-        fileASTNode.nodes.forEach { functionNode ->
-            val simpleIdentifier = functionNode.identifier
-            val parameters = functionNode.getParameters()
-            val returnType = functionNode.returnType?.identifier?.let { typesRegister.findType(it) } ?: builtInTypes.voidType
-            val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
-
-            val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-            val function = Function(identifier, parameters, returnType, LLVMType.just(typeRef), valueRef)
-
-            if (function.identifier.uniqueIdentifier == "main") {
-                createEntryProgram(function)
-            }
-            typesRegister.register(function)
-        }
+//        fileASTNode.nodes.forEach { functionNode ->
+//            val simpleIdentifier = functionNode.identifier
+//            val parameters = functionNode.getParameters()
+//            val returnType = functionNode.returnType?.identifier?.let { typesRegister.findType(it) } ?: builtinTypes.voidType
+//            val identifier = TypeIdentifier.create(simpleIdentifier, parameters.map { it.type })
+//
+//            val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
+//            val function = Function(identifier, parameters, returnType, LLVMType.just(typeRef), valueRef)
+//
+//            if (function.identifier.uniqueIdentifier == "main") {
+//                createEntryProgram(function)
+//            }
+//            typesRegister.register(function)-
+//        }
     }
 
     private fun createEntryProgram(mainFunction: Function) {
@@ -97,75 +93,75 @@ class Compiler(
     }
 
     private fun compileFunctionBody(nodeAST: FunctionDefinitionNodeAST) {
-        val parameters = nodeAST.getParameters()
-        val identifier = TypeIdentifier.create(nodeAST.identifier, parameters.map { it.type })
-        val function = typesRegister.findFunction(identifier)
-
-        scopesStack.createScope {
-            val functionParametersValues = function.valueRef.getFunctionParametersValues()
-            (function.parameters zip functionParametersValues).forEach { (parameter, value) ->
-                scopesStack.current.addReference(parameter.identifier, parameter.type, LLVMValue.just(value))
-            }
-
-            val debugParameters = parameters.map { parameter ->
-                val sizeInBits = LLVM.LLVMGetIntTypeWidth(parameter.type.type.reference)
-                debugBuilder.createBasicType(parameter.identifier, sizeInBits.toLong(), Encoding.Signed, 0)
-            }
-            val debugSubroutineType = debugBuilder.createSubroutineType(debugFile, debugParameters, 0)
-            val debugFunction = debugBuilder.createFunction(
-                scope = debugFile,
-                name = nodeAST.identifier,
-                linkageName = null,
-                file = debugFile,
-                type = debugSubroutineType,
-                lineNumber = nodeAST.sourceLocation.startIndex.line,
-                isLocalToUnit = true,
-                isDefinition = true,
-                scopeLine = nodeAST.sourceLocation.startIndex.line,
-                flags = 0,
-                isOptimized = true
-            )
-            scopesStack.current.debugScope = debugFunction
-            irCompiler.setFunctionDebugSubprogram(function, debugFunction.reference)
-
-            val entryBlock = irCompiler.beginFunctionEntry(function)
-
-            parameters.zip(debugParameters).withIndex().forEach {
-                val (parameter, debugParameter) = it.value
-                val debugVariable = debugBuilder.createParameterVariable(
-                    scopesStack.current.debugScope!!,
-                    parameter.identifier,
-                    it.index,
-                    debugFile,
-                    nodeAST.sourceLocation.startIndex.line,
-                    debugParameter,
-                    true,
-                    0
-                )
-                val parameterReference = scopesStack.current.getReferenceOrNull(parameter.identifier)!!
-                val parameterAlloca = irCompiler.createAlloca(parameter.identifier + "_alloca", parameter.type.type.reference)
-                irCompiler.createStore(parameterAlloca, parameterReference.value.reference)
-
-                debugBuilder.insertDeclareAtEnd(
-                    parameterAlloca,
-                    debugVariable,
-                    debugBuilder.createExpression(),
-                    debugBuilder.createDebugLocation(
-                        nodeAST.sourceLocation.startIndex.line,
-                        nodeAST.sourceLocation.startIndex.column,
-                        scopesStack.current.debugScope!!
-                    ),
-                    entryBlock
-                )
-            }
-
-            val returnValue = compileStatement(nodeAST.body)
-
-            if (!function.returnType.isCompatibleWith(returnValue.type))
-                throw Exception("Mismatch types. Expected return ${function.returnType.identifier}, but got ${returnValue.type.identifier}")
-
-            irCompiler.createReturnValue(returnValue.value.reference)
-        }
+//        val parameters = nodeAST.getParameters()
+//        val identifier = TypeIdentifier.create(nodeAST.identifier, parameters.map { it.type })
+//        val function = typesRegister.findFunction(identifier)
+//
+//        scopesStack.createScope {
+//            val functionParametersValues = function.value.getFunctionParametersValues()
+//            (function.parameters zip functionParametersValues).forEach { (parameter, value) ->
+//                scopesStack.current.addReference(parameter.name, parameter.type, LLVMValue.just(value))
+//            }
+//
+//            val debugParameters = parameters.map { parameter ->
+//                val sizeInBits = LLVM.LLVMGetIntTypeWidth(parameter.type.type.reference)
+//                debugBuilder.createBasicType(parameter.name, sizeInBits.toLong(), Encoding.Signed, 0)
+//            }
+//            val debugSubroutineType = debugBuilder.createSubroutineType(debugFile, debugParameters, 0)
+//            val debugFunction = debugBuilder.createFunction(
+//                scope = debugFile,
+//                name = nodeAST.identifier,
+//                linkageName = null,
+//                file = debugFile,
+//                type = debugSubroutineType,
+//                lineNumber = nodeAST.sourceLocation.startIndex.line,
+//                isLocalToUnit = true,
+//                isDefinition = true,
+//                scopeLine = nodeAST.sourceLocation.startIndex.line,
+//                flags = 0,
+//                isOptimized = true
+//            )
+//            scopesStack.current.debugScope = debugFunction
+//            irCompiler.setFunctionDebugSubprogram(function, debugFunction.reference)
+//
+//            val entryBlock = irCompiler.beginFunctionEntry(function)
+//
+//            parameters.zip(debugParameters).withIndex().forEach {
+//                val (parameter, debugParameter) = it.value
+//                val debugVariable = debugBuilder.createParameterVariable(
+//                    scopesStack.current.debugScope!!,
+//                    parameter.name,
+//                    it.index,
+//                    debugFile,
+//                    nodeAST.sourceLocation.startIndex.line,
+//                    debugParameter,
+//                    true,
+//                    0
+//                )
+//                val parameterReference = scopesStack.current.getReferenceOrNull(parameter.name)!!
+//                val parameterAlloca = irCompiler.createAlloca(parameter.name + "_alloca", parameter.type.type.reference)
+//                irCompiler.createStore(parameterAlloca, parameterReference.value.reference)
+//
+//                debugBuilder.insertDeclareAtEnd(
+//                    parameterAlloca,
+//                    debugVariable,
+//                    debugBuilder.createExpression(),
+//                    debugBuilder.createDebugLocation(
+//                        nodeAST.sourceLocation.startIndex.line,
+//                        nodeAST.sourceLocation.startIndex.column,
+//                        scopesStack.current.debugScope!!
+//                    ),
+//                    entryBlock
+//                )
+//            }
+//
+//            val returnValue = compileStatement(nodeAST.body)
+//
+//            if (!function.returnType.isCompatibleWith(returnValue.type))
+//                throw Exception("Mismatch types. Expected return ${function.returnType.identifier}, but got ${returnValue.type.identifier}")
+//
+//            irCompiler.createReturnValue(returnValue.value.reference)
+//        }
     }
 
     private fun FunctionDefinitionNodeAST.getParameters(): List<Function.Parameter> =
@@ -206,7 +202,7 @@ class Compiler(
     private fun compileConstantValue(nodeAST: ConstantValueNodeAST): Reference {
         return when (nodeAST) {
             is IntegerConstantValueNodeAST -> {
-                val type = builtInTypes.integerType
+                val type = builtinTypes.integerType
                 irCompiler.createConstantIntegerValue(nodeAST.value, type)
                     .toReference(type)
             }
@@ -219,14 +215,14 @@ class Compiler(
         val rhs = compileStatement(nodeAST.rhs)
 
         val toIdentifier = { simpleIdentifier: String ->
-            TypeIdentifier.create(simpleIdentifier, listOf(rhs.type), lhs.type)
+//            TypeIdentifier.create(simpleIdentifier, listOf(rhs.type), lhs.type)
         }
 
         val invokeFunction = when (nodeAST.identifier) {
-            "+" -> typesRegister.findFunction(toIdentifier(BuiltInTypes.ADD_FUNCTION))
-            "-" -> typesRegister.findFunction(toIdentifier(BuiltInTypes.SUBTRACT_FUNCTION))
-            "*" -> typesRegister.findFunction(toIdentifier(BuiltInTypes.MULTIPLE_FUNCTION))
-            "==" -> typesRegister.findFunction(toIdentifier(BuiltInTypes.IS_EQUAL_TO_FUNCTION))
+//            "+" -> typesRegister.findFunction(toIdentifier(BuiltinTypes.ADD_FUNCTION))
+//            "-" -> typesRegister.findFunction(toIdentifier(BuiltinTypes.SUBTRACT_FUNCTION))
+//            "*" -> typesRegister.findFunction(toIdentifier(BuiltinTypes.MULTIPLE_FUNCTION))
+//            "==" -> typesRegister.findFunction(toIdentifier(BuiltinTypes.IS_EQUAL_TO_FUNCTION))
             else -> throw Exception("Unknown operator: ${nodeAST.identifier}")
         }
         return compileCallFunction(invokeFunction, listOf(lhs, rhs))
@@ -237,16 +233,18 @@ class Compiler(
         val argumentsTypes = arguments.map { it.type }
 
         val type = typesRegister.findType(nodeAST.typeIdentifier)
-        val function = typesRegister.findFunction(type, nodeAST.functionIdentifier, argumentsTypes)
-        return compileCallFunction(function, arguments)
+//        val function = typesRegister.findFunction(type, nodeAST.functionIdentifier, argumentsTypes)
+//        return compileCallFunction(function, arguments)
+        error("")
     }
 
     private fun compileCallFunction(nodeAST: FunctionCallNodeAST): Reference {
         val arguments = nodeAST.parameters.map { compileStatement(it) }
         val argumentsTypes = arguments.map { it.type }
 
-        val function = typesRegister.findFunction(TypeIdentifier.create(nodeAST.identifier, argumentsTypes))
-        return compileCallFunction(function, arguments)
+//        val function = typesRegister.findFunction(TypeIdentifier.function(null, nodeAST.identifier, argumentsTypes, Type.))
+//        return compileCallFunction(function, arguments)
+        error("")
     }
 
     private fun compileCallFunction(function: Function, arguments: List<Reference>): Reference {
@@ -270,18 +268,18 @@ class Compiler(
                 fun() { compileStatement(node.elseBlock) }
             } else null
         )
-        return Reference("", builtInTypes.voidType, LLVMValue.empty())
+        return Reference("", builtinTypes.voidType, LLVMValue.empty())
     }
 
     private fun compileCondition(node: IfConditionNodeAST): Reference {
         val condition = compileStatement(node.condition)
-        if (!condition.type.isCompatibleWith(builtInTypes.booleanType))
+        if (!condition.type.isCompatibleWith(builtinTypes.booleanType))
             throw Exception("Conditional expression must be logic expression")
         return condition
     }
 
     private fun compileConstantString(node: ConstantStringNodeAST): Reference {
         val stringValueRef = irCompiler.createString(node.string)
-        return stringValueRef.toReference(builtInTypes.stringType, "string")
+        return stringValueRef.toReference(builtinTypes.stringType, "string")
     }
 }

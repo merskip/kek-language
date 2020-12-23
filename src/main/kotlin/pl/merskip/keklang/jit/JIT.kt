@@ -25,7 +25,7 @@ class JIT(
         }
 
         println("Executing JIT...")
-        val result = LLVMRunFunction(engine, mainFunction.valueRef, 0, PointerPointer<LLVMGenericValueRef>())
+        val result = LLVMRunFunction(engine, mainFunction.value.reference, 0, PointerPointer<LLVMGenericValueRef>())
         println("Result: " + LLVMGenericValueToInt(result, 0))
     }
 }

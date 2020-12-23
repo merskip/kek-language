@@ -4,10 +4,15 @@ import org.bytedeco.javacpp.Pointer
 import org.bytedeco.javacpp.PointerPointer
 import pl.merskip.keklang.llvm.LLVMReferencing
 
-fun <T> List<T>.addingBegin(element: T): List<T> {
-    val list = this.toMutableList()
-    list.add(0, element)
-    return list.toList()
+fun <T> List<T>.addingBegin(element: T?): List<T> {
+    return if (element != null) {
+        val list = this.toMutableList()
+        list.add(0, element)
+        list.toList()
+    }
+    else {
+        this
+    }
 }
 
 fun <T> List<T>.addingEnd(element: T): List<T> {

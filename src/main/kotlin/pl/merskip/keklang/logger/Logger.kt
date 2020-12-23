@@ -56,7 +56,7 @@ class Logger<T : Any>(
         LocalDateTime.now().toString().padEnd(27, '0').subSequence(0, 27).toString()
 
     private fun levelTag(level: Level): String =
-        level.name.padStart(7, ' ')
+        level.name
 
     private fun classTag(): String =
         forClass.simpleName ?: forClass.toString()

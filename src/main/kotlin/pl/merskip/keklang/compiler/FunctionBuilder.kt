@@ -1,26 +1,27 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMValueRef
+import pl.merskip.keklang.llvm.LLVMFunctionType
+import pl.merskip.keklang.llvm.LLVMValue
 
-typealias Implementation = (IRCompiler, List<LLVMValueRef>) -> Unit
+typealias ImplementationBuilder = (List<LLVMValue>) -> Unit
 
 class FunctionBuilder {
 
     private lateinit var simpleIdentifier: String
     private lateinit var parameters: List<Function.Parameter>
     private lateinit var returnType: Type
-    private var calleeType: Type? = null
-    private var noOverload: Boolean = false
-    private var inline: Boolean = false
-    private var implementation: Implementation? = null
+    private var onType: Type? = null
+    private var isExtern: Boolean = false
+    private var isInline: Boolean = false
+    private var implementation: ImplementationBuilder? = null
 
     companion object {
 
-        fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): Function {
+        fun register(compilerContext: CompilerContext, builder: FunctionBuilder.() -> Unit): Function {
             val functionBuilder = FunctionBuilder()
             builder(functionBuilder)
-            val function = functionBuilder.build(context)
-            context.typesRegister.register(function)
+            val function = functionBuilder.build(compilerContext)
+            compilerContext.typesRegister.register(function)
             return function
         }
     }
@@ -37,42 +38,44 @@ class FunctionBuilder {
     fun returnType(returnType: Type) =
         apply { this.returnType = returnType }
 
-    fun calleeType(calleeType: Type?) =
-        apply { this.calleeType = calleeType }
+    fun onType(onType: Type?) = apply { this.onType = onType }
 
-    fun noOverload(noOverload: Boolean) =
-        apply { this.noOverload = noOverload }
+    fun isExtern(isExtern: Boolean = true) =
+        apply { this.isExtern = isExtern }
 
-    fun inline(inline: Boolean) =
-        apply { this.inline = inline }
+    fun isInline(inline: Boolean = true) =
+        apply { this.isInline = inline }
 
-    fun implementation(implementation: Implementation) =
+    fun implementation(implementation: ImplementationBuilder) =
         apply { this.implementation = implementation }
 
-    fun build(context: CompilerContext): Function {
-        error("")
-//        if (noOverload && calleeType != null)
-//            throw IllegalStateException("Forbidden is set the extern function and callee type")
-//
-//        val identifier =
-//            if (!noOverload) TypeIdentifier.create(simpleIdentifier, parameters.map { it.type }, calleeType)
-//            else TypeIdentifier(simpleIdentifier, simpleIdentifier)
-//        val parameters = if (calleeType == null) parameters else TypeFunction.createParameters(calleeType!!, parameters)
-//        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-//        val function =
-//            if (calleeType == null) Function(identifier, parameters, returnType, typeRef, valueRef)
-//            else TypeFunction(calleeType!!, identifier, parameters, returnType, typeRef, valueRef)
-//
-//        if (inline)
-//            function.valueRef.setPrivateAndAlwaysInline(irCompiler.context)
-//
-//        implementation?.let { implementation ->
-//            val parametersValues = function.valueRef.getFunctionParametersValues()
-//            irCompiler.beginFunctionEntry(function)
-//            implementation(irCompiler, parametersValues)
-//        }
-//
-////        irCompiler.verifyFunction(function)
-//        return function
+    private fun build(compilerContext: CompilerContext): Function {
+        val identifier =
+            if (isExtern) TypeIdentifier(simpleIdentifier, simpleIdentifier)
+            else TypeIdentifier.function(onType, simpleIdentifier, parameters.types, returnType)
+
+        val functionType = LLVMFunctionType(
+            result = returnType.type,
+            parameters = parameters.types.map { it.type },
+            isVariadicArguments = false
+        )
+        val functionValue = compilerContext.module.addFunction(identifier.mangled, functionType)
+        if (isInline) functionValue.setInline(true)
+
+        val function = Function(
+            onType = onType,
+            identifier = identifier,
+            parameters = parameters,
+            returnType = returnType,
+            type = functionType,
+            value = functionValue
+        )
+
+        if (implementation != null) {
+            compilerContext.instructionsBuilder.appendBasicBlockAtEnd(functionValue, "entry")
+            implementation?.invoke(functionValue.getParametersValues())
+        }
+
+        return function
     }
 }

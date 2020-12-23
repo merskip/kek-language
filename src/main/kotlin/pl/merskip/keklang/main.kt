@@ -112,18 +112,20 @@ fun main(args: Array<String>) = mainBody {
         if (isInterpreterMode()) {
             withInterpreter { inputText ->
                 processSource(null, inputText, compiler)
-                processModule(compiler.context.module.reference)
+                if (compiler.compilerContext.module.isValid)
+                    processModule(compiler.compilerContext.module.reference)
             }
         } else {
             withReadSources(sources) { filename, content ->
                 processSource(filename, content, compiler)
             }
-            processModule(compiler.context.module.reference)
+            if (compiler.compilerContext.module.isValid)
+                processModule(compiler.compilerContext.module.reference)
         }
 
         if (runJIT) {
-            val mainFunction = compiler.context.typesRegister.findFunction(TypeIdentifier("main"))
-            JIT(compiler.context.module.reference).run(mainFunction)
+            val mainFunction = compiler.compilerContext.typesRegister.findFunction(TypeIdentifier("main"))
+            JIT(compiler.compilerContext.module.reference).run(mainFunction)
         }
     }
 }

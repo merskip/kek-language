@@ -18,6 +18,10 @@ abstract class LLVMType(
         return RawValuable.fromRawValue(LLVMGetTypeKind(reference))
     }
 
+    fun getContext(): LLVMContext {
+        return LLVMContext(LLVMGetTypeContext(reference))
+    }
+
     override fun toString() = getStringRepresentable().quotedIfNeeded()
 
     fun getStringRepresentable(): String {
@@ -35,7 +39,7 @@ class LLVMArrayType(reference: LLVMTypeRef) : LLVMType(reference)
 
 class LLVMFunctionType(reference: LLVMTypeRef) : LLVMType(reference) {
 
-    constructor(result: LLVMType, parameters: List<LLVMType>, isVariadicArguments: Boolean) : this(
+    constructor(parameters: List<LLVMType>, isVariadicArguments: Boolean, result: LLVMType) : this(
         LLVMFunctionType(
             result.reference,
             parameters.toPointerPointer(),
