@@ -147,19 +147,30 @@ class IRInstructionsBuilder(
         val constraints = listOf(outputConstraints, inputConstraints, clobberConstraints)
             .flatten().joinToString(",")
 
-        val inlineAssemblerValueRef = LLVMGetInlineAsm(
-            LLVMFunctionType(
-                parameters = emptyList(),
-                isVariadicArguments = true,
-                result = outputType
-            ).reference,
+        val inlineAssemblerType = LLVMFunctionType(
+            parameters = input.map { context.createIntegerType(64) },
+            isVariadicArguments = false,
+            result = outputType
+        )
+
+        val inlineAssemblerValueReference = LLVMGetInlineAsm(
+            inlineAssemblerType.reference,
             assemblerCode.toByteArray(), assemblerCode.length.toLong(),
             constraints.toByteArray(), constraints.length.toLong(),
             1,
             0,
             LLVMInlineAsmDialectATT
         )
-        return LLVMInstructionValue(LLVMBuildCall(irBuilder, inlineAssemblerValueRef, input.toPointerPointer(), input.size, name))
+        return LLVMInstructionValue(
+            LLVMBuildCall2(
+                irBuilder,
+                inlineAssemblerType.reference,
+                inlineAssemblerValueReference,
+                input.toPointerPointer(),
+                input.size,
+                name
+            )
+        )
     }
 
     /**
