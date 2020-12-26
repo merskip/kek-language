@@ -1,6 +1,7 @@
 package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.llvm.LLVMContext
+import pl.merskip.keklang.llvm.LLVMIntegerType
 import pl.merskip.keklang.llvm.LLVMTargetTriple
 import pl.merskip.keklang.llvm.LLVMType
 import pl.merskip.keklang.llvm.enum.ArchType
@@ -88,11 +89,17 @@ class BuiltinTypes(
             parameters("string" to stringType)
             returnType(voidType)
             implementation { (string) ->
-//                val stdoutFileDescription = LLVM.LLVMConstInt(integerType.type.reference, 1, 1)
-//                val stringLength = LLVM.LLVMConstInt(integerType.type.reference, 16, 1)//LLVM.LLVMGetOperand(string, 2)
-//                irCompiler.createSysCall(1, stdoutFileDescription, string, stringLength)
-//                irCompiler.createReturn()
-                compilerContext.instructionsBuilder.createUnreachable()
+                val standardOutputFileDescription = (integerType.type as LLVMIntegerType).constantValue(1, false)
+                val stringPointer = compilerContext.instructionsBuilder.buildCast(string, integerType.type, "string_address")
+                // TODO: Calculate length of string
+                val stringLength = (integerType.type as LLVMIntegerType).constantValue(16, false)
+
+                compilerContext.instructionsBuilder.createSystemCall(
+                    1,
+                    listOf(standardOutputFileDescription, stringPointer, stringLength),
+                    "syscall_write"
+                )
+                compilerContext.instructionsBuilder.createReturnVoid()
             }
         }
     }

@@ -75,13 +75,6 @@ class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
 
 abstract class LLVMConstantValue(reference: LLVMValueRef) : LLVMValue(reference)
 
-class LLVMConstantIntegerValue(reference: LLVMValueRef) : LLVMValue(reference) {
-    /**
-     * Obtain a constant value for an integer type
-     */
-    constructor(type: LLVMIntegerType, value: Long, isSigned: Boolean) : this(
-        LLVMConstInt(type.reference, value, isSigned.toInt())
-    )
-}
+class LLVMConstantIntegerValue(reference: LLVMValueRef) : LLVMValue(reference)
 
 class LLVMBasicBlockValue(val basicBlockReference: LLVMBasicBlockRef) : LLVMValue(LLVMValueRef(basicBlockReference))

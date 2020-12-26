@@ -1,5 +1,6 @@
 package pl.merskip.keklang.llvm
 
+import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.OperatingSystem
@@ -79,6 +80,27 @@ class IRInstructionsBuilder(
     }
 
     /**
+     * Create a one of instruction:
+     *  - 'typebit <type of value> to <toType>'
+     *  - 'ptrtoint <type of value> to <toType>'
+     *  - 'addrspacecast <type of value> to <toType>'
+     */
+    fun buildCast(
+        value: LLVMValue,
+        toType: LLVMType,
+        name: String
+    ): LLVMInstructionValue {
+        return LLVMInstructionValue(
+            LLVMBuildPointerCast(
+                irBuilder,
+                value.reference,
+                toType.reference,
+                name
+            )
+        )
+    }
+
+    /**
      * Creates a system call fitted to set target triple
      */
     fun createSystemCall(
@@ -92,7 +114,7 @@ class IRInstructionsBuilder(
 
             val usedInputRegister = mutableListOf<String>()
             val inputValues = listOf(
-                LLVMConstantIntegerValue(registerType, number, false),
+                registerType.constantValue(number, false),
                 *parameters.toTypedArray()
             )
 
