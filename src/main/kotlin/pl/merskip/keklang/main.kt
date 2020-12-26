@@ -2,7 +2,6 @@ package pl.merskip.keklang
 
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
-import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
@@ -81,16 +80,16 @@ fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler
     compiler.compile(listOf(fileNode))
 }
 
-fun ApplicationArguments.processModule(module: LLVMModuleRef) {
+fun ApplicationArguments.processModule(compilerContext: CompilerContext) {
     output?.let { outputFilename ->
         val outputFile = outputFilename.withExtensionIfNoExists(".o")
         println("Output file: $outputFile")
-        val backendCompiler = BackendCompiler(module)
+        val backendCompiler = BackendCompiler(compilerContext.module.reference)
         backendCompiler.compile(outputFile, asmDump, bitcode)
     }
 
     if (llvmIRDump) {
-        println(LLVM.LLVMPrintModuleToString(module).string.colorizeLLVMIR())
+        println(LLVM.LLVMPrintModuleToString(compilerContext.module.reference).disposable.string.colorizeLLVMIR(compilerContext.typesRegister))
     }
 }
 
@@ -113,14 +112,14 @@ fun main(args: Array<String>) = mainBody {
             withInterpreter { inputText ->
                 processSource(null, inputText, compiler)
                 if (compiler.compilerContext.module.isValid)
-                    processModule(compiler.compilerContext.module.reference)
+                    processModule(compiler.compilerContext)
             }
         } else {
             withReadSources(sources) { filename, content ->
                 processSource(filename, content, compiler)
             }
             if (compiler.compilerContext.module.isValid)
-                processModule(compiler.compilerContext.module.reference)
+                processModule(compiler.compilerContext)
         }
 
         if (runJIT) {
