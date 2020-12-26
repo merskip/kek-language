@@ -90,13 +90,13 @@ class BuiltinTypes(
             returnType(voidType)
             implementation { (string) ->
                 val standardOutputFileDescription = (integerType.type as LLVMIntegerType).constantValue(1, false)
-                val stringPointer = compilerContext.instructionsBuilder.buildCast(string, integerType.type, "string_address")
+                val stringAddress = compilerContext.instructionsBuilder.buildCast(string, integerType.type, "string_address")
                 // TODO: Calculate length of string
                 val stringLength = (integerType.type as LLVMIntegerType).constantValue(16, false)
 
                 compilerContext.instructionsBuilder.createSystemCall(
                     1,
-                    listOf(standardOutputFileDescription, stringPointer, stringLength),
+                    listOf(standardOutputFileDescription, stringAddress, stringLength),
                     "syscall_write"
                 )
                 compilerContext.instructionsBuilder.createReturnVoid()

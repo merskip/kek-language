@@ -1,6 +1,5 @@
 package pl.merskip.keklang.llvm
 
-import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.OperatingSystem
@@ -40,8 +39,8 @@ class IRInstructionsBuilder(
     /**
      * Create a 'alloca <type>' instruction
      */
-    fun createAlloca(type: LLVMType, name: String): LLVMInstructionValue {
-        return LLVMInstructionValue(LLVMBuildAlloca(irBuilder, type.reference, name))
+    fun createAlloca(type: LLVMType, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildAlloca(irBuilder, type.reference, name ?: ""))
     }
 
     /**
@@ -54,8 +53,8 @@ class IRInstructionsBuilder(
     /**
      * Create a 'load <type>, <storage>' instruction
      */
-    fun createLoad(storage: LLVMValue, type: LLVMType, name: String): LLVMInstructionValue {
-        return LLVMInstructionValue(LLVMBuildLoad2(irBuilder, type.reference, storage.reference, name))
+    fun createLoad(storage: LLVMValue, type: LLVMType, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildLoad2(irBuilder, type.reference, storage.reference, name ?: ""))
     }
 
     /**
@@ -65,7 +64,7 @@ class IRInstructionsBuilder(
         function: LLVMFunctionValue,
         functionType: LLVMFunctionType,
         arguments: List<LLVMValue>,
-        name: String
+        name: String?
     ): LLVMInstructionValue {
         return LLVMInstructionValue(
             LLVMBuildCall2(
@@ -74,7 +73,7 @@ class IRInstructionsBuilder(
                 function.reference,
                 arguments.toPointerPointer(),
                 arguments.size,
-                name
+                name ?: ""
             )
         )
     }
@@ -88,14 +87,14 @@ class IRInstructionsBuilder(
     fun buildCast(
         value: LLVMValue,
         toType: LLVMType,
-        name: String
+        name: String?
     ): LLVMInstructionValue {
         return LLVMInstructionValue(
             LLVMBuildPointerCast(
                 irBuilder,
                 value.reference,
                 toType.reference,
-                name
+                name ?: ""
             )
         )
     }
@@ -106,7 +105,7 @@ class IRInstructionsBuilder(
     fun createSystemCall(
         number: Long,
         parameters: List<LLVMValue>,
-        name: String
+        name: String?
     ): LLVMInstructionValue {
         if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
             val registerType = context.createIntegerType(64)
@@ -163,7 +162,7 @@ class IRInstructionsBuilder(
         outputConstraints: List<String>,
         inputConstraints: List<String>,
         clobberConstraints: List<String>,
-        name: String
+        name: String?
     ): LLVMInstructionValue {
         val assemblerCode = instructions.joinToString("; ")
         val constraints = listOf(outputConstraints, inputConstraints, clobberConstraints)
@@ -190,7 +189,7 @@ class IRInstructionsBuilder(
                 inlineAssemblerValueReference,
                 input.toPointerPointer(),
                 input.size,
-                name
+                name ?: ""
             )
         )
     }
@@ -205,8 +204,8 @@ class IRInstructionsBuilder(
     /**
      * Append a basic block to the end of a function
      */
-    fun appendBasicBlockAtEnd(function: LLVMFunctionValue, name: String): LLVMBasicBlockValue {
-        val basicBlock = LLVMBasicBlockValue(LLVMAppendBasicBlockInContext(context.reference, function.reference, name))
+    fun appendBasicBlockAtEnd(function: LLVMFunctionValue, name: String?): LLVMBasicBlockValue {
+        val basicBlock = LLVMBasicBlockValue(LLVMAppendBasicBlockInContext(context.reference, function.reference, name ?: ""))
         moveAtEnd(basicBlock)
         return basicBlock
     }
