@@ -33,7 +33,7 @@ data class TypeIdentifier(
                 "Boolean" -> "b"
                 "BytePointer" -> "p"
                 "String" -> "s"
-                else -> if (isType) "T$length$this" else "$length$this"
+                else -> if (isType) "T$length$this" else "N$length$this"
             }
     }
 
