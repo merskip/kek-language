@@ -24,6 +24,10 @@ class TypesRegister {
             ?: throw NotFoundTypeWithIdentifier(identifier)
     }
 
+    fun findTypeOrNull(mangledIdentifier: String): Type? {
+        return types.firstOrNull { it.identifier.mangled == mangledIdentifier }
+    }
+
     fun findFunction(calleeType: Type?, simpleIdentifier: String, parameters: List<Type>, returnType: Type): Function =
         findFunction(TypeIdentifier.function(null, simpleIdentifier, parameters.addingBegin(calleeType), returnType))
 

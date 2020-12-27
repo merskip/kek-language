@@ -2,7 +2,6 @@ package pl.merskip.keklang
 
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
-import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
 import pl.merskip.keklang.compiler.CompilerContext
@@ -89,7 +88,9 @@ fun ApplicationArguments.processModule(compilerContext: CompilerContext) {
     }
 
     if (llvmIRDump) {
-        println(LLVM.LLVMPrintModuleToString(compilerContext.module.reference).disposable.string.colorizeLLVMIR(compilerContext.typesRegister))
+        val plainIR = compilerContext.module.getIntermediateRepresentation()
+        val richIR = RicherLLVMIRText(plainIR, compilerContext.typesRegister).rich()
+        println(richIR)
     }
 }
 

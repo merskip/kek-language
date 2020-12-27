@@ -26,8 +26,8 @@ class LLVMModule(
         return LLVMTargetTriple.fromString(targetTriple)
     }
 
-    fun dump() {
-        LLVMDumpModule(reference)
+    fun getIntermediateRepresentation(): String {
+        return LLVMPrintModuleToString(reference).disposable.string
     }
 
     fun verify() {

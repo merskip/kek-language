@@ -37,7 +37,7 @@ fun String.colored(color: Color): String {
         Color.BrightGreen -> "\u001b[92m"
         Color.BrightYellow -> "\u001b[93m"
         Color.BrightBlue -> "\u001b[94m"
-        Color.BrightMagenta -> "\u001b[9m"
+        Color.BrightMagenta -> "\u001b[95m"
         Color.BrightCyan -> "\u001b[96m"
         Color.White -> "\u001b[97m"
     }
