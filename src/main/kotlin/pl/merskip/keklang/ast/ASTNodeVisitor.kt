@@ -2,19 +2,19 @@ package pl.merskip.keklang.ast
 
 import pl.merskip.keklang.ast.node.*
 
-interface NodeASTVisitor<T> {
+interface ASTNodeVisitor<T> {
 
     fun visitFileNode(node: FileASTNode): T
     fun visitFunctionDefinitionNode(node: FunctionDefinitionNodeAST): T
     fun visitIfElseConditionNode(node: IfElseConditionNodeAST): T
     fun visitIfConditionNode(node: IfConditionNodeAST): T
-    fun visitCodeBlockNode(node: CodeBlockNodeAST): T
-    fun visitFunctionCallNode(node: FunctionCallNodeAST): T
-    fun visitTypeFunctionCallNode(node: TypeFunctionCallNodeAST): T
+    fun visitCodeBlockNode(node: CodeBlockASTNode): T
+    fun visitFunctionCallNode(node: FunctionCallASTNode): T
+    fun visitTypeFunctionCallNode(node: TypeFunctionCallASTNode): T
     fun visitConstantValueNode(node: ConstantValueNodeAST): T
     fun visitReferenceDeclarationNode(node: ReferenceDeclarationNodeAST): T
-    fun visitTypeReferenceNode(node: TypeReferenceNodeAST): T
-    fun visitReferenceNode(node: ReferenceNodeAST): T
+    fun visitTypeReferenceNode(node: TypeReferenceASTNode): T
+    fun visitReferenceNode(node: ReferenceASTNode): T
     fun visitBinaryOperatorNode(node: BinaryOperatorNodeAST): T
-    fun visitStringNode(node: ConstantStringNodeAST): T
+    fun visitStringNode(node: ConstantStringASTNode): T
 }

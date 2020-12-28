@@ -1,12 +1,14 @@
-package pl.merskip.keklang.compiler
+package pl.merskip.keklang.compiler.node
 
-import pl.merskip.keklang.ast.node.CodeBlockNodeAST
+import pl.merskip.keklang.ast.node.CodeBlockASTNode
+import pl.merskip.keklang.compiler.CompilerContext
+import pl.merskip.keklang.compiler.Reference
 
-class CodeBlockASTNodeCompiler(
+class CodeBlockCompiler(
     context: CompilerContext
-) : ASTNodeCompiler<CodeBlockNodeAST>(context) {
+) : ASTNodeCompiler<CodeBlockASTNode>(context) {
 
-    override fun compile(node: CodeBlockNodeAST): Reference? {
+    override fun compile(node: CodeBlockASTNode): Reference? {
         val iterator = node.statements.iterator()
         while (iterator.hasNext()) {
             val statementNode = iterator.next()

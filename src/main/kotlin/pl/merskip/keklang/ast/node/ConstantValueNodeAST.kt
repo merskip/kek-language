@@ -1,3 +1,3 @@
 package pl.merskip.keklang.ast.node
 
-abstract class ConstantValueNodeAST : StatementNodeAST()
+abstract class ConstantValueNodeAST : StatementASTNode()

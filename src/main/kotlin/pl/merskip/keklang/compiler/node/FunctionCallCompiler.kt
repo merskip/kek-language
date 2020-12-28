@@ -1,34 +1,37 @@
-package pl.merskip.keklang.compiler
+package pl.merskip.keklang.compiler.node
 
-import pl.merskip.keklang.ast.node.TypeFunctionCallNodeAST
+import pl.merskip.keklang.ast.node.FunctionCallASTNode
+import pl.merskip.keklang.compiler.CompilerContext
+import pl.merskip.keklang.compiler.Function
+import pl.merskip.keklang.compiler.Reference
+import pl.merskip.keklang.compiler.TypeIdentifier
 
-class TypeFunctionCallASTNodeCompiler(
+class FunctionCallCompiler(
     context: CompilerContext
-) : ASTNodeCompiler<TypeFunctionCallNodeAST>(context) {
+) : ASTNodeCompiler<FunctionCallASTNode>(context) {
 
-    override fun compile(node: TypeFunctionCallNodeAST): Reference? {
+    override fun compile(node: FunctionCallASTNode): Reference? {
         val parameters = compileParameters(node)
         val function = findFunction(node, parameters)
         val value = context.instructionsBuilder.createCall(
             function.value,
             function.type,
             parameters.map(Reference::value),
-            if (function.returnType.isVoid) null else "call_${function.identifier.simple}"
+            "call"
         )
         return Reference(null, function.returnType, value)
     }
 
-    private fun compileParameters(node: TypeFunctionCallNodeAST): List<Reference> {
+    private fun compileParameters(node: FunctionCallASTNode): List<Reference> {
         return node.parameters.map { parameterNode ->
             context.compile(parameterNode)!! // TODO: Throw exception - expression without
         }
     }
 
-    private fun findFunction(node: TypeFunctionCallNodeAST, parameters: List<Reference>): Function {
-        val type = context.typesRegister.findType(node.typeIdentifier)
+    private fun findFunction(node: FunctionCallASTNode, parameters: List<Reference>): Function {
         val functionIdentifier = TypeIdentifier.function(
-            onType = type,
-            simple = node.functionIdentifier,
+            onType = null,
+            simple = node.identifier,
             parameters = parameters.map(Reference::type)
         )
         return context.typesRegister.findFunction(functionIdentifier)

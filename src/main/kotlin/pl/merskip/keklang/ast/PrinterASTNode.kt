@@ -5,7 +5,7 @@ import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.colored
 import kotlin.reflect.KClass
 
-class PrinterNodeAST : NodeASTVisitor<Unit> {
+class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     private var indentLevel: Int = 0
     private lateinit var output: String
@@ -68,7 +68,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
-    override fun visitCodeBlockNode(node: CodeBlockNodeAST) {
+    override fun visitCodeBlockNode(node: CodeBlockASTNode) {
         print(
             nodeClass = node::class,
             parameters = emptyMap(),
@@ -78,7 +78,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
-    override fun visitFunctionCallNode(node: FunctionCallNodeAST) {
+    override fun visitFunctionCallNode(node: FunctionCallASTNode) {
         print(
             nodeClass = node::class,
             parameters =  mapOf("identifier" to node.identifier),
@@ -88,7 +88,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
-    override fun visitTypeFunctionCallNode(node: TypeFunctionCallNodeAST) {
+    override fun visitTypeFunctionCallNode(node: TypeFunctionCallASTNode) {
         print(
             nodeClass = node::class,
             parameters =  mapOf(
@@ -103,7 +103,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
 
     override fun visitConstantValueNode(node: ConstantValueNodeAST) {
         when (node) {
-            is IntegerConstantValueNodeAST -> print(
+            is IntegerConstantASTNode -> print(
                 nodeClass = node::class,
                 parameters =  mapOf("value" to node.value.toString())
             )
@@ -126,7 +126,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
-    override fun visitTypeReferenceNode(node: TypeReferenceNodeAST) {
+    override fun visitTypeReferenceNode(node: TypeReferenceASTNode) {
         print(
             nodeClass = node::class,
             parameters = mapOf(
@@ -135,7 +135,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
-    override fun visitReferenceNode(node: ReferenceNodeAST) {
+    override fun visitReferenceNode(node: ReferenceASTNode) {
         print(
             nodeClass = node::class,
             parameters = mapOf("identifier" to node.identifier)
@@ -153,7 +153,7 @@ class PrinterNodeAST : NodeASTVisitor<Unit> {
         )
     }
 
-    override fun visitStringNode(node: ConstantStringNodeAST) {
+    override fun visitStringNode(node: ConstantStringASTNode) {
         print(
             nodeClass = node::class,
             parameters = mapOf("string" to node.string)

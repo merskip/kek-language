@@ -170,7 +170,7 @@ class Compiler(
             Function.Parameter(it.identifier, type)
         }
 
-    private fun compileStatement(statement: StatementNodeAST): Reference {
+    private fun compileStatement(statement: StatementASTNode): Reference {
         irCompiler.setCurrentDebugLocation(
             debugBuilder.createDebugLocation(
                 statement.sourceLocation.startIndex.line,
@@ -179,19 +179,19 @@ class Compiler(
             ).reference
         )
         return when (statement) {
-            is ReferenceNodeAST -> scopesStack.current.getReferenceOrNull(statement.identifier)!!
-            is CodeBlockNodeAST -> compileCodeBlockAndGetLastValue(statement)
+            is ReferenceASTNode -> scopesStack.current.getReferenceOrNull(statement.identifier)!!
+            is CodeBlockASTNode -> compileCodeBlockAndGetLastValue(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
-            is TypeFunctionCallNodeAST -> compileCallTypeFunction(statement)
-            is FunctionCallNodeAST -> compileCallFunction(statement)
+            is TypeFunctionCallASTNode -> compileCallTypeFunction(statement)
+            is FunctionCallASTNode -> compileCallFunction(statement)
             is IfElseConditionNodeAST -> compileIfElseCondition(statement)
-            is ConstantStringNodeAST -> compileConstantString(statement)
+            is ConstantStringASTNode -> compileConstantString(statement)
             else -> throw Exception("TODO: $statement")
         }
     }
 
-    private fun compileCodeBlockAndGetLastValue(nodeAST: CodeBlockNodeAST): Reference {
+    private fun compileCodeBlockAndGetLastValue(nodeAST: CodeBlockASTNode): Reference {
         var lastValue: Reference? = null
         nodeAST.statements.forEach { statement ->
             lastValue = compileStatement(statement)
@@ -201,7 +201,7 @@ class Compiler(
 
     private fun compileConstantValue(nodeAST: ConstantValueNodeAST): Reference {
         return when (nodeAST) {
-            is IntegerConstantValueNodeAST -> {
+            is IntegerConstantASTNode -> {
                 val type = builtinTypes.integerType
                 irCompiler.createConstantIntegerValue(nodeAST.value, type)
                     .toReference(type)
@@ -228,7 +228,7 @@ class Compiler(
         return compileCallFunction(invokeFunction, listOf(lhs, rhs))
     }
 
-    private fun compileCallTypeFunction(nodeAST: TypeFunctionCallNodeAST): Reference {
+    private fun compileCallTypeFunction(nodeAST: TypeFunctionCallASTNode): Reference {
         val arguments = nodeAST.parameters.map { compileStatement(it) }
         val argumentsTypes = arguments.map { it.type }
 
@@ -238,7 +238,7 @@ class Compiler(
         error("")
     }
 
-    private fun compileCallFunction(nodeAST: FunctionCallNodeAST): Reference {
+    private fun compileCallFunction(nodeAST: FunctionCallASTNode): Reference {
         val arguments = nodeAST.parameters.map { compileStatement(it) }
         val argumentsTypes = arguments.map { it.type }
 
@@ -278,7 +278,7 @@ class Compiler(
         return condition
     }
 
-    private fun compileConstantString(node: ConstantStringNodeAST): Reference {
+    private fun compileConstantString(node: ConstantStringASTNode): Reference {
         val stringValueRef = irCompiler.createString(node.string)
         return stringValueRef.toReference(builtinTypes.stringType, "string")
     }

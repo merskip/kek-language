@@ -3,7 +3,7 @@ package pl.merskip.keklang
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
 import pl.merskip.keklang.ast.ParserAST
-import pl.merskip.keklang.ast.PrinterNodeAST
+import pl.merskip.keklang.ast.PrinterASTNode
 import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
@@ -70,7 +70,7 @@ fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler
     val fileNode = parserNodeAST.parse()
 
     if (astDump) {
-        println(PrinterNodeAST().print(fileNode))
+        println(PrinterASTNode().print(fileNode))
     }
 
     compiler.compile(listOf(fileNode))

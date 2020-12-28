@@ -1,12 +1,12 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.NodeASTVisitor
+import pl.merskip.keklang.ast.ASTNodeVisitor
 
 data class BinaryOperatorNodeAST(
     val identifier: String,
-    val lhs: StatementNodeAST,
-    val rhs: StatementNodeAST
-) : StatementNodeAST() {
+    val lhs: StatementASTNode,
+    val rhs: StatementASTNode
+) : StatementASTNode() {
 
-    override fun <T> accept(visitor: NodeASTVisitor<T>) = visitor.visitBinaryOperatorNode(this)
+    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitBinaryOperatorNode(this)
 }

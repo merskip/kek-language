@@ -1,13 +1,13 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.NodeASTVisitor
+import pl.merskip.keklang.ast.ASTNodeVisitor
 
 data class FunctionDefinitionNodeAST(
     val identifier: String,
     val parameters: List<ReferenceDeclarationNodeAST>,
-    val returnType: TypeReferenceNodeAST?,
-    val body: CodeBlockNodeAST
+    val returnType: TypeReferenceASTNode?,
+    val body: CodeBlockASTNode
 ): ASTNode() {
 
-    override fun <T> accept(visitor: NodeASTVisitor<T>) = visitor.visitFunctionDefinitionNode(this)
+    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitFunctionDefinitionNode(this)
 }

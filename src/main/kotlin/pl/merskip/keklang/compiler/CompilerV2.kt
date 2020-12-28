@@ -1,6 +1,7 @@
 package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.ast.node.FileASTNode
+import pl.merskip.keklang.compiler.node.*
 import pl.merskip.keklang.logger.Logger
 
 class CompilerV2(
@@ -11,14 +12,14 @@ class CompilerV2(
 
     init {
         logger.info("Preparing compiler")
-        context.addNodeCompiler(FileASTNodeCompiler(context))
-        context.addNodeCompiler(CodeBlockASTNodeCompiler(context))
-        context.addNodeCompiler(StatementASTNodeCompiler(context))
-        context.addNodeCompiler(ReferenceASTNodeCompiler(context))
-        context.addNodeCompiler(ConstantIntegerASTNodeCompiler(context))
-        context.addNodeCompiler(ConstantStringASTNodeCompiler(context))
-        context.addNodeCompiler(FunctionCallASTNodeCompiler(context))
-        context.addNodeCompiler(TypeFunctionCallASTNodeCompiler(context))
+        context.addNodeCompiler(FileCompiler(context))
+        context.addNodeCompiler(CodeBlockCompiler(context))
+        context.addNodeCompiler(StatementCompiler(context))
+        context.addNodeCompiler(ReferenceCompiler(context))
+        context.addNodeCompiler(ConstantIntegerCompiler(context))
+        context.addNodeCompiler(ConstantStringCompiler(context))
+        context.addNodeCompiler(FunctionCallCompiler(context))
+        context.addNodeCompiler(TypeFunctionCallCompiler(context))
         BuiltinTypes(context).register()
     }
 

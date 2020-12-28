@@ -215,20 +215,20 @@ class LLVMCompiler(
         variableScopeStack.leaveScope()
     }
 
-    private fun compileStatement(statement: StatementNodeAST): LLVMValueRef {
+    private fun compileStatement(statement: StatementASTNode): LLVMValueRef {
         return when (statement) {
-            is FunctionCallNodeAST -> compileFunctionCall(statement)
+            is FunctionCallASTNode -> compileFunctionCall(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is IfConditionNodeAST -> compileIfCondition(statement)
-            is CodeBlockNodeAST -> compileCodeBlock(statement)
-            is ConstantStringNodeAST -> compileConstantStringValue(statement)
-            is ReferenceNodeAST -> variableScopeStack.getReference(statement.identifier)
+            is CodeBlockASTNode -> compileCodeBlock(statement)
+            is ConstantStringASTNode -> compileConstantStringValue(statement)
+            is ReferenceASTNode -> variableScopeStack.getReference(statement.identifier)
             else -> throw Exception("Unexpected statement: $statement")
         }
     }
 
-    private fun compileFunctionCall(functionCall: FunctionCallNodeAST): LLVMValueRef {
+    private fun compileFunctionCall(functionCall: FunctionCallASTNode): LLVMValueRef {
         val identifier = if (functionCall.identifier == "printf") ".kek.builtin.print" else functionCall.identifier
         val functionValue = LLVMGetNamedFunction(module, identifier)
             ?: throw Exception("Not found function: ${functionCall.identifier}")
@@ -262,7 +262,7 @@ class LLVMCompiler(
                 LLVMDoubleTypeInContext(context),
                 constantValue.value.toDouble()
             )
-            is IntegerConstantValueNodeAST -> LLVMConstInt(
+            is IntegerConstantASTNode -> LLVMConstInt(
                 LLVMInt32TypeInContext(context),
                 constantValue.value.toLong(),
                 1
@@ -271,7 +271,7 @@ class LLVMCompiler(
         }
     }
 
-    private fun compileConstantStringValue(constantStringNodeAST: ConstantStringNodeAST): LLVMValueRef {
+    private fun compileConstantStringValue(constantStringNodeAST: ConstantStringASTNode): LLVMValueRef {
         val hash = "%02x".format(constantStringNodeAST.string.hashCode())
         return LLVMBuildGlobalStringPtr(builder, constantStringNodeAST.string, ".str.$hash")
     }
@@ -299,7 +299,7 @@ class LLVMCompiler(
         return ifBlockValue
     }
 
-    private fun compileCodeBlock(codeBlockNodeAST: CodeBlockNodeAST): LLVMValueRef {
+    private fun compileCodeBlock(codeBlockNodeAST: CodeBlockASTNode): LLVMValueRef {
         var lastValue: LLVMValueRef? = null
         codeBlockNodeAST.statements.forEach { statement ->
             lastValue = compileStatement(statement)

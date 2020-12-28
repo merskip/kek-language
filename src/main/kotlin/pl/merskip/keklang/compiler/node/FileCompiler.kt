@@ -1,11 +1,13 @@
-package pl.merskip.keklang.compiler
+package pl.merskip.keklang.compiler.node
 
 import pl.merskip.keklang.ast.node.FileASTNode
 import pl.merskip.keklang.ast.node.FunctionDefinitionNodeAST
+import pl.merskip.keklang.compiler.*
+import pl.merskip.keklang.compiler.Function
 import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.logger.Logger
 
-class FileASTNodeCompiler(
+class FileCompiler(
     context: CompilerContext
 ) : ASTNodeCompiler<FileASTNode>(context) {
 
