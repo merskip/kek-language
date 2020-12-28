@@ -13,14 +13,12 @@ data class TypeIdentifier(
         fun function(
             onType: Type?,
             simple: String,
-            parameters: List<Type>,
-            returnType: Type
+            parameters: List<Type>
         ): TypeIdentifier {
             val mangledIdentifier = listOfNotNull(
                 onType?.identifier?.mangled,
                 simple.mangled(isType = false),
-                parameters.joinToString { it.identifier.mangled },
-                returnType.identifier.mangled
+                parameters.joinToString { it.identifier.mangled }.ifEmpty { null }
             ).joinToString("_")
             return TypeIdentifier(simple, mangledIdentifier)
         }

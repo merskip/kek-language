@@ -11,25 +11,27 @@ class CompilerContext(
     val context: LLVMContext,
     val module: LLVMModule,
     val typesRegister: TypesRegister,
+    val scopesStack: ScopesStack,
     val instructionsBuilder: IRInstructionsBuilder,
     val debugBuilder: DebugInformationBuilder
 ) {
 
     var nodesCompilers = mutableListOf<ASTNodeCompiler<*>>()
 
-    inline fun <reified T: ASTNode> compile(node: T) {
+    inline fun <reified T: ASTNode> compile(node: T): Reference? {
         val nodeCompiler = getNodeCompiler<T>()
-        nodeCompiler.compile(node)
+        return nodeCompiler.compile(node)
     }
 
-    inline fun <reified N: ASTNode> getNodeCompiler(): ASTNodeCompiler<N> {
+    inline fun <reified Node: ASTNode> getNodeCompiler(): ASTNodeCompiler<Node> {
+        val nodeClass = Node::class.java
         for (nodeCompiler in nodesCompilers) {
             val innerType = (nodeCompiler::class.java.genericSuperclass as ParameterizedType).actualTypeArguments[0]
             @Suppress("UNCHECKED_CAST")
-            if (innerType == N::class.java)
-                return nodeCompiler as ASTNodeCompiler<N>
+            if (innerType == nodeClass)
+                return nodeCompiler as ASTNodeCompiler<Node>
         }
-        throw IllegalArgumentException("Not found node compiler for ${N::class}")
+        throw IllegalArgumentException("Not found node compiler for ${Node::class}")
     }
 
     fun <T: ASTNode> addNodeCompiler(nodeCompiler: ASTNodeCompiler<T>) {

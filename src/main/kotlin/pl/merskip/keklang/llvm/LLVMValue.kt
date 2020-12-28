@@ -5,7 +5,6 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.AttributeIndex
 import pl.merskip.keklang.llvm.enum.Linkage
-import pl.merskip.keklang.toInt
 
 abstract class LLVMValue(
     override val reference: LLVMValueRef
@@ -73,8 +72,6 @@ class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
     }
 }
 
-abstract class LLVMConstantValue(reference: LLVMValueRef) : LLVMValue(reference)
-
-class LLVMConstantIntegerValue(reference: LLVMValueRef) : LLVMValue(reference)
+class LLVMConstantValue(reference: LLVMValueRef) : LLVMValue(reference)
 
 class LLVMBasicBlockValue(val basicBlockReference: LLVMBasicBlockRef) : LLVMValue(LLVMValueRef(basicBlockReference))

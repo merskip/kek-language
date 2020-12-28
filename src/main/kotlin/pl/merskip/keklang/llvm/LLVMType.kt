@@ -51,8 +51,8 @@ class LLVMFunctionType(reference: LLVMTypeRef) : LLVMType(reference) {
 
 class LLVMIntegerType(reference: LLVMTypeRef) : LLVMType(reference) {
 
-    fun constantValue(value: Long, isSigned: Boolean): LLVMConstantIntegerValue {
-        return LLVMConstantIntegerValue(LLVMConstInt(reference, value, isSigned.toInt()))
+    fun constantValue(value: Long, isSigned: Boolean): LLVMConstantValue {
+        return LLVMConstantValue(LLVMConstInt(reference, value, isSigned.toInt()))
     }
 }
 

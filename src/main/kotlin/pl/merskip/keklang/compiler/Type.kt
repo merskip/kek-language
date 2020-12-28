@@ -6,7 +6,7 @@ import pl.merskip.keklang.llvm.LLVMType
 
 abstract class Type(
     val identifier: TypeIdentifier,
-    val type: LLVMType
+    open val type: LLVMType
 ) {
 
     val isVoid: Boolean
@@ -31,7 +31,7 @@ class Function(
     val onType: Type?,
     val parameters: List<Parameter>,
     val returnType: Type,
-    type: LLVMFunctionType,
+    override val type: LLVMFunctionType,
     val value: LLVMFunctionValue
 ) : Type(identifier, type) {
 

@@ -28,8 +28,8 @@ class TypesRegister {
         return types.firstOrNull { it.identifier.mangled == mangledIdentifier }
     }
 
-    fun findFunction(calleeType: Type?, simpleIdentifier: String, parameters: List<Type>, returnType: Type): Function =
-        findFunction(TypeIdentifier.function(null, simpleIdentifier, parameters.addingBegin(calleeType), returnType))
+    fun findFunction(onType: Type?, simpleIdentifier: String, parameters: List<Type>): Function =
+        findFunction(TypeIdentifier.function(null, simpleIdentifier, parameters.addingBegin(onType)))
 
     fun findFunction(identifier: TypeIdentifier): Function {
         return types.mapNotNull { it as? Function }

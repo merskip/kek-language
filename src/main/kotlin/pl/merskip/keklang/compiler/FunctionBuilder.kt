@@ -52,7 +52,7 @@ class FunctionBuilder {
     private fun build(compilerContext: CompilerContext): Function {
         val identifier =
             if (isExtern) TypeIdentifier(simpleIdentifier, simpleIdentifier)
-            else TypeIdentifier.function(onType, simpleIdentifier, parameters.types, returnType)
+            else TypeIdentifier.function(onType, simpleIdentifier, parameters.types)
 
         val functionType = LLVMFunctionType(
             result = returnType.type,

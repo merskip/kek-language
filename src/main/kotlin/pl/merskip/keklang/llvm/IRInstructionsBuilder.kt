@@ -99,6 +99,11 @@ class IRInstructionsBuilder(
         )
     }
 
+    fun createGlobalString(value: String): LLVMConstantValue {
+        val hash = "%02x".format(value.hashCode())
+        return LLVMConstantValue(LLVMBuildGlobalStringPtr(irBuilder, value, "str_$hash"))
+    }
+
     /**
      * Creates a system call fitted to set target triple
      */
@@ -213,7 +218,7 @@ class IRInstructionsBuilder(
     /**
      * Moves the position of builder after passed basic block
      */
-    private fun moveAtEnd(basicBlock: LLVMBasicBlockValue) {
+    fun moveAtEnd(basicBlock: LLVMBasicBlockValue) {
         LLVMPositionBuilderAtEnd(irBuilder, basicBlock.basicBlockReference)
     }
 }

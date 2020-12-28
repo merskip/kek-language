@@ -1,10 +1,10 @@
 
-func sayHello(returnValue: Integer) -> Integer {
+func sayHello() -> Integer {
     System.print("Hello world!   \n")
     System.print("Witaj świecie!\n")
-    returnValue
+    0
 }
 
 func main() -> Integer {
-    sayHello(0)
+    sayHello()
 }

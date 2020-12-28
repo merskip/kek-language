@@ -4,10 +4,7 @@ import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterNodeAST
-import pl.merskip.keklang.compiler.CompilerContext
-import pl.merskip.keklang.compiler.CompilerV2
-import pl.merskip.keklang.compiler.TypeIdentifier
-import pl.merskip.keklang.compiler.TypesRegister
+import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
@@ -86,12 +83,6 @@ fun ApplicationArguments.processModule(compilerContext: CompilerContext) {
         val backendCompiler = BackendCompiler(compilerContext.module.reference)
         backendCompiler.compile(outputFile, asmDump, bitcode)
     }
-
-    if (llvmIRDump) {
-        val plainIR = compilerContext.module.getIntermediateRepresentation()
-        val richIR = RicherLLVMIRText(plainIR, compilerContext.typesRegister).rich()
-        println(richIR)
-    }
 }
 
 fun main(args: Array<String>) = mainBody {
@@ -104,28 +95,38 @@ fun main(args: Array<String>) = mainBody {
                 context,
                 module,
                 TypesRegister(),
+                ScopesStack(),
                 IRInstructionsBuilder(context, module.getTargetTriple()),
                 DebugInformationBuilder(context, module)
             )
         )
 
-        if (isInterpreterMode()) {
-            withInterpreter { inputText ->
-                processSource(null, inputText, compiler)
-                if (compiler.compilerContext.module.isValid)
-                    processModule(compiler.compilerContext)
+        try {
+            if (isInterpreterMode()) {
+                withInterpreter { inputText ->
+                    processSource(null, inputText, compiler)
+                    if (compiler.context.module.isValid)
+                        processModule(compiler.context)
+                }
+            } else {
+                withReadSources(sources) { filename, content ->
+                    processSource(filename, content, compiler)
+                }
+                if (compiler.context.module.isValid)
+                    processModule(compiler.context)
             }
-        } else {
-            withReadSources(sources) { filename, content ->
-                processSource(filename, content, compiler)
-            }
-            if (compiler.compilerContext.module.isValid)
-                processModule(compiler.compilerContext)
-        }
 
-        if (runJIT) {
-            val mainFunction = compiler.compilerContext.typesRegister.findFunction(TypeIdentifier("main"))
-            JIT(compiler.compilerContext.module.reference).run(mainFunction)
+            if (runJIT) {
+                val mainFunction = compiler.context.typesRegister.findFunction(TypeIdentifier("main"))
+                JIT(compiler.context.module.reference).run(mainFunction)
+            }
+        }
+        finally {
+            if (llvmIRDump) {
+                val plainIR = compiler.context.module.getIntermediateRepresentation()
+                val richIR = RicherLLVMIRText(plainIR, compiler.context.typesRegister).rich()
+                println(richIR)
+            }
         }
     }
 }

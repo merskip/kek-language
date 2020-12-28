@@ -268,7 +268,7 @@ class Compiler(
                 fun() { compileStatement(node.elseBlock) }
             } else null
         )
-        return Reference("", builtinTypes.voidType, LLVMValue.empty())
+        return Reference(null, builtinTypes.voidType, LLVMValue.empty())
     }
 
     private fun compileCondition(node: IfConditionNodeAST): Reference {
