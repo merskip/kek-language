@@ -253,8 +253,6 @@ class ParserAST(
 
     private fun parseConstantString(stringLiteral: Token.StringLiteral): ConstantStringASTNode {
         val string = stringLiteral.text.removePrefix("\"").removeSuffix("\"")
-            .replace("\\n", "\n")
-
         return ConstantStringASTNode(string)
             .sourceLocation(stringLiteral)
     }

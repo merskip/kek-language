@@ -9,7 +9,7 @@ class ConstantStringCompiler(
 ): ASTNodeCompiler<ConstantStringASTNode>(context) {
 
     override fun compile(node: ConstantStringASTNode): Reference {
-        val string = node.string
+        val string = node.string.replace("\\n", "\n")
         val stringPointer = context.instructionsBuilder.createGlobalString(string)
         return Reference(null, context.typesRegister.findType("String"), stringPointer)
     }
