@@ -5,8 +5,8 @@ import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.Reference
 
 class CodeBlockCompiler(
-    context: CompilerContext
-) : ASTNodeCompiler<CodeBlockASTNode>(context) {
+    val context: CompilerContext
+) : ASTNodeCompiling<CodeBlockASTNode> {
 
     override fun compile(node: CodeBlockASTNode): Reference? {
         val iterator = node.statements.iterator()

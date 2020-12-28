@@ -5,8 +5,8 @@ import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.Reference
 
 class StatementCompiler(
-    context: CompilerContext
-): ASTNodeCompiler<StatementASTNode>(context) {
+    val context: CompilerContext
+): ASTNodeCompiling<StatementASTNode> {
 
     override fun compile(node: StatementASTNode): Reference? {
         return when (node) {

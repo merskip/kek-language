@@ -5,8 +5,8 @@ import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.Reference
 
 class ConstantStringCompiler(
-    context: CompilerContext
-): ASTNodeCompiler<ConstantStringASTNode>(context) {
+    val context: CompilerContext
+): ASTNodeCompiling<ConstantStringASTNode> {
 
     override fun compile(node: ConstantStringASTNode): Reference {
         val string = node.string.replace("\\n", "\n")

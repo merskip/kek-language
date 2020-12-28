@@ -8,8 +8,8 @@ import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.logger.Logger
 
 class FileCompiler(
-    context: CompilerContext
-) : ASTNodeCompiler<FileASTNode>(context) {
+    val context: CompilerContext
+) : ASTNodeCompiling<FileASTNode> {
 
     private val logger = Logger(this::class)
 

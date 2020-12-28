@@ -5,8 +5,8 @@ import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.Reference
 
 class ReferenceCompiler(
-    context: CompilerContext
-) : ASTNodeCompiler<ReferenceASTNode>(context) {
+    val context: CompilerContext
+) : ASTNodeCompiling<ReferenceASTNode> {
 
     override fun compile(node: ReferenceASTNode): Reference? {
         return context.scopesStack.current.getReferenceOrNull(node.identifier)

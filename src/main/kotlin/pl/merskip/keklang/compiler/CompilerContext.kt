@@ -1,7 +1,7 @@
 package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.ast.node.ASTNode
-import pl.merskip.keklang.compiler.node.ASTNodeCompiler
+import pl.merskip.keklang.compiler.node.ASTNodeCompiling
 import pl.merskip.keklang.llvm.DebugInformationBuilder
 import pl.merskip.keklang.llvm.IRInstructionsBuilder
 import pl.merskip.keklang.llvm.LLVMContext
@@ -17,25 +17,25 @@ class CompilerContext(
     val debugBuilder: DebugInformationBuilder
 ) {
 
-    var nodesCompilers = mutableListOf<ASTNodeCompiler<*>>()
+    var nodesCompilers = mutableListOf<ASTNodeCompiling<*>>()
 
     inline fun <reified T: ASTNode> compile(node: T): Reference? {
         val nodeCompiler = getNodeCompiler<T>()
         return nodeCompiler.compile(node)
     }
 
-    inline fun <reified Node: ASTNode> getNodeCompiler(): ASTNodeCompiler<Node> {
+    inline fun <reified Node: ASTNode> getNodeCompiler(): ASTNodeCompiling<Node> {
         val nodeClass = Node::class.java
         for (nodeCompiler in nodesCompilers) {
-            val innerType = (nodeCompiler::class.java.genericSuperclass as ParameterizedType).actualTypeArguments[0]
+            val innerType = (nodeCompiler::class.java.genericInterfaces[0] as ParameterizedType).actualTypeArguments[0]
             @Suppress("UNCHECKED_CAST")
             if (innerType == nodeClass)
-                return nodeCompiler as ASTNodeCompiler<Node>
+                return nodeCompiler as ASTNodeCompiling<Node>
         }
         throw IllegalArgumentException("Not found node compiler for ${Node::class}")
     }
 
-    fun <T: ASTNode> addNodeCompiler(nodeCompiler: ASTNodeCompiler<T>) {
-        nodesCompilers.add(nodeCompiler)
+    fun <T: ASTNode> addNodeCompiler(nodeCompiling: ASTNodeCompiling<T>) {
+        nodesCompilers.add(nodeCompiling)
     }
 }
