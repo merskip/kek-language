@@ -21,12 +21,12 @@ class RicherLLVMIRText(
     private val unnamedIdentifierRegex = Regex("%[0-9]+")
 
     /** See https://llvm.org/docs/LangRef.html#type-system */
+    private val typeVoidRegex = Regex("void")
     private val typeIntegerRegex = Regex("i[0-9]+\\**")
     private val typeFloatingPointRegex = Regex("(half|bfloat|float|double|fp128|x86_fp80|ppc_fp128)\\**")
-    private val typeVoidRegex = Regex("void")
-
-    // TODO: Add vector type, array type, structure type, improve pointer type
-    private val anyTypeRegex = oneOf(typeIntegerRegex, typeFloatingPointRegex, typeVoidRegex)
+    private val typeArrayRegex = Regex("\\[\\d+ x .+?]\\**")
+    private val typeStructure = Regex("\\{ .*? }\\*8")
+    private val anyTypeRegex = oneOf(typeVoidRegex, typeIntegerRegex, typeFloatingPointRegex, typeArrayRegex, typeStructure)
 
     /** See [https://llvm.org/docs/LangRef.html#constants] */
     private val constantBooleanRegex = Regex("true|false").spaceBefore()
