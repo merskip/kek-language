@@ -170,7 +170,7 @@ class RicherLLVMIRText(
                 val type = typesRegister.findTypeOrNull(matchIdentifier.value.substring(1))
                 if (type != null) {
                     logger.verbose("Matched \"${matchIdentifier.value}\" to \"${type.getDebugDescription()}\"")
-                    lineIterator.addBefore("; " + type.getDebugDescription())
+                    lineIterator.addBefore(line.getIndent() + "; " + type.getDebugDescription())
                 }
             }
         }
@@ -238,6 +238,10 @@ class RicherLLVMIRText(
     private fun String.skipPrefix(prefix: String): String {
         return if (startsWith(prefix)) substring(prefix.length)
         else error("The string doesn't starts with $prefix")
+    }
+
+    private fun String.getIndent(): String {
+        return takeWhile { it.isWhitespace() }
     }
 
     private fun <T> MutableListIterator<T>.addBefore(element: T) {
