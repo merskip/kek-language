@@ -19,7 +19,7 @@ class CompilerV2(
         context.addNodeCompiler(ConstantIntegerCompiler(context))
         context.addNodeCompiler(ConstantStringCompiler(context))
         context.addNodeCompiler(FunctionCallCompiler(context))
-        context.addNodeCompiler(TypeFunctionCallCompiler(context))
+        context.addNodeCompiler(StaticFunctionCallCompiler(context))
         BuiltinTypes(context).register()
     }
 

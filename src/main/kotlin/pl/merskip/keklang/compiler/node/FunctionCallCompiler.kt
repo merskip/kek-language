@@ -10,7 +10,7 @@ class FunctionCallCompiler(
     context: CompilerContext
 ) : ASTNodeCompiler<FunctionCallASTNode>(context) {
 
-    override fun compile(node: FunctionCallASTNode): Reference? {
+    override fun compile(node: FunctionCallASTNode): Reference {
         val parameters = compileParameters(node)
         val function = findFunction(node, parameters)
         val value = context.instructionsBuilder.createCall(

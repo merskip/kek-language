@@ -183,7 +183,7 @@ class Compiler(
             is CodeBlockASTNode -> compileCodeBlockAndGetLastValue(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
-            is TypeFunctionCallASTNode -> compileCallTypeFunction(statement)
+            is StaticFunctionCallASTNode -> compileCallTypeFunction(statement)
             is FunctionCallASTNode -> compileCallFunction(statement)
             is IfElseConditionNodeAST -> compileIfElseCondition(statement)
             is ConstantStringASTNode -> compileConstantString(statement)
@@ -228,11 +228,11 @@ class Compiler(
         return compileCallFunction(invokeFunction, listOf(lhs, rhs))
     }
 
-    private fun compileCallTypeFunction(nodeAST: TypeFunctionCallASTNode): Reference {
+    private fun compileCallTypeFunction(nodeAST: StaticFunctionCallASTNode): Reference {
         val arguments = nodeAST.parameters.map { compileStatement(it) }
         val argumentsTypes = arguments.map { it.type }
 
-        val type = typesRegister.findType(nodeAST.typeIdentifier)
+//        val type = typesRegister.findType(nodeAST.typeIdentifier)
 //        val function = typesRegister.findFunction(type, nodeAST.functionIdentifier, argumentsTypes)
 //        return compileCallFunction(function, arguments)
         error("")

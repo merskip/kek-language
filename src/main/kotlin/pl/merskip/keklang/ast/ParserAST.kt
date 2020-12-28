@@ -197,7 +197,6 @@ class ParserAST(
     private fun parseReferenceOrFunctionCall(identifierToken: Token.Identifier): ASTNode {
         return when {
             isNextToken<Token.LeftParenthesis>() -> {
-
                 val (arguments, rightParenthesis) = parseArguments()
                 FunctionCallASTNode(identifierToken.text, arguments)
                     .sourceLocation(identifierToken, rightParenthesis)
@@ -205,10 +204,11 @@ class ParserAST(
             isNextToken<Token.Dot>() -> {
                 getNextToken<Token.Dot>()
 
+                val typeIdentifier = TypeReferenceASTNode(identifierToken.text)
                 val functionIdentifier = getNextToken<Token.Identifier>()
-
                 val (arguments, rightParenthesis) = parseArguments()
-                TypeFunctionCallASTNode(identifierToken.text, functionIdentifier.text, arguments)
+
+                StaticFunctionCallASTNode(typeIdentifier, functionIdentifier.text, arguments)
                     .sourceLocation(identifierToken, rightParenthesis)
             }
             else -> {
@@ -311,8 +311,9 @@ class ParserAST(
 
     fun <T : ASTNode> T.sourceLocation(from: SourceLocation, to: SourceLocation): T {
         this.sourceLocation = SourceLocation.from(
-            from.file ?: to.file, source,
-            from.startIndex.offset, from.startIndex.distanceTo(to.endIndex)
+            from.file, source,
+            from.startIndex.offset,
+            from.startIndex.distanceTo(to.endIndex)
         )
         return this
     }

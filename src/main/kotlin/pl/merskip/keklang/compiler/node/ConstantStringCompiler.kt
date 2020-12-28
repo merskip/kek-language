@@ -8,7 +8,7 @@ class ConstantStringCompiler(
     context: CompilerContext
 ): ASTNodeCompiler<ConstantStringASTNode>(context) {
 
-    override fun compile(node: ConstantStringASTNode): Reference? {
+    override fun compile(node: ConstantStringASTNode): Reference {
         val string = node.string
         val stringPointer = context.instructionsBuilder.createGlobalString(string)
         return Reference(null, context.typesRegister.findType("String"), stringPointer)

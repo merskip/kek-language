@@ -88,14 +88,14 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
-    override fun visitTypeFunctionCallNode(node: TypeFunctionCallASTNode) {
+    override fun visitStaticFunctionCallNode(node: StaticFunctionCallASTNode) {
         print(
             nodeClass = node::class,
             parameters =  mapOf(
-                "typeIdentifier" to node.typeIdentifier,
-                "functionIdentifier" to node.functionIdentifier
+                "identifier" to node.identifier
             ),
             children = mapOf(
+                "type" to listOf(node.type),
                 "parameters" to node.parameters
             )
         )

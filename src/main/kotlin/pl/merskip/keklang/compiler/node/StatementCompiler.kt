@@ -14,7 +14,7 @@ class StatementCompiler(
             is IntegerConstantASTNode -> context.compile(node)
             is ConstantStringASTNode -> context.compile(node)
             is FunctionCallASTNode -> context.compile(node)
-            is TypeFunctionCallASTNode -> context.compile(node)
+            is StaticFunctionCallASTNode -> context.compile(node)
             else -> throw IllegalArgumentException("Unknown or unsupported node: ${node::class}")
         }
     }

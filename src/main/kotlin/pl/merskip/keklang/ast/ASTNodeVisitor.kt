@@ -10,7 +10,7 @@ interface ASTNodeVisitor<T> {
     fun visitIfConditionNode(node: IfConditionNodeAST): T
     fun visitCodeBlockNode(node: CodeBlockASTNode): T
     fun visitFunctionCallNode(node: FunctionCallASTNode): T
-    fun visitTypeFunctionCallNode(node: TypeFunctionCallASTNode): T
+    fun visitStaticFunctionCallNode(node: StaticFunctionCallASTNode): T
     fun visitConstantValueNode(node: ConstantValueNodeAST): T
     fun visitReferenceDeclarationNode(node: ReferenceDeclarationNodeAST): T
     fun visitTypeReferenceNode(node: TypeReferenceASTNode): T
