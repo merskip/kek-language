@@ -100,7 +100,7 @@ class IRInstructionsBuilder(
     }
 
     fun createGlobalString(value: String): LLVMConstantValue {
-        val hash = "%02x".format(value.hashCode())
+        val hash = "%08x".format(value.hashCode())
         return LLVMConstantValue(LLVMBuildGlobalStringPtr(irBuilder, value, "str_$hash"))
     }
 
