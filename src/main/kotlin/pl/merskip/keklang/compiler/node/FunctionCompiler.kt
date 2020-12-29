@@ -45,12 +45,22 @@ class FunctionCompiler(
 
     fun compileFunction(node: FunctionDefinitionNodeAST, function: Function) {
         logger.verbose("Compiling function: ${function.getDebugDescription()}")
-        context.instructionsBuilder.appendBasicBlockAtEnd(function.value, "entry")
-        val lastValueReference = context.compile(node.body)
-        when {
-            function.returnType.isVoid -> context.instructionsBuilder.createReturnVoid()
-            lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.value)
-            else -> throw Exception("Expected return value of type ${function.returnType.getDebugDescription()}")
+        context.scopesStack.createScope {
+            function.value.getParametersValues().zip(function.parameters).forEach { (parameterValue, parameter) ->
+                context.scopesStack.current.addReference(
+                    identifier = parameter.name,
+                    type = parameter.type,
+                    value = parameterValue
+                )
+            }
+
+            context.instructionsBuilder.appendBasicBlockAtEnd(function.value, "entry")
+            val lastValueReference = context.compile(node.body)
+            when {
+                function.returnType.isVoid -> context.instructionsBuilder.createReturnVoid()
+                lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.value)
+                else -> throw Exception("Expected return value of type ${function.returnType.getDebugDescription()}")
+            }
         }
     }
 

@@ -20,6 +20,7 @@ class CompilerV2(
         context.addNodeCompiler(ConstantStringCompiler(context))
         context.addNodeCompiler(FunctionCallCompiler(context))
         context.addNodeCompiler(StaticFunctionCallCompiler(context))
+        context.addNodeCompiler(BinaryOperatorCompiler(context))
         BuiltinTypes(context).register()
     }
 
@@ -31,5 +32,4 @@ class CompilerV2(
         logger.info("Verifying module")
         context.module.verify()
     }
-
 }

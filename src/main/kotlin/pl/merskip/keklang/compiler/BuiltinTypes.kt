@@ -30,10 +30,10 @@ class BuiltinTypes(
 
         private const val SYSTEM = "System"
 
-        private const val ADD_FUNCTION = "add"
-        private const val SUBTRACT_FUNCTION = "subtract"
-        private const val MULTIPLE_FUNCTION = "multiple"
-        private const val IS_EQUAL_TO_FUNCTION = "isEqualTo"
+        const val ADD_FUNCTION = "add"
+        const val SUBTRACT_FUNCTION = "subtract"
+        const val MULTIPLE_FUNCTION = "multiple"
+        const val IS_EQUAL_TO_FUNCTION = "isEqualTo"
         private const val EXIT_FUNCTION = "exit"
         private const val PRINT_FUNCTION = "print"
     }
