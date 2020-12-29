@@ -25,7 +25,7 @@ class FunctionCompiler(
             isVariadicArguments = false,
             result = returnType.type
         )
-        val functionValue = context.module.addFunction(node.identifier, functionType)
+        val functionValue = context.module.addFunction(identifier.mangled, functionType)
 
         functionValue.getParametersValues().zip(parameters).forEach { (parameterValue, parameter) ->
             parameterValue.setName(parameter.name)
