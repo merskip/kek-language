@@ -1,0 +1,8 @@
+
+func foo(number1: Integer, number2: Integer) -> Integer {
+    (number1 + number2) * number2
+}
+
+func main() -> Integer {
+    foo(3, 5)
+}
