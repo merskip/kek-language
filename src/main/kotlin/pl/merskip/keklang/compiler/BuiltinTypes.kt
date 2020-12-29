@@ -1,14 +1,12 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.llvm.LLVMContext
-import pl.merskip.keklang.llvm.LLVMIntegerType
-import pl.merskip.keklang.llvm.LLVMTargetTriple
-import pl.merskip.keklang.llvm.LLVMType
+import pl.merskip.keklang.llvm.*
 import pl.merskip.keklang.llvm.enum.ArchType
+import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.logger.Logger
 
 class BuiltinTypes(
-    private val compilerContext: CompilerContext
+    private val context: CompilerContext
 ) {
 
     private val logger = Logger(this::class)
@@ -41,8 +39,9 @@ class BuiltinTypes(
     }
 
     fun register() {
-        registerPrimitiveTypes(compilerContext.module.getTargetTriple())
+        registerPrimitiveTypes(context.module.getTargetTriple())
         registerStandardTypes()
+        registerOperatorsFunctions()
     }
 
     private fun registerPrimitiveTypes(target: LLVMTargetTriple) {
@@ -69,77 +68,88 @@ class BuiltinTypes(
 
     private fun registerSystemExit() {
         // System.exit(exitCode: Integer)
-        FunctionBuilder.register(compilerContext) {
+        FunctionBuilder.register(context) {
             onType(systemType)
             simpleIdentifier("exit")
             parameters("exitCode" to integerType)
             returnType(voidType)
             implementation { (exitCode) ->
-                compilerContext.instructionsBuilder.createSystemCall(60, listOf(exitCode), "syscall_exit")
-                compilerContext.instructionsBuilder.createUnreachable()
+                context.instructionsBuilder.createSystemCall(60, listOf(exitCode), "syscall_exit")
+                context.instructionsBuilder.createUnreachable()
             }
         }
     }
 
     private fun registerSystemPrint() {
         // System.print(string: String)
-        FunctionBuilder.register(compilerContext) {
+        FunctionBuilder.register(context) {
             onType(systemType)
             simpleIdentifier("print")
             parameters("string" to stringType)
             returnType(voidType)
             implementation { (string) ->
                 val standardOutputFileDescription = (integerType.type as LLVMIntegerType).constantValue(1, false)
-                val stringAddress = compilerContext.instructionsBuilder.buildCast(string, integerType.type, "string_address")
+                val stringAddress = context.instructionsBuilder.buildCast(string, integerType.type, "string_address")
                 // TODO: Calculate length of string
                 val stringLength = (integerType.type as LLVMIntegerType).constantValue(16, false)
 
-                compilerContext.instructionsBuilder.createSystemCall(
+                context.instructionsBuilder.createSystemCall(
                     1,
                     listOf(standardOutputFileDescription, stringAddress, stringLength),
                     "syscall_write"
                 )
-                compilerContext.instructionsBuilder.createReturnVoid()
+                context.instructionsBuilder.createReturnVoid()
             }
         }
     }
 
-
-
     private fun registerOperatorsFunctions() {
-//        registerOperatorFunction(integerType, integerType, ADD_FUNCTION, integerType, irCompiler::createAdd)
-//        registerOperatorFunction(integerType, integerType, SUBTRACT_FUNCTION, integerType, irCompiler::createSub)
-//        registerOperatorFunction(integerType, integerType, MULTIPLE_FUNCTION, integerType, irCompiler::createMul)
-//        registerOperatorFunction(integerType, integerType, IS_EQUAL_TO_FUNCTION, booleanType, irCompiler::createIsEqual)
-//
-//        registerOperatorFunction(booleanType, booleanType, IS_EQUAL_TO_FUNCTION, booleanType, irCompiler::createIsEqual)
-//        registerOperatorFunction(bytePointerType, bytePointerType, IS_EQUAL_TO_FUNCTION, booleanType, irCompiler::createIsEqual)
+        logger.debug("Registering operators")
+        registerOperatorFunction(integerType, integerType, ADD_FUNCTION, integerType) { lhs, rhs ->
+            context.instructionsBuilder.createAddition(lhs, rhs, "add")
+        }
+
+        registerOperatorFunction(integerType, integerType, SUBTRACT_FUNCTION, integerType) { lhs, rhs ->
+            context.instructionsBuilder.createSubtraction(lhs, rhs, "sub")
+        }
+
+        registerOperatorFunction(integerType, integerType, MULTIPLE_FUNCTION, integerType) { lhs, rhs ->
+            context.instructionsBuilder.createMultiplication(lhs, rhs, "mul")
+        }
+
+        registerOperatorFunction(integerType, integerType, IS_EQUAL_TO_FUNCTION, booleanType) { lhs, rhs ->
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs, rhs, "isEqual")
+        }
+
+        registerOperatorFunction(booleanType, booleanType, IS_EQUAL_TO_FUNCTION, booleanType) { lhs, rhs ->
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs, rhs, "isEqual")
+        }
     }
 
     private fun registerType(simpleIdentifier: String, getType: LLVMContext.() -> LLVMType): PrimitiveType {
         val identifier = TypeIdentifier(simpleIdentifier)
-        val primitiveType = PrimitiveType(identifier, getType(compilerContext.context))
-        compilerContext.typesRegister.register(primitiveType)
+        val primitiveType = PrimitiveType(identifier, getType(context.context))
+        context.typesRegister.register(primitiveType)
         return primitiveType
     }
 
-//    private fun registerOperatorFunction(
-//        calleeType: Type,
-//        otherType: Type,
-//        simpleIdentifier: String,
-//        returnType: Type,
-//        getResult: (lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef) -> LLVMValueRef
-//    ) {
-//        FunctionBuilder.register(compilerContext) {
-//            calleeType(calleeType)
-//            simpleIdentifier(simpleIdentifier)
-//            parameters("other" to otherType)
-//            returnType(returnType)
-//            isInline(true)
-//            implementation { irCompiler, (lhsValueRef, rhsValueRef) ->
-//                val resultValueRef = getResult(lhsValueRef, rhsValueRef)
-//                irCompiler.createReturnValue(resultValueRef)
-//            }
-//        }
-//    }
+    private fun registerOperatorFunction(
+        lhs: Type,
+        rhs: Type,
+        simpleIdentifier: String,
+        returnType: Type,
+        getResult: (lhsValueRef: LLVMValue, rhsValueRef: LLVMValue) -> LLVMValue
+    ) {
+        FunctionBuilder.register(context) {
+            onType(lhs)
+            simpleIdentifier(simpleIdentifier)
+            parameters("lhs" to lhs, "rhs" to rhs)
+            returnType(returnType)
+            isInline(true)
+            implementation { (lhs, rhs) ->
+                val result = getResult(lhs, rhs)
+                context.instructionsBuilder.createReturn(result)
+            }
+        }
+    }
 }

@@ -13,8 +13,7 @@ class TypesRegister {
         if (types.any { it.identifier == type.identifier })
             throw RegisteringTypeAlreadyExistsException(type)
         types.add(type)
-
-            logger.verbose("Registered type: ${type.getDebugDescription()}, ${type.identifier.mangled}")
+        logger.verbose("Registered type: ${type.getDebugDescription()}, ${type.identifier.mangled}")
     }
 
     fun findType(simpleIdentifier: String) = findType(TypeIdentifier(simpleIdentifier))
@@ -37,7 +36,7 @@ class TypesRegister {
             ?: throw NotFoundFunctionWithIdentifier(identifier)
     }
 
-    class RegisteringTypeAlreadyExistsException(type: Type) : Exception("Registering type already exists: $type")
+    class RegisteringTypeAlreadyExistsException(type: Type) : Exception("Registering type already exists: ${type.getDebugDescription()}")
 
     class NotFoundTypeWithIdentifier(identifier: TypeIdentifier) : Exception("Not found type with identifier: $identifier")
 

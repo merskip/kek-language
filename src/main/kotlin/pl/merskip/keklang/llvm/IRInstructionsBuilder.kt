@@ -2,6 +2,7 @@ package pl.merskip.keklang.llvm
 
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.ArchType
+import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
 import pl.merskip.keklang.toPointerPointer
 
@@ -99,10 +100,55 @@ class IRInstructionsBuilder(
         )
     }
 
+    /**
+     * Creates a '@str_HASH = constant [LENGTH x i8] c"<value>\0"' global constant
+     */
     fun createGlobalString(value: String): LLVMConstantValue {
         val hash = "%08x".format(value.hashCode())
         return LLVMConstantValue(LLVMBuildGlobalStringPtr(irBuilder, value, "str_$hash"))
     }
+
+    /**
+     * Creates a 'add <type> <lhs>, <rhs>` instruction
+     * Type of <lhs> and <rhs> must be the same.
+     */
+    fun createAddition(lhs: LLVMValue, rhs: LLVMValue, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildAdd(irBuilder, lhs.reference, rhs.reference, name ?: ""))
+    }
+
+    /**
+     * Creates a 'sub <type> <lhs>, <rhs>` instruction
+     * Type of <lhs> and <rhs> must be the same.
+     */
+    fun createSubtraction(lhs: LLVMValue, rhs: LLVMValue, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildSub(irBuilder, lhs.reference, rhs.reference, name ?: ""))
+    }
+
+    /**
+     * Creates a 'mul <type> <lhs>, <rhs>` instruction
+     * Type of <lhs> and <rhs> must be the same.
+     */
+    fun createMultiplication(lhs: LLVMValue, rhs: LLVMValue, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildMul(irBuilder, lhs.reference, rhs.reference, name ?: ""))
+    }
+
+    /**
+     * Creates a 'icmp <predicate> <type> <lhs>, <rhs>' instruction
+     * * Type of <lhs> and <rhs> must be the integer type.
+     */
+    fun createIntegerComparison(predicate: IntPredicate, lhs: LLVMValue, rhs: LLVMValue, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildICmp(irBuilder, predicate.rawValue, lhs.reference, rhs.reference, name ?: ""))
+    }
+
+//
+//    fun createSub(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+//        LLVMBuildSub(builder, lhsValueRef, rhsValueRef, "sub")
+//
+//    fun createMul(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+//        LLVMBuildMul(builder, lhsValueRef, rhsValueRef, "mul")
+//
+//    fun createIsEqual(lhsValueRef: LLVMValueRef, rhsValueRef: LLVMValueRef): LLVMValueRef =
+//        LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
 
     /**
      * Creates a system call fitted to set target triple

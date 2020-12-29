@@ -18,7 +18,7 @@ data class TypeIdentifier(
             val mangledIdentifier = listOfNotNull(
                 onType?.identifier?.mangled,
                 simple.mangled(isType = false),
-                parameters.joinToString { it.identifier.mangled }.ifEmpty { null }
+                parameters.joinToString("_") { it.identifier.mangled }.ifEmpty { null }
             ).joinToString("_")
             return TypeIdentifier(simple, mangledIdentifier)
         }
