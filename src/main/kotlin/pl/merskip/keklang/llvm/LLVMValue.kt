@@ -40,7 +40,9 @@ class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
 
     fun getParametersValues(): List<LLVMValue> {
         val count = LLVMCountParams(reference)
-        return (0..count).map { just(LLVMGetParam(reference, it)) }
+        return (0 until count).map {
+            just(LLVMGetParam(reference, it))
+        }
     }
 
     /**

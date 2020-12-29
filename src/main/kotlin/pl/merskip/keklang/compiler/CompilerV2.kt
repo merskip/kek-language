@@ -12,7 +12,7 @@ class CompilerV2(
 
     init {
         logger.info("Preparing compiler")
-        context.addNodeCompiler(FileCompiler(context))
+        context.addNodeCompiler(FileCompiler(context, FunctionCompiler(context)))
         context.addNodeCompiler(CodeBlockCompiler(context))
         context.addNodeCompiler(StatementCompiler(context))
         context.addNodeCompiler(ReferenceCompiler(context))
