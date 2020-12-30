@@ -140,6 +140,16 @@ class IRInstructionsBuilder(
         return LLVMInstructionValue(LLVMBuildICmp(irBuilder, predicate.rawValue, lhs.reference, rhs.reference, name ?: ""))
     }
 
+    class ConditionBlock(
+        val label: String,
+        val builder: () -> LLVMValue?,
+        val completed: (block: LLVMBasicBlockValue, lastValue: LLVMValue?) -> Unit = { _, _ -> },
+        val finallyBlock: LLVMBasicBlockValue
+    ) {
+
+        lateinit var block: LLVMBasicBlockValue
+    }
+
     /**
      * Creates a 'br <type of condition> <condition>, label <ifTrue>, label <ifFalse>' instruction
      */
@@ -156,31 +166,43 @@ class IRInstructionsBuilder(
         val branchValueRef = LLVMBuildCondBr(irBuilder,
             condition.reference,
             ifTrue.block.blockReference,
-            (ifFalse?.block ?: ifTrue.finallyBlock).blockReference
+            (ifFalse?.block ?: ifTrue.finallyBlock)!!.blockReference
         )
 
         // Create ifTrue block
         insertBasicBlock(ifTrue.block)
         moveAtEnd(ifTrue.block)
-        ifTrue.builder()
-        createBranchIfLastInstructionIsNotTerminatorInstruction(ifTrue.finallyBlock)
+        val ifTrueLastValue = ifTrue.builder()
+        ifTrue.completed(ifTrue.block, ifTrueLastValue)
+        createBranchIfLastInstructionIsNotTerminatorInstruction(ifTrue)
 
         // Create ifFalse block
         if (ifFalse != null) {
             insertBasicBlock(ifFalse.block)
             moveAtEnd(ifFalse.block)
-            ifFalse.builder()
-            createBranchIfLastInstructionIsNotTerminatorInstruction(ifFalse.finallyBlock)
+            val ifFalseLastValue = ifFalse.builder()
+            ifFalse.completed(ifFalse.block, ifFalseLastValue)
+            createBranchIfLastInstructionIsNotTerminatorInstruction(ifFalse)
         }
-
         return LLVMInstructionValue(branchValueRef)
     }
 
-    private fun createBranchIfLastInstructionIsNotTerminatorInstruction(destinationBlock: LLVMBasicBlockValue) {
+    private fun createBranchIfLastInstructionIsNotTerminatorInstruction(conditionBlock: ConditionBlock) {
         val lastInstruction = getInsertBlock().getLastInstruction()
-        if (!lastInstruction.getOpcode().isTerminatorInstruction) {
-            LLVMBuildBr(irBuilder, destinationBlock.blockReference)
+        if (lastInstruction == null || !lastInstruction.getOpcode().isTerminatorInstruction) {
+            LLVMBuildBr(irBuilder, conditionBlock.finallyBlock.blockReference)
         }
+    }
+
+    /**
+     * Creates a 'phi <type>' instruction
+     */
+    fun createPhi(type: LLVMType, values: List<Pair<LLVMValue, LLVMBasicBlockValue>>, name: String?): LLVMInstructionValue {
+        val phiInstruction = LLVMInstructionValue(LLVMBuildPhi(irBuilder, type.reference, name ?: ""))
+        for ((value, block) in values) {
+            LLVMAddIncoming(phiInstruction.reference, value.reference, block.blockReference, 1)
+        }
+        return phiInstruction
     }
 
     /**
@@ -319,12 +341,4 @@ class IRInstructionsBuilder(
         LLVMPositionBuilderAtEnd(irBuilder, basicBlock.blockReference)
     }
 
-    class ConditionBlock(
-        val label: String,
-        val builder: () -> Unit,
-        val finallyBlock: LLVMBasicBlockValue
-    ) {
-
-        lateinit var block: LLVMBasicBlockValue
-    }
 }

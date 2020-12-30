@@ -9,6 +9,10 @@ abstract class LLVMValue(
     override val reference: LLVMValueRef
 ) : LLVMReferencing<LLVMValueRef> {
 
+    fun getType(): LLVMType {
+        return LLVMType.just(LLVMTypeOf(reference))
+    }
+
     /**
      * Set the string name of a value
      */
@@ -100,7 +104,7 @@ class LLVMBasicBlockValue(
         return LLVMGetBasicBlockName(blockReference).string
     }
 
-    fun getLastInstruction(): LLVMInstructionValue {
-        return LLVMInstructionValue(LLVMGetLastInstruction(blockReference))
+    fun getLastInstruction(): LLVMInstructionValue? {
+        return LLVMGetLastInstruction(blockReference)?.let { LLVMInstructionValue(it) }
     }
 }
