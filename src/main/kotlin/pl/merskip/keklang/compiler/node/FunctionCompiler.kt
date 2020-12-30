@@ -59,7 +59,7 @@ class FunctionCompiler(
             when {
                 function.returnType.isVoid -> context.instructionsBuilder.createReturnVoid()
                 lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.value)
-                else -> throw Exception("Expected return value of type ${function.returnType.getDebugDescription()}")
+                else -> throw Exception("Expected return value of type ${function.returnType.getDebugDescription()} but got nothing")
             }
         }
     }

@@ -21,6 +21,7 @@ class CompilerV2(
         context.addNodeCompiler(FunctionCallCompiler(context))
         context.addNodeCompiler(StaticFunctionCallCompiler(context))
         context.addNodeCompiler(BinaryOperatorCompiler(context))
+        context.addNodeCompiler(IfElseConditionCompiler(context))
         BuiltinTypes(context).register()
     }
 

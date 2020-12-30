@@ -152,6 +152,7 @@ class ParserAST(
             }
         }
         return IfElseConditionNodeAST(ifConditions.toList(), elseBlock)
+            .sourceLocation(ifCondition.sourceLocation, (elseBlock ?: ifConditions.last()).sourceLocation)
     }
 
     private fun parseIfCondition(ifToken: Token.If): IfConditionNodeAST {
@@ -205,6 +206,8 @@ class ParserAST(
                 getNextToken<Token.Dot>()
 
                 val typeIdentifier = TypeReferenceASTNode(identifierToken.text)
+                    .sourceLocation(identifierToken)
+
                 val functionIdentifier = getNextToken<Token.Identifier>()
                 val (arguments, rightParenthesis) = parseArguments()
 

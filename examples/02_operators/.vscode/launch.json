@@ -8,7 +8,7 @@
             "target": "operators",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
-            "autorun": ["b main"],
+            "autorun": ["b main"]
         }
     ]
 }

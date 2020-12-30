@@ -23,6 +23,10 @@ data class SourceLocation(
         override fun toString() = "$line:$column"
     }
 
+    override fun toString(): String {
+        return "${file}@${startIndex}..${endIndex}"
+    }
+
     companion object {
 
         fun from(file: File, source: String, offset: Int, length: Int): SourceLocation {

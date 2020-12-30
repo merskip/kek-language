@@ -3,8 +3,7 @@ package pl.merskip.keklang.llvm
 import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
-import pl.merskip.keklang.llvm.enum.AttributeIndex
-import pl.merskip.keklang.llvm.enum.Linkage
+import pl.merskip.keklang.llvm.enum.*
 
 abstract class LLVMValue(
     override val reference: LLVMValueRef
@@ -15,6 +14,14 @@ abstract class LLVMValue(
      */
     fun setName(name: String) {
         LLVMSetValueName2(reference, name, name.length.toLong())
+    }
+
+    open fun getName(): String {
+        return LLVMGetValueName2(reference, null).disposable.string
+    }
+
+    fun getKind(): ValueKind {
+        return RawValuable.fromRawValue(LLVMGetValueKind(reference))
     }
 
     protected fun getContext(): LLVMContext {
@@ -34,7 +41,12 @@ abstract class LLVMValue(
     }
 }
 
-class LLVMInstructionValue(reference: LLVMValueRef) : LLVMValue(reference)
+class LLVMInstructionValue(reference: LLVMValueRef) : LLVMValue(reference) {
+
+    fun getOpcode(): Opcode {
+        return RawValuable.fromRawValue(LLVMGetInstructionOpcode(reference))
+    }
+}
 
 class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
 
@@ -76,4 +88,19 @@ class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
 
 class LLVMConstantValue(reference: LLVMValueRef) : LLVMValue(reference)
 
-class LLVMBasicBlockValue(val basicBlockReference: LLVMBasicBlockRef) : LLVMValue(LLVMValueRef(basicBlockReference))
+class LLVMBasicBlockValue(
+    val blockReference: LLVMBasicBlockRef
+) : LLVMValue(LLVMValueRef(blockReference)) {
+
+    fun getBaseName(): String {
+        return getName().replace(Regex("\\d+$"), "")
+    }
+
+    override fun getName(): String {
+        return LLVMGetBasicBlockName(blockReference).string
+    }
+
+    fun getLastInstruction(): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMGetLastInstruction(blockReference))
+    }
+}

@@ -40,5 +40,5 @@ class TypesRegister {
 
     class NotFoundTypeWithIdentifier(identifier: TypeIdentifier) : Exception("Not found type with identifier: $identifier")
 
-    class NotFoundFunctionWithIdentifier(identifier: TypeIdentifier) : Exception("Not found function with identifier: $identifier")
+    class NotFoundFunctionWithIdentifier(identifier: TypeIdentifier) : Exception("Not found function with identifier: ${identifier.simple}, ${identifier.mangled}")
 }

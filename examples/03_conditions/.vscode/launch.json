@@ -5,7 +5,7 @@
             "name": "Debug",
             "type": "gdb",
             "request": "launch",
-            "target": "hello_world",
+            "target": "conditions",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
             "autorun": ["b main"]

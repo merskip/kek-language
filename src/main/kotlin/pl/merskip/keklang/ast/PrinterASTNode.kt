@@ -3,7 +3,6 @@ package pl.merskip.keklang.ast
 import pl.merskip.keklang.Color
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.colored
-import kotlin.reflect.KClass
 
 class PrinterASTNode : ASTNodeVisitor<Unit> {
 
@@ -27,7 +26,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitFileNode(node: FileASTNode) {
         print(
-            nodeClass = node::class,
+            node = node,
             children = mapOf(
                 "nodes" to node.nodes
             )
@@ -36,7 +35,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitFunctionDefinitionNode(node: FunctionDefinitionNodeAST) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters = mapOf(
                 "identifier" to node.identifier
             ),
@@ -50,7 +49,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitIfElseConditionNode(node: IfElseConditionNodeAST) {
         print(
-            nodeClass = node::class,
+            node = node,
             children = mapOf(
                 "ifConditions" to node.ifConditions,
                 "elseBlock" to listOfNotNull(node.elseBlock)
@@ -60,7 +59,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitIfConditionNode(node: IfConditionNodeAST) {
         print(
-            nodeClass = node::class,
+            node = node,
             children = mapOf(
                 "condition" to listOf(node.condition),
                 "body" to listOf(node.body)
@@ -70,7 +69,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitCodeBlockNode(node: CodeBlockASTNode) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters = emptyMap(),
             children = mapOf(
                 "statements" to node.statements
@@ -80,7 +79,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitFunctionCallNode(node: FunctionCallASTNode) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters =  mapOf("identifier" to node.identifier),
             children = mapOf(
                 "parameters" to node.parameters
@@ -90,7 +89,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitStaticFunctionCallNode(node: StaticFunctionCallASTNode) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters =  mapOf(
                 "identifier" to node.identifier
             ),
@@ -104,11 +103,11 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
     override fun visitConstantValueNode(node: ConstantValueNodeAST) {
         when (node) {
             is IntegerConstantASTNode -> print(
-                nodeClass = node::class,
+                node = node,
                 parameters =  mapOf("value" to node.value.toString())
             )
             is DecimalConstantValueNodeAST -> print(
-                nodeClass = node::class,
+                node = node,
                 parameters =  mapOf("value" to node.value.toString())
             )
         }
@@ -116,7 +115,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitReferenceDeclarationNode(node: ReferenceDeclarationNodeAST) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters = mapOf(
                 "identifier" to node.identifier
             ),
@@ -128,7 +127,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitTypeReferenceNode(node: TypeReferenceASTNode) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters = mapOf(
                 "identifier" to node.identifier
             )
@@ -137,14 +136,14 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitReferenceNode(node: ReferenceASTNode) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters = mapOf("identifier" to node.identifier)
         )
     }
 
     override fun visitBinaryOperatorNode(node: BinaryOperatorNodeAST) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters = mapOf("identifier" to node.identifier),
             children = mapOf(
                 "lhs" to listOf(node.lhs),
@@ -155,23 +154,28 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     override fun visitStringNode(node: ConstantStringASTNode) {
         print(
-            nodeClass = node::class,
+            node = node,
             parameters = mapOf("string" to node.string)
         )
     }
 
     private fun print(
-        nodeClass: KClass<out ASTNode>,
+        node: ASTNode,
         parameters: Map<String, String> = emptyMap(),
         children: Map<String, List<ASTNode>> = emptyMap()
     ) {
-        output += "$indent[${nodeClass.simpleName?.colored(Color.Blue)}"
+        output += "$indent[${node::class.simpleName?.colored(Color.Blue)}"
 
         if (parameters.isNotEmpty()) {
             output += " "
             output += parameters.map {
                 it.key + "=" + it.value.escapeParamValue().colored(Color.White)
             }.joinToString(" ")
+        }
+        output += try {
+            " ${node.sourceLocation}".colored(Color.DarkGray)
+        } catch (e: Exception) {
+            " !no_source_location".colored(Color.Red)
         }
 
         if (children.isNotEmpty() && children.any { it.value.isNotEmpty() }) {

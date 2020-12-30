@@ -1,7 +1,7 @@
 package pl.merskip.keklang.llvm.enum
 
 @Suppress("unused")
-enum class ValueKind(val rawValue: Int) {
+enum class ValueKind(override val rawValue: Int): RawValuable<Int> {
     Argument(0),
     BasicBlock(1),
     MemoryUse(2),

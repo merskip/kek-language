@@ -16,6 +16,7 @@ class StatementCompiler(
             is FunctionCallASTNode -> context.compile(node)
             is StaticFunctionCallASTNode -> context.compile(node)
             is BinaryOperatorNodeAST -> context.compile(node)
+            is IfElseConditionNodeAST -> context.compile(node)
             else -> throw IllegalArgumentException("Unknown or unsupported node: ${node::class}")
         }
     }

@@ -1,7 +1,7 @@
 package pl.merskip.keklang.llvm.enum
 
-@Suppress("unused")
-enum class Opcode(val rawValue: Int) {
+@Suppress("unused", "SpellCheckingInspection")
+enum class Opcode(override val rawValue: Int): RawValuable<Int> {
     /* Terminator Instructions */
     Ret(1),
     Br(2),
@@ -87,5 +87,11 @@ enum class Opcode(val rawValue: Int) {
     CatchRet(62),
     CatchPad(63),
     CleanupPad(64),
-    CatchSwitch(65),
+    CatchSwitch(65);
+
+    companion object {
+        val terminatorInstructions = listOf(Ret, Br, Switch, IndirectBr, Invoke)
+    }
+
+    val isTerminatorInstruction: Boolean get() = terminatorInstructions.contains(this)
 }
