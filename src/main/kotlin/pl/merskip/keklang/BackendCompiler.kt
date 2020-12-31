@@ -67,7 +67,7 @@ class BackendCompiler(
         }
 
         val executableFile = filename.withExtension("")
-        val process = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", "_kek_start", "-o", executableFile, objectFile)
+        val process = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", "_start", "-o", executableFile, objectFile)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()

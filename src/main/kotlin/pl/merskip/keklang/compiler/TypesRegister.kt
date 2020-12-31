@@ -1,6 +1,5 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.addingBegin
 import pl.merskip.keklang.logger.Logger
 
 class TypesRegister {
@@ -27,13 +26,15 @@ class TypesRegister {
         return types.firstOrNull { it.identifier.mangled == mangledIdentifier }
     }
 
-    fun findFunction(onType: Type?, simpleIdentifier: String, parameters: List<Type>): Function =
-        findFunction(TypeIdentifier.function(null, simpleIdentifier, parameters.addingBegin(onType)))
-
     fun findFunction(identifier: TypeIdentifier): Function {
         return types.mapNotNull { it as? Function }
             .firstOrNull { it.identifier == identifier }
             ?: throw NotFoundFunctionWithIdentifier(identifier)
+    }
+
+    fun findFunctionOrNull(identifier: TypeIdentifier): Function? {
+        return types.mapNotNull { it as? Function }
+            .firstOrNull { it.identifier == identifier }
     }
 
     class RegisteringTypeAlreadyExistsException(type: Type) : Exception("Registering type already exists: ${type.getDebugDescription()}")
