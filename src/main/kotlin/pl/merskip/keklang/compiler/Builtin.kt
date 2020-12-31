@@ -7,7 +7,7 @@ import pl.merskip.keklang.logger.Logger
 
 class Builtin(
     private val context: LLVMContext,
-    private val module: LLVMModule,
+    module: LLVMModule,
     private val typesRegister: TypesRegister
 ) {
 
@@ -61,31 +61,31 @@ class Builtin(
     }
 
     private fun <WrappedType : LLVMType> registerType(
-        simpleIdentifier: String,
+        identifier: String,
         getType: LLVMContext.() -> WrappedType
     ): PrimitiveType<WrappedType> {
-        val identifier = TypeIdentifier(simpleIdentifier)
-        val primitiveType = PrimitiveType(identifier, getType(context))
+        val primitiveType = PrimitiveType(Identifier.Type(identifier), getType(context))
         typesRegister.register(primitiveType)
         return primitiveType
     }
 
     private fun registerSystemFunctions(context: CompilerContext) {
-        systemExitFunction = FunctionBuilder.register(context) { // System.exit(exitCode: Integer)
-            onType(systemType)
-            simpleIdentifier("exit")
+        // System.exit(exitCode: Integer)
+        systemExitFunction = FunctionBuilder.register(context) {
+            declaringType(systemType)
+            identifier("exit")
             parameters("exitCode" to integerType)
-            returnType(voidType)
             implementation { (exitCode) ->
                 context.instructionsBuilder.createSystemCall(60, listOf(exitCode), "syscall_exit")
                 context.instructionsBuilder.createUnreachable()
             }
         }
-        systemPrintFunction = FunctionBuilder.register(context) { // System.print(string: String)
-            onType(systemType)
-            simpleIdentifier("print")
+
+        // System.print(string: String)
+        systemPrintFunction = FunctionBuilder.register(context) {
+            declaringType(systemType)
+            identifier("print")
             parameters("string" to stringType)
-            returnType(voidType)
             implementation { (string) ->
                 val standardOutputFileDescription = integerType.type.constantValue(1, false)
                 val stringAddress = context.instructionsBuilder.buildCast(string, integerType.type, "string_address")
@@ -151,8 +151,8 @@ class Builtin(
         returnType: Type,
         getResult: (lhs: LLVMValue, rhs: LLVMValue) -> LLVMValue
     ) = FunctionBuilder.register(this) {
-        onType(lhs)
-        simpleIdentifier(simpleIdentifier)
+        declaringType(lhs)
+        identifier(simpleIdentifier)
         parameters("lhs" to lhs, "rhs" to rhs)
         returnType(returnType)
         isInline(true)

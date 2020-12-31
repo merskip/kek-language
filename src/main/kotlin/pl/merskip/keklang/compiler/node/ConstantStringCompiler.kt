@@ -11,6 +11,6 @@ class ConstantStringCompiler(
     override fun compile(node: ConstantStringASTNode): Reference {
         val string = node.string.replace("\\n", "\n")
         val stringPointer = context.instructionsBuilder.createGlobalString(string)
-        return Reference(null, context.typesRegister.findType("String"), stringPointer)
+        return Reference(null, context.builtin.stringType, stringPointer)
     }
 }

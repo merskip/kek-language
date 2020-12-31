@@ -2,6 +2,7 @@ package pl.merskip.keklang.llvm
 
 import pl.merskip.keklang.Color
 import pl.merskip.keklang.colored
+import pl.merskip.keklang.compiler.Function
 import pl.merskip.keklang.compiler.TypesRegister
 import pl.merskip.keklang.logger.Logger
 
@@ -165,11 +166,11 @@ class RicherLLVMIRText(
     private fun recognizeMangledIdentifiersForDefines(lines: MutableList<String>) {
         val lineIterator = lines.listIterator()
         for (line in lineIterator) {
-            val matchIdentifier = globalIdentifierRegex.find(line)
-            if (line.contains("define") && matchIdentifier != null) {
-                val type = typesRegister.findTypeOrNull(matchIdentifier.value.substring(1))
+            val mangledIdentifier = globalIdentifierRegex.find(line)?.value?.substring(1)
+            if (line.contains("define") && mangledIdentifier != null) {
+                val type = typesRegister.find<Function> { it.identifier.mangled == mangledIdentifier }
                 if (type != null) {
-                    logger.verbose("Matched \"${matchIdentifier.value}\" to \"${type.getDebugDescription()}\"")
+                    logger.verbose("Matched \"${mangledIdentifier}\" to \"${type.getDebugDescription()}\"")
                     lineIterator.addBefore(line.getIndent() + "; " + type.getDebugDescription())
                 }
             }

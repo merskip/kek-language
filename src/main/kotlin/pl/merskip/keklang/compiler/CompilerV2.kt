@@ -45,19 +45,21 @@ class CompilerV2(
         logger.info("Adding entry point")
         context.entryPointFunction = FunctionBuilder.register(context) {
             isExtern(true)
-            simpleIdentifier("_start")
+            identifier("_start")
             parameters(emptyList())
             returnType(context.builtin.voidType)
             implementation {
-                val mainFunction = context.typesRegister.findFunctionOrNull(TypeIdentifier.function(null, "main", emptyList())) // TODO: Add search method
-                val exitCode = if (mainFunction != null) {
-                    context.instructionsBuilder.createCall(
+                val mainFunction = context.typesRegister.find<Function> { it.identifier.canonical == "main" }
+
+                val exitCode = when {
+                    mainFunction == null -> context.builtin.integerType.type.constantValue(0L, true)
+                    mainFunction.returnType.isVoid -> context.builtin.integerType.type.constantValue(0L, true)
+                    mainFunction.returnType == context.builtin.integerType -> context.instructionsBuilder.createCall(
                         function = mainFunction,
                         arguments = emptyList(),
                         name = "exit_code"
                     )
-                } else {
-                    context.builtin.integerType.type.constantValue(0L, true)
+                    else -> throw Exception("The main function must return Integer or Void")
                 }
 
                 context.instructionsBuilder.createCall(

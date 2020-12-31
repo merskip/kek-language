@@ -7,27 +7,30 @@ typealias ImplementationBuilder = (List<LLVMValue>) -> Unit
 
 class FunctionBuilder {
 
-    private lateinit var simpleIdentifier: String
+    private lateinit var canonicalIdentifier: String
     private lateinit var parameters: List<Function.Parameter>
     private lateinit var returnType: Type
-    private var onType: Type? = null
+    private var declaringType: Type? = null
     private var isExtern: Boolean = false
     private var isInline: Boolean = false
     private var implementation: ImplementationBuilder? = null
 
     companion object {
 
-        fun register(compilerContext: CompilerContext, builder: FunctionBuilder.() -> Unit): Function {
+        fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): Function {
             val functionBuilder = FunctionBuilder()
+            functionBuilder.parameters = emptyList()
+            functionBuilder.returnType = context.builtin.voidType
+
             builder(functionBuilder)
-            val function = functionBuilder.build(compilerContext)
-            compilerContext.typesRegister.register(function)
+            val function = functionBuilder.build(context)
+            context.typesRegister.register(function)
             return function
         }
     }
 
-    fun simpleIdentifier(simpleIdentifier: String) =
-        apply { this.simpleIdentifier = simpleIdentifier }
+    fun identifier(identifier: String) =
+        apply { this.canonicalIdentifier = identifier }
 
     fun parameters(parameters: List<Function.Parameter>) =
         apply { this.parameters = parameters }
@@ -38,7 +41,8 @@ class FunctionBuilder {
     fun returnType(returnType: Type) =
         apply { this.returnType = returnType }
 
-    fun onType(onType: Type?) = apply { this.onType = onType }
+    fun declaringType(declaringType: Type?) =
+        apply { this.declaringType = declaringType }
 
     fun isExtern(isExtern: Boolean = true) =
         apply { this.isExtern = isExtern }
@@ -49,21 +53,26 @@ class FunctionBuilder {
     fun implementation(implementation: ImplementationBuilder) =
         apply { this.implementation = implementation }
 
-    private fun build(compilerContext: CompilerContext): Function {
+    private fun build(context: CompilerContext): Function {
+        assert(this::canonicalIdentifier.isInitialized) { "You must call identifier() method" }
+        val parametersIdentifiers = parameters.types.map { it.identifier }
         val identifier =
-            if (isExtern) TypeIdentifier(simpleIdentifier, simpleIdentifier)
-            else TypeIdentifier.function(onType, simpleIdentifier, parameters.types)
+            when {
+                isExtern -> Identifier.ExternType(canonicalIdentifier)
+                declaringType != null -> Identifier.Function(declaringType!!, canonicalIdentifier, parametersIdentifiers)
+                else -> Identifier.Function(canonicalIdentifier, parametersIdentifiers)
+            }
 
         val functionType = LLVMFunctionType(
             result = returnType.type,
             parameters = parameters.types.map { it.type },
             isVariadicArguments = false
         )
-        val functionValue = compilerContext.module.addFunction(identifier.mangled, functionType)
+        val functionValue = context.module.addFunction(identifier.mangled, functionType)
         if (isInline) functionValue.setInline(true)
 
         val function = Function(
-            onType = onType,
+            declaringType = declaringType,
             identifier = identifier,
             parameters = parameters,
             returnType = returnType,
@@ -76,7 +85,7 @@ class FunctionBuilder {
         }
 
         if (implementation != null) {
-            compilerContext.instructionsBuilder.appendBasicBlockAtEnd(functionValue, "entry")
+            context.instructionsBuilder.appendBasicBlockAtEnd(functionValue, "entry")
             implementation?.invoke(functionValue.getParametersValues())
         }
 

@@ -3,7 +3,7 @@ package pl.merskip.keklang.compiler
 import pl.merskip.keklang.llvm.*
 
 abstract class Type(
-    val identifier: TypeIdentifier,
+    val identifier: Identifier,
     open val type: LLVMType
 ) {
 
@@ -17,7 +17,7 @@ abstract class Type(
 }
 
 class PrimitiveType<WrappedType : LLVMType>(
-    identifier: TypeIdentifier,
+    identifier: Identifier,
     override val type: WrappedType
 ) : Type(identifier, type) {
 
@@ -25,8 +25,8 @@ class PrimitiveType<WrappedType : LLVMType>(
 }
 
 class Function(
-    identifier: TypeIdentifier,
-    val onType: Type?,
+    identifier: Identifier,
+    val declaringType: Type?,
     val parameters: List<Parameter>,
     val returnType: Type,
     override val type: LLVMFunctionType,
@@ -40,14 +40,14 @@ class Function(
 
     override fun getDebugDescription(): String {
         var description = ""
-        if (onType != null) description += onType.identifier.simple + "."
-        description += identifier.simple
+        if (declaringType != null) description += declaringType.identifier.canonical + "."
+        description += identifier.canonical
         description += "(" + getParametersDescription() + ")"
-        description += " -> " + returnType.identifier.simple
+        description += " -> " + returnType.identifier.canonical
         return description
     }
 
-    private fun getParametersDescription() = parameters.joinToString(", ") { "${it.name}: ${it.type.identifier.simple}" }
+    private fun getParametersDescription() = parameters.joinToString(", ") { "${it.name}: ${it.type.identifier.canonical}" }
 }
 
 /* Utils */

@@ -164,11 +164,11 @@ class Compiler(
 //        }
     }
 
-    private fun FunctionDefinitionNodeAST.getParameters(): List<Function.Parameter> =
-        parameters.map {
-            val type = typesRegister.findType(it.type.identifier)
-            Function.Parameter(it.identifier, type)
-        }
+    private fun FunctionDefinitionNodeAST.getParameters(): List<Function.Parameter> = emptyList()
+//        parameters.map {
+//            val type = typesRegister.find(it.type.identifier)
+//            Function.Parameter(it.identifier, type)
+//        }
 
     private fun compileStatement(statement: StatementASTNode): Reference {
         irCompiler.setCurrentDebugLocation(

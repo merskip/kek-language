@@ -3,16 +3,14 @@ package pl.merskip.keklang.compiler.node
 import pl.merskip.keklang.ast.node.IntegerConstantASTNode
 import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.Reference
-import pl.merskip.keklang.llvm.LLVMIntegerType
 
 class ConstantIntegerCompiler(
     val context: CompilerContext
 ): ASTNodeCompiling<IntegerConstantASTNode> {
 
     override fun compile(node: IntegerConstantASTNode): Reference {
-        val type = context.typesRegister.findType("Integer")
-        val value = (type.type as LLVMIntegerType).constantValue(node.value, true)
-        value.setName("hue")
+        val type = context.builtin.integerType
+        val value = type.type.constantValue(node.value, true)
         return Reference(null, type, value)
     }
 }

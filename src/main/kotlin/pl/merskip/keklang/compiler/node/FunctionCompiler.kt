@@ -8,17 +8,20 @@ import pl.merskip.keklang.logger.Logger
 
 class FunctionCompiler(
     val context: CompilerContext
-): ASTNodeCompiling<FunctionDefinitionNodeAST> {
+) : ASTNodeCompiling<FunctionDefinitionNodeAST> {
 
     private val logger = Logger(this::class)
 
     fun registerFunction(node: FunctionDefinitionNodeAST): Function {
         val parameters = node.parameters.map {
-            val type = context.typesRegister.findType(it.type.identifier)
+            val type = context.typesRegister.find(Identifier.Type(it.type.identifier))
+                ?: throw Exception("Not found type: ${it.type.identifier}")
             Function.Parameter(it.identifier, type)
         }
-        val returnType = context.typesRegister.findType(node.returnType?.identifier ?: "Void")
-        val identifier = TypeIdentifier.function(null, node.identifier, parameters.map { it.type })
+        val returnType = if (node.returnType != null)
+            (context.typesRegister.find(Identifier.Type(node.returnType.identifier))
+                ?: throw Exception("Not found type: ${node.returnType.identifier}")) else context.builtin.voidType
+        val identifier = Identifier.Function(node.identifier, parameters.map { it.type.identifier })
 
         val functionType = LLVMFunctionType(
             parameters = parameters.types.map { it.type },
@@ -33,7 +36,7 @@ class FunctionCompiler(
 
         val function = Function(
             identifier = identifier,
-            onType = null,
+            declaringType = null,
             parameters = parameters,
             returnType = returnType,
             type = functionType,

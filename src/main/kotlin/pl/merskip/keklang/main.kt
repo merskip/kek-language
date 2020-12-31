@@ -5,6 +5,7 @@ import com.xenomachina.argparser.mainBody
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterASTNode
 import pl.merskip.keklang.compiler.*
+import pl.merskip.keklang.compiler.Function
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
@@ -120,7 +121,8 @@ fun main(args: Array<String>) = mainBody {
             }
 
             if (runJIT) {
-                val mainFunction = compiler.context.typesRegister.findFunction(TypeIdentifier("main"))
+                val mainFunction = compiler.context.typesRegister.find<Function> { it.identifier.canonical == "main" }
+                    ?: throw Exception("Not found main function")
                 JIT(compiler.context.module.reference).run(mainFunction)
             }
         }

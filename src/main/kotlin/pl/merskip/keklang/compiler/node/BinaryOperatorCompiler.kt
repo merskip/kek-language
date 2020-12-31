@@ -19,7 +19,7 @@ class BinaryOperatorCompiler(
             function = function.value,
             functionType = function.type,
             arguments = listOf(lhs.value, rhs.value),
-            name = "call_${function.identifier.simple}"
+            name = "call_${function.identifier.canonical}"
         )
         return Reference(null, function.returnType, result)
     }

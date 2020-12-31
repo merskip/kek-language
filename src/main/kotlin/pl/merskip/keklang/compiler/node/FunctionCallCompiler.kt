@@ -20,7 +20,7 @@ class StaticFunctionCallCompiler(
 ) : FunctionCallCompilerBase(context), ASTNodeCompiling<StaticFunctionCallASTNode> {
 
     override fun compile(node: StaticFunctionCallASTNode): Reference {
-        return compileCall(node.type.identifier, node.identifier, node.parameters)
+        return compileCall(Identifier.Type(node.type.identifier), node.identifier, node.parameters)
     }
 }
 
@@ -28,9 +28,9 @@ abstract class FunctionCallCompilerBase(
     val context: CompilerContext
 ) {
 
-    protected fun compileCall(typeIdentifier: String?, functionIdentifier: String, parametersNodes: List<StatementASTNode>): Reference {
+    protected fun compileCall(typeIdentifier: Identifier?, functionIdentifier: String, parametersNodes: List<StatementASTNode>): Reference {
         val parameters = compileParameters(parametersNodes)
-        val function = findFunction(typeIdentifier, functionIdentifier, parameters)
+        val function = findFunction(typeIdentifier, functionIdentifier, parameters.map { it.type.identifier })
         val value = context.instructionsBuilder.createCall(
             function = function,
             arguments = parameters.map(Reference::value),
@@ -46,11 +46,15 @@ abstract class FunctionCallCompilerBase(
         }
     }
 
-    private fun findFunction(typeIdentifier: String?, functionIdentifier: String, parameters: List<Reference>): Function {
-        return context.typesRegister.findFunction(TypeIdentifier.function(
-            onType = if (typeIdentifier != null) context.typesRegister.findType(typeIdentifier) else null,
-            simple = functionIdentifier,
-            parameters = parameters.map(Reference::type)
-        ))
+    private fun findFunction(declaringTypeIdentifier: Identifier?, functionIdentifier: String, parameters: List<Identifier>): Function {
+        val typeIdentifier = if (declaringTypeIdentifier !== null) {
+            val declaringType = context.typesRegister.find(declaringTypeIdentifier)
+                ?: throw Exception("Not found type: $declaringTypeIdentifier")
+            Identifier.Function(declaringType, functionIdentifier, parameters)
+        } else {
+            Identifier.Function(functionIdentifier, parameters)
+        }
+        return context.typesRegister.find(typeIdentifier)
+            ?: throw Exception("Not found function: $typeIdentifier")
     }
 }
