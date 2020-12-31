@@ -1,8 +1,6 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.llvm.LLVMFunctionType
-import pl.merskip.keklang.llvm.LLVMFunctionValue
-import pl.merskip.keklang.llvm.LLVMType
+import pl.merskip.keklang.llvm.*
 
 abstract class Type(
     val identifier: TypeIdentifier,
@@ -18,7 +16,7 @@ abstract class Type(
     abstract fun getDebugDescription(): String
 }
 
-class PrimitiveType<WrappedType: LLVMType>(
+class PrimitiveType<WrappedType : LLVMType>(
     identifier: TypeIdentifier,
     override val type: WrappedType
 ) : Type(identifier, type) {
@@ -52,4 +50,15 @@ class Function(
     private fun getParametersDescription() = parameters.joinToString(", ") { "${it.name}: ${it.type.identifier.simple}" }
 }
 
+/* Utils */
+
 val List<Function.Parameter>.types: List<Type> get() = map { it.type }
+
+/**
+ * Create a 'call <result> @<function>(<parameters>)' instruction
+ */
+fun IRInstructionsBuilder.createCall(
+    function: Function,
+    arguments: List<LLVMValue>,
+    name: String?
+) = createCall(function.value, function.type, arguments, name)

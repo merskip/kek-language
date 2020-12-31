@@ -76,11 +76,11 @@ fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler
     compiler.compile(listOf(fileNode))
 }
 
-fun ApplicationArguments.processModule(compilerContext: CompilerContext) {
+fun ApplicationArguments.processModule(context: CompilerContext) {
     output?.let { outputFilename ->
         val outputFile = outputFilename.withExtensionIfNoExists(".o")
         println("Output file: $outputFile")
-        val backendCompiler = BackendCompiler(compilerContext.module.reference)
+        val backendCompiler = BackendCompiler(context)
         backendCompiler.compile(outputFile, asmDump, bitcode)
     }
 }

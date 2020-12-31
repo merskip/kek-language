@@ -2,7 +2,6 @@ package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.ast.node.FileASTNode
 import pl.merskip.keklang.compiler.node.*
-import pl.merskip.keklang.llvm.LLVMIntegerType
 import pl.merskip.keklang.logger.Logger
 
 class CompilerV2(
@@ -44,30 +43,25 @@ class CompilerV2(
 
     private fun createEntryPoint() {
         logger.info("Adding entry point")
-        FunctionBuilder.register(context) {
+        context.entryPointFunction = FunctionBuilder.register(context) {
+            isExtern(true)
             simpleIdentifier("_start")
             parameters(emptyList())
-            returnType(context.typesRegister.findType("Void"))
-            isExtern(true)
+            returnType(context.builtin.voidType)
             implementation {
-                val mainFunction = context.typesRegister.findFunctionOrNull(TypeIdentifier.function(null, "main", emptyList()))
+                val mainFunction = context.typesRegister.findFunctionOrNull(TypeIdentifier.function(null, "main", emptyList())) // TODO: Add search method
                 val exitCode = if (mainFunction != null) {
                     context.instructionsBuilder.createCall(
-                        function = mainFunction.value,
-                        functionType = mainFunction.type,
+                        function = mainFunction,
                         arguments = emptyList(),
                         name = "exit_code"
                     )
                 } else {
-                    (context.typesRegister.findType("Integer").type as LLVMIntegerType).constantValue(0L, true)
+                    context.builtin.integerType.type.constantValue(0L, true)
                 }
 
-                val systemType = context.typesRegister.findType("System")
-                val integerType = context.typesRegister.findType("Integer")
-                val systemExit = context.typesRegister.findFunction(TypeIdentifier.function(systemType, "exit", listOf(integerType)))
                 context.instructionsBuilder.createCall(
-                    function = systemExit.value,
-                    functionType = systemExit.type,
+                    function = context.builtin.systemExitFunction,
                     arguments = listOf(exitCode),
                     name = null
                 )

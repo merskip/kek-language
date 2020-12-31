@@ -18,6 +18,8 @@ class CompilerContext(
     val debugBuilder: DebugInformationBuilder
 ) {
 
+    lateinit var entryPointFunction: Function
+
     var nodesCompilers = mutableListOf<ASTNodeCompiling<*>>()
 
     inline fun <reified T: ASTNode> compile(node: T): Reference? {

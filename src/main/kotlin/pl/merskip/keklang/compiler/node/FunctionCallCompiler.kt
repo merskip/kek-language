@@ -3,10 +3,8 @@ package pl.merskip.keklang.compiler.node
 import pl.merskip.keklang.ast.node.FunctionCallASTNode
 import pl.merskip.keklang.ast.node.StatementASTNode
 import pl.merskip.keklang.ast.node.StaticFunctionCallASTNode
-import pl.merskip.keklang.compiler.CompilerContext
+import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.compiler.Function
-import pl.merskip.keklang.compiler.Reference
-import pl.merskip.keklang.compiler.TypeIdentifier
 
 class FunctionCallCompiler(
     context: CompilerContext
@@ -34,10 +32,9 @@ abstract class FunctionCallCompilerBase(
         val parameters = compileParameters(parametersNodes)
         val function = findFunction(typeIdentifier, functionIdentifier, parameters)
         val value = context.instructionsBuilder.createCall(
-            function.value,
-            function.type,
-            parameters.map(Reference::value),
-            if (function.returnType.isVoid) null else "call_$functionIdentifier"
+            function = function,
+            arguments = parameters.map(Reference::value),
+            name = if (function.returnType.isVoid) null else "call_$functionIdentifier"
         )
         return Reference(null, function.returnType, value)
     }
