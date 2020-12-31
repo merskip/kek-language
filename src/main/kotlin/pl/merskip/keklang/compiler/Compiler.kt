@@ -17,7 +17,7 @@ class Compiler(
     val module = irCompiler.module
 
     private val scopesStack = ScopesStack()
-    private lateinit var builtinTypes: BuiltinTypes // placeholdere
+    private lateinit var builtinTypes: Builtin // placeholdere
     lateinit var debugFile: DebugFile
 
     init {

@@ -1,14 +1,16 @@
 package pl.merskip.keklang.compiler.node
 
 import pl.merskip.keklang.ast.node.BinaryOperatorNodeAST
-import pl.merskip.keklang.compiler.*
+import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.Function
+import pl.merskip.keklang.compiler.Reference
+import pl.merskip.keklang.compiler.Type
 
 class BinaryOperatorCompiler(
     val context: CompilerContext
 ) : ASTNodeCompiling<BinaryOperatorNodeAST> {
 
-    override fun compile(node: BinaryOperatorNodeAST): Reference? {
+    override fun compile(node: BinaryOperatorNodeAST): Reference {
         val lhs = context.compile(node.lhs)!!
         val rhs = context.compile(node.rhs)!!
 
@@ -23,14 +25,19 @@ class BinaryOperatorCompiler(
     }
 
     private fun getFunctionForOperator(operator: String, lhsType: Type, rhsType: Type): Function {
+        val builtin = context.builtin
         return when (operator) {
-            "+" -> context.typesRegister.findFunction(TypeIdentifier.function(lhsType, BuiltinTypes.ADD_FUNCTION, listOf(lhsType, rhsType)))
-            "-" -> context.typesRegister.findFunction(TypeIdentifier.function(lhsType, BuiltinTypes.SUBTRACT_FUNCTION, listOf(lhsType, rhsType)))
-            "*" -> context.typesRegister.findFunction(TypeIdentifier.function(lhsType, BuiltinTypes.MULTIPLE_FUNCTION, listOf(lhsType, rhsType)))
-            "==" -> context.typesRegister.findFunction(TypeIdentifier.function(lhsType, BuiltinTypes.IS_EQUAL_TO_FUNCTION, listOf(lhsType, rhsType)))
-            else -> throw Exception("Not found function for operator: $operator" +
-                    " and lhs ${lhsType.getDebugDescription()}" +
-                    " and rhs ${rhsType.getDebugDescription()}")
-        }
+            "+" -> builtin.integerAddFunction
+            "-" -> builtin.integerSubtractFunction
+            "*" -> builtin.integerMultipleFunction
+            "==" -> when {
+                lhsType == builtin.integerType && rhsType == builtin.integerType -> builtin.integerIsEqualFunction
+                lhsType == builtin.booleanType && rhsType == builtin.booleanType -> builtin.booleanIsEqualFunction
+                else -> null
+            }
+            else -> null
+        } ?: throw Exception("Not found function for operator: $operator" +
+                " and lhs ${lhsType.getDebugDescription()}" +
+                " and rhs ${rhsType.getDebugDescription()}")
     }
 }

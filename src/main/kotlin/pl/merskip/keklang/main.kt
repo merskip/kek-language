@@ -90,11 +90,14 @@ fun main(args: Array<String>) = mainBody {
 
         val context = LLVMContext()
         val module = LLVMModule("kek-lang", context, targetTriple?.let { LLVMTargetTriple.fromString(it) })
+        val typesRegister = TypesRegister()
+        val builtin = Builtin(context, module, typesRegister)
         val compiler = CompilerV2(
             CompilerContext(
                 context,
                 module,
-                TypesRegister(),
+                typesRegister,
+                builtin,
                 ScopesStack(),
                 IRInstructionsBuilder(context, module.getTargetTriple()),
                 DebugInformationBuilder(context, module)

@@ -12,6 +12,7 @@ class CompilerContext(
     val context: LLVMContext,
     val module: LLVMModule,
     val typesRegister: TypesRegister,
+    val builtin: Builtin,
     val scopesStack: ScopesStack,
     val instructionsBuilder: IRInstructionsBuilder,
     val debugBuilder: DebugInformationBuilder

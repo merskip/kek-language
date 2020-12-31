@@ -12,7 +12,11 @@ class CompilerV2(
     private val logger = Logger(this::class)
 
     init {
+
         logger.info("Preparing compiler")
+
+        context.builtin.registerFunctions(context)
+
         context.addNodeCompiler(FileCompiler(context, FunctionCompiler(context)))
         context.addNodeCompiler(CodeBlockCompiler(context))
         context.addNodeCompiler(StatementCompiler(context))
@@ -23,7 +27,6 @@ class CompilerV2(
         context.addNodeCompiler(StaticFunctionCallCompiler(context))
         context.addNodeCompiler(BinaryOperatorCompiler(context))
         context.addNodeCompiler(IfElseConditionCompiler(context))
-        BuiltinTypes(context).register()
     }
 
     fun compile(filesNodes: List<FileASTNode>) {
