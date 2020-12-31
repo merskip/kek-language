@@ -22,7 +22,7 @@ class RicherLLVMIRText(
 
     /** See https://llvm.org/docs/LangRef.html#type-system */
     private val typeVoidRegex = Regex("void")
-    private val typeIntegerRegex = Regex("i[0-9]+\\**")
+    private val typeIntegerRegex = Regex("[^.a-zA-Z0-9]i[0-9]+\\**")
     private val typeFloatingPointRegex = Regex("(half|bfloat|float|double|fp128|x86_fp80|ppc_fp128)\\**")
     private val typeArrayRegex = Regex("\\[\\d+ x .+?]\\**")
     private val typeStructure = Regex("\\{ .*? }\\*8")
@@ -53,7 +53,7 @@ class RicherLLVMIRText(
     fun rich(): String {
         val lines = plainLLVMIR.lineSequence().toMutableList()
         parseDataLayout(lines)
-        recognizeMangledIdentifiers(lines)
+        recognizeMangledIdentifiersForDefines(lines)
         highlightSyntax(lines)
         return lines.joinToString(System.lineSeparator())
     }
@@ -162,11 +162,11 @@ class RicherLLVMIRText(
         return Triple(size, abi, alignment)
     }
 
-    private fun recognizeMangledIdentifiers(lines: MutableList<String>) {
+    private fun recognizeMangledIdentifiersForDefines(lines: MutableList<String>) {
         val lineIterator = lines.listIterator()
         for (line in lineIterator) {
             val matchIdentifier = globalIdentifierRegex.find(line)
-            if (matchIdentifier != null) {
+            if (line.contains("define") && matchIdentifier != null) {
                 val type = typesRegister.findTypeOrNull(matchIdentifier.value.substring(1))
                 if (type != null) {
                     logger.verbose("Matched \"${matchIdentifier.value}\" to \"${type.getDebugDescription()}\"")
