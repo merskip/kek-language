@@ -49,6 +49,8 @@ class LLVMFunctionType(reference: LLVMTypeRef) : LLVMType(reference) {
     )
 }
 
+class LLVMVoidType(reference: LLVMTypeRef) : LLVMType(reference)
+
 class LLVMIntegerType(reference: LLVMTypeRef) : LLVMType(reference) {
 
     fun constantValue(value: Long, isSigned: Boolean): LLVMConstantValue {

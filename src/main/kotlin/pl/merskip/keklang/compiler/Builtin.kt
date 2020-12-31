@@ -14,11 +14,11 @@ class Builtin(
     private val logger = Logger(this::class)
 
     /* Primitive types */
-    val voidType: PrimitiveType
-    val booleanType: PrimitiveType
-    val byteType: PrimitiveType
-    val integerType: PrimitiveType
-    val bytePointerType: PrimitiveType
+    val voidType: PrimitiveType<LLVMVoidType>
+    val booleanType: PrimitiveType<LLVMIntegerType>
+    val byteType: PrimitiveType<LLVMIntegerType>
+    val integerType: PrimitiveType<LLVMIntegerType>
+    val bytePointerType: PrimitiveType<LLVMPointerType>
 
     /* System type */
     val systemType: Type
@@ -60,7 +60,10 @@ class Builtin(
         registerOperatorsFunctions(context)
     }
 
-    private fun registerType(simpleIdentifier: String, getType: LLVMContext.() -> LLVMType): PrimitiveType {
+    private fun <WrappedType : LLVMType> registerType(
+        simpleIdentifier: String,
+        getType: LLVMContext.() -> WrappedType
+    ): PrimitiveType<WrappedType> {
         val identifier = TypeIdentifier(simpleIdentifier)
         val primitiveType = PrimitiveType(identifier, getType(context))
         typesRegister.register(primitiveType)
@@ -84,7 +87,7 @@ class Builtin(
             parameters("string" to stringType)
             returnType(voidType)
             implementation { (string) ->
-                val standardOutputFileDescription = (integerType.type as LLVMIntegerType).constantValue(1, false)
+                val standardOutputFileDescription = integerType.type.constantValue(1, false)
                 val stringAddress = context.instructionsBuilder.buildCast(string, integerType.type, "string_address")
                 // TODO: Calculate length of string
                 val stringLength = integerType.type.constantValue(16, false)

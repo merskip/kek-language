@@ -8,8 +8,8 @@ class LLVMContext(
 ) {
     constructor() : this(LLVMContextCreate())
 
-    fun createVoidType(): LLVMType {
-        return LLVMType.just(LLVMVoidTypeInContext(reference))
+    fun createVoidType(): LLVMVoidType {
+        return LLVMVoidType(LLVMVoidTypeInContext(reference))
     }
 
     fun createIntegerType(bits: Int): LLVMIntegerType {

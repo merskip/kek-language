@@ -18,9 +18,9 @@ abstract class Type(
     abstract fun getDebugDescription(): String
 }
 
-class PrimitiveType(
+class PrimitiveType<WrappedType: LLVMType>(
     identifier: TypeIdentifier,
-    type: LLVMType
+    override val type: WrappedType
 ) : Type(identifier, type) {
 
     override fun getDebugDescription() = "$identifier=Primitive($type)"
