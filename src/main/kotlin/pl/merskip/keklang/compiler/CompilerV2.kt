@@ -52,8 +52,14 @@ class CompilerV2(
                 val mainFunction = context.typesRegister.find<Function> { it.identifier.canonical == "main" }
 
                 val exitCode = when {
-                    mainFunction == null -> context.builtin.integerType.type.constantValue(0L, true)
-                    mainFunction.returnType.isVoid -> context.builtin.integerType.type.constantValue(0L, true)
+                    mainFunction == null -> {
+                        logger.warning("Not found main function. Define `func main()` or `func main() -> Integer` function")
+                        context.builtin.integerType.type.constantValue(0L, true)
+                    }
+                    mainFunction.returnType.isVoid -> {
+                        context.instructionsBuilder.createCall(mainFunction, emptyList(), null)
+                        context.builtin.integerType.type.constantValue(0L, true)
+                    }
                     mainFunction.returnType == context.builtin.integerType -> context.instructionsBuilder.createCall(
                         function = mainFunction,
                         arguments = emptyList(),

@@ -25,13 +25,8 @@ class TypesRegister {
     }
 
     inline fun <reified T: Type> find(predicate: (type: T) -> Boolean): T? {
-        println("Finding by ${T::class}")
         @Suppress("UNCHECKED_CAST")
-        return types.mapNotNull {
-            it as? T
-        }.find {
-            predicate(it)
-        }
+        return types.mapNotNull { it as? T }.find { predicate(it) }
     }
 
     class RegisteringTypeAlreadyExistsException(type: Type) : Exception("Registering type already exists: ${type.getDebugDescription()}")

@@ -1,10 +1,9 @@
 
-func sayHello() -> Integer {
+func sayHello() {
     System.print("Hello world!   \n")
     System.print("Witaj świecie!\n")
-    0
 }
 
-func main() -> Integer {
+func main() {
     sayHello()
 }
