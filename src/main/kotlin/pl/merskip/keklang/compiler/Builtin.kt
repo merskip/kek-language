@@ -24,9 +24,11 @@ class Builtin(
     val systemType: Type
     lateinit var systemExitFunction: Function private set
     lateinit var systemPrintFunction: Function private set
+    lateinit var systemPrintV2Function: Function private set
 
     /* String type */
     val stringType: Type
+    val stringV2Type: PrimitiveType<LLVMStructureType>
 
     /* Operators */
     lateinit var integerAddFunction: Function private set
@@ -52,6 +54,13 @@ class Builtin(
         logger.debug("Registering builtin standard types")
         systemType = registerType("System") { createVoidType() }
         stringType = registerType("String") { bytePointerType.type }
+        stringV2Type = registerType("StringV2") {
+            createStructure(
+                name = "StringV2",
+                types = listOf(bytePointerType.type, integerType.type),
+                isPacked = false
+            )
+        }
     }
 
     fun registerFunctions(context: CompilerContext) {
@@ -97,6 +106,16 @@ class Builtin(
                     listOf(standardOutputFileDescription, stringAddress, stringLength),
                     "syscall_write"
                 )
+                context.instructionsBuilder.createReturnVoid()
+            }
+        }
+
+        // System.printV2(string: StringV2)
+        systemPrintV2Function = FunctionBuilder.register(context) {
+            declaringType(systemType)
+            identifier("printV2")
+            parameters("string" to stringV2Type)
+            implementation { string ->
                 context.instructionsBuilder.createReturnVoid()
             }
         }

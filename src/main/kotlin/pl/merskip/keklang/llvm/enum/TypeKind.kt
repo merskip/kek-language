@@ -34,23 +34,23 @@ enum class TypeKind(override val rawValue: Int): RawValuable<Int> {
     Function(9),
 
     /** Structures */
-    Struct(0),
+    Struct(10),
 
     /** Arrays */
-    Array(1),
+    Array(11),
 
     /** Pointers */
-    Pointer(2),
+    Pointer(12),
 
     /** SIMD 'packed' format, or other vector type */
-    Vector(3),
+    Vector(13),
 
     /** Metadata */
-    Metadata(4),
+    Metadata(14),
 
     /** X86 MMX */
-    X86_MMX(5),
+    X86_MMX(15),
 
     /** Tokens */
-    Token(6),
+    Token(16),
 }

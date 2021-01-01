@@ -1,6 +1,7 @@
 package pl.merskip.keklang.llvm
 
 import org.bytedeco.llvm.global.LLVM.*
+import pl.merskip.keklang.compiler.llvm.toValueRefPointer
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
@@ -14,7 +15,7 @@ class IRInstructionsBuilder(
     private val targetTriple: LLVMTargetTriple
 ) {
 
-    private val irBuilder = LLVMCreateBuilderInContext(context.reference)
+    val irBuilder = LLVMCreateBuilderInContext(context.reference)
 
     /**
      * Create a 'ret void' instruction
@@ -103,9 +104,36 @@ class IRInstructionsBuilder(
     /**
      * Creates a '@str_HASH = constant [LENGTH x i8] c"<value>\0"' global constant
      */
+    fun createGlobalStringPointer(value: String): LLVMConstantValue {
+        val hash = "%08x".format(value.hashCode())
+        return LLVMConstantValue(LLVMBuildGlobalStringPtr(irBuilder, value, "str_${hash}_ptr"))
+    }
+
+    /**
+     * Creates a '@str_HASH = constant [LENGTH x i8] c"<value>\0"' global constant
+     * @return Value of type [LENGTH x i8]*
+     */
     fun createGlobalString(value: String): LLVMConstantValue {
         val hash = "%08x".format(value.hashCode())
-        return LLVMConstantValue(LLVMBuildGlobalStringPtr(irBuilder, value, "str_$hash"))
+        return LLVMConstantValue(LLVMBuildGlobalString(irBuilder, value, "str_$hash"))
+    }
+
+    fun createGetElementPointerInBounds(
+        type: LLVMType,
+        pointer: LLVMValue,
+        index: LLVMValue,
+        name: String?
+    ): LLVMInstructionValue {
+        return LLVMInstructionValue(
+            LLVMBuildInBoundsGEP2(
+                irBuilder,
+                type.reference,
+                pointer.reference,
+                listOf(index.reference).toValueRefPointer(),
+                1,
+                name ?: ""
+            )
+        )
     }
 
     /**

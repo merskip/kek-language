@@ -10,7 +10,8 @@ interface RawValuable<V> {
         inline fun <reified T, V> fromRawValue(rawValue: V): T
                 where T : Enum<T>,
                       T : RawValuable<V>{
-            return enumValues<T>().first { it.rawValue == rawValue }
+            return enumValues<T>().firstOrNull { it.rawValue == rawValue }
+                ?: throw Exception("Not found rawValue=$rawValue in class ${T::class}")
         }
     }
 }

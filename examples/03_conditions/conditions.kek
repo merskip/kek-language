@@ -12,5 +12,5 @@ func fibonacci(n: Integer) -> Integer {
 }
 
 func main() -> Integer {
-    fibonacci(10)
+    fibonacci(14)
 }

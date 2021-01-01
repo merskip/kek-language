@@ -60,7 +60,7 @@ class LLVMIntegerType(reference: LLVMTypeRef) : LLVMType(reference) {
 
 class LLVMPointerType(reference: LLVMTypeRef) : LLVMType(reference)
 
-class LLVMStructType(reference: LLVMTypeRef) : LLVMType(reference)
+class LLVMStructureType(reference: LLVMTypeRef) : LLVMType(reference)
 
 abstract class LLVMVectorType(reference: LLVMTypeRef) : LLVMType(reference)
 
