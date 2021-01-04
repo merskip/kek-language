@@ -20,7 +20,7 @@ sealed class Identifier(
         ).joinToString("_"))
 
         constructor(
-            declaringType: pl.merskip.keklang.compiler.Type,
+            declaringType: DeclaredType,
             canonical: String,
             parameters: List<Identifier>
         ) : this(canonical,

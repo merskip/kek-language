@@ -49,28 +49,31 @@ class CompilerV2(
             parameters(emptyList())
             returnType(context.builtin.voidType)
             implementation {
-                val mainFunction = context.typesRegister.find<Function> { it.identifier.canonical == "main" }
+                val mainFunction = context.typesRegister.find<DeclaredFunction> { it.identifier.canonical == "main" }
 
                 val exitCode = when {
                     mainFunction == null -> {
                         logger.warning("Not found main function. Define `func main()` or `func main() -> Integer` function")
-                        context.builtin.integerType.type.constantValue(0L, true)
+                        context.builtin.createInteger(0L)
                     }
                     mainFunction.returnType.isVoid -> {
                         context.instructionsBuilder.createCall(mainFunction, emptyList(), null)
-                        context.builtin.integerType.type.constantValue(0L, true)
+                        context.builtin.createInteger(0L)
                     }
-                    mainFunction.returnType == context.builtin.integerType -> context.instructionsBuilder.createCall(
-                        function = mainFunction,
-                        arguments = emptyList(),
-                        name = "exit_code"
-                    )
+                    mainFunction.returnType == context.builtin.integerType -> {
+                        val value = context.instructionsBuilder.createCall(
+                            function = mainFunction,
+                            arguments = emptyList(),
+                            name = "exit_code"
+                        )
+                        Reference.Anonymous(mainFunction.returnType, value)
+                    }
                     else -> throw Exception("The main function must return Integer or Void")
                 }
 
                 context.instructionsBuilder.createCall(
                     function = context.builtin.systemExitFunction,
-                    arguments = listOf(exitCode),
+                    arguments = listOf(exitCode.value),
                     name = null
                 )
                 context.instructionsBuilder.createUnreachable()

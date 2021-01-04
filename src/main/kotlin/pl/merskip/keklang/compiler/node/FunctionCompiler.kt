@@ -2,7 +2,6 @@ package pl.merskip.keklang.compiler.node
 
 import pl.merskip.keklang.ast.node.FunctionDefinitionNodeAST
 import pl.merskip.keklang.compiler.*
-import pl.merskip.keklang.compiler.Function
 import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.logger.Logger
 
@@ -12,11 +11,11 @@ class FunctionCompiler(
 
     private val logger = Logger(this::class)
 
-    fun registerFunction(node: FunctionDefinitionNodeAST): Function {
+    fun registerFunction(node: FunctionDefinitionNodeAST): DeclaredFunction {
         val parameters = node.parameters.map {
             val type = context.typesRegister.find(Identifier.Type(it.type.identifier))
                 ?: throw Exception("Not found type: ${it.type.identifier}")
-            Function.Parameter(it.identifier, type)
+            DeclaredFunction.Parameter(it.identifier, type)
         }
         val returnType = if (node.returnType != null)
             (context.typesRegister.find(Identifier.Type(node.returnType.identifier))
@@ -24,9 +23,9 @@ class FunctionCompiler(
         val identifier = Identifier.Function(node.identifier, parameters.map { it.type.identifier })
 
         val functionType = LLVMFunctionType(
-            parameters = parameters.types.map { it.type },
+            parameters = parameters.types.map { it.wrappedType },
             isVariadicArguments = false,
-            result = returnType.type
+            result = returnType.wrappedType
         )
         val functionValue = context.module.addFunction(identifier.mangled, functionType)
 
@@ -34,19 +33,19 @@ class FunctionCompiler(
             parameterValue.setName(parameter.name)
         }
 
-        val function = Function(
+        val function = DeclaredFunction(
             identifier = identifier,
             declaringType = null,
             parameters = parameters,
             returnType = returnType,
-            type = functionType,
+            wrappedType = functionType,
             value = functionValue
         )
         context.typesRegister.register(function)
         return function
     }
 
-    fun compileFunction(node: FunctionDefinitionNodeAST, function: Function) {
+    fun compileFunction(node: FunctionDefinitionNodeAST, function: DeclaredFunction) {
         logger.verbose("Compiling function: ${function.getDebugDescription()}")
         context.scopesStack.createScope {
             function.value.getParametersValues().zip(function.parameters).forEach { (parameterValue, parameter) ->

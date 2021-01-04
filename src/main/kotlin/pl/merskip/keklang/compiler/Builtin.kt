@@ -4,6 +4,7 @@ import pl.merskip.keklang.llvm.*
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.logger.Logger
+import pl.merskip.keklang.toInt
 
 class Builtin(
     private val context: LLVMContext,
@@ -14,52 +15,61 @@ class Builtin(
     private val logger = Logger(this::class)
 
     /* Primitive types */
-    val voidType: PrimitiveType<LLVMVoidType>
-    val booleanType: PrimitiveType<LLVMIntegerType>
-    val byteType: PrimitiveType<LLVMIntegerType>
-    val integerType: PrimitiveType<LLVMIntegerType>
-    val bytePointerType: PrimitiveType<LLVMPointerType>
+    val voidType: PrimitiveType
+    val booleanType: PrimitiveType
+    val byteType: PrimitiveType
+    val integerType: PrimitiveType
+    val bytePointerType: PointerType
 
     /* System type */
-    val systemType: Type
-    lateinit var systemExitFunction: Function private set
-    lateinit var systemPrintFunction: Function private set
-    lateinit var systemPrintV2Function: Function private set
+    val systemType: DeclaredType
+    lateinit var systemExitFunction: DeclaredFunction private set
+    lateinit var systemPrintFunction: DeclaredFunction private set
 
     /* String type */
-    val stringType: Type
-    val stringV2Type: PrimitiveType<LLVMStructureType>
+    val stringType: StructureType
 
     /* Operators */
-    lateinit var integerAddFunction: Function private set
-    lateinit var integerSubtractFunction: Function private set
-    lateinit var integerMultipleFunction: Function private set
-    lateinit var integerIsEqualFunction: Function private set
-    lateinit var booleanIsEqualFunction: Function private set
+    lateinit var integerAddFunction: DeclaredFunction private set
+    lateinit var integerSubtractFunction: DeclaredFunction private set
+    lateinit var integerMultipleFunction: DeclaredFunction private set
+    lateinit var integerIsEqualFunction: DeclaredFunction private set
+    lateinit var booleanIsEqualFunction: DeclaredFunction private set
 
     init {
         val target = module.getTargetTriple()
         when (target.archType) {
             ArchType.X86, ArchType.X86_64 -> {
                 logger.debug("Registering builtin primitive types for x86/x86_64")
-                voidType = registerType("Void") { createVoidType() }
-                booleanType = registerType("Boolean") { createIntegerType(1) }
-                byteType = registerType("Byte") { createIntegerType(8) }
-                integerType = registerType("Integer") { createIntegerType(64) }
-                bytePointerType = registerType("BytePointer") { createPointerType(byteType.type) }
+                voidType = registerType {
+                    PrimitiveType(Identifier.Type("Void"), createVoidType())
+                }
+                booleanType = registerType {
+                    PrimitiveType(Identifier.Type("Boolean"), createIntegerType(1))
+                }
+                byteType = registerType {
+                    PrimitiveType(Identifier.Type("Byte"), createIntegerType(8))
+                }
+                integerType = registerType {
+                    PrimitiveType(Identifier.Type("Integer"), createIntegerType(64))
+                }
+                bytePointerType = registerType {
+                    PointerType(Identifier.Type("BytePointer"), createPointerType(byteType.wrappedType))
+                }
             }
             else -> error("Unsupported arch: ${target.archType}")
         }
 
         logger.debug("Registering builtin standard types")
-        systemType = registerType("System") { createVoidType() }
-        stringType = registerType("String") { bytePointerType.type }
-        stringV2Type = registerType("StringV2") {
-            createStructure(
-                name = "StringV2",
-                types = listOf(bytePointerType.type, integerType.type),
+        systemType = registerType {
+            PrimitiveType(Identifier.Type("System"), voidType.wrappedType)
+        }
+        stringType = registerType {
+            StructureType(Identifier.Type("String"), createStructure(
+                name = "String",
+                types = listOf(bytePointerType.wrappedType, integerType.wrappedType),
                 isPacked = false
-            )
+            ))
         }
     }
 
@@ -69,13 +79,22 @@ class Builtin(
         registerOperatorsFunctions(context)
     }
 
-    private fun <WrappedType : LLVMType> registerType(
+    private fun <T : DeclaredType> registerType(
+        getType: LLVMContext.() -> T
+    ): T {
+        val type = getType(context)
+        typesRegister.register(type)
+        return type
+    }
+
+    private fun registerPointerTypeOf(
         identifier: String,
-        getType: LLVMContext.() -> WrappedType
-    ): PrimitiveType<WrappedType> {
-        val primitiveType = PrimitiveType(Identifier.Type(identifier), getType(context))
-        typesRegister.register(primitiveType)
-        return primitiveType
+        getType: LLVMContext.() -> LLVMType
+    ): PointerType {
+        val type = getType(context)
+        val pointerType = PointerType(Identifier.Type(identifier), context.createPointerType(type))
+        typesRegister.register(pointerType)
+        return pointerType
     }
 
     private fun registerSystemFunctions(context: CompilerContext) {
@@ -90,32 +109,57 @@ class Builtin(
             }
         }
 
+//        // System.print(string: String)
+//        systemPrintFunction = FunctionBuilder.register(context) {
+//            declaringType(systemType)
+//            identifier("print")
+//            parameters("string" to stringType)
+//            implementation { (string) ->
+//                val standardOutputFileDescription = integerType.wrappedType.constantValue(1, false)
+//                val stringAddress = context.instructionsBuilder.buildCast(string, integerType.wrappedType, "string_address")
+//                // TODO: Calculate length of string
+//                val stringLength = integerType.wrappedType.constantValue(16, false)
+//
+//                context.instructionsBuilder.createSystemCall(
+//                    1,
+//                    listOf(standardOutputFileDescription, stringAddress, stringLength),
+//                    "syscall_write"
+//                )
+//                context.instructionsBuilder.createReturnVoid()
+//            }
+//        }
+
         // System.print(string: String)
+        val stringTypePointer = stringType.asPointer()
         systemPrintFunction = FunctionBuilder.register(context) {
             declaringType(systemType)
             identifier("print")
-            parameters("string" to stringType)
+            parameters("string" to stringTypePointer)
             implementation { (string) ->
-                val standardOutputFileDescription = integerType.type.constantValue(1, false)
-                val stringAddress = context.instructionsBuilder.buildCast(string, integerType.type, "string_address")
-                // TODO: Calculate length of string
-                val stringLength = integerType.type.constantValue(16, false)
+                val standardOutputFileDescription = createInteger(1L).value
+
+                val stringGutsGEP = context.instructionsBuilder.createGetElementPointerInBounds(
+                    type = context.builtin.bytePointerType.wrappedType,
+                    pointer = string,
+                    index = context.builtin.createInteger(0L).value,
+                    name = "stringGutsGEP"
+                )
+                val stringGuts = context.instructionsBuilder.createLoad(stringGutsGEP, bytePointerType.wrappedType, "stringGuts")
+                val stringGutsAddress = context.instructionsBuilder.buildCast(stringGuts, integerType.wrappedType, "stringGuts")
+
+                val stringLengthGEP = context.instructionsBuilder.createGetElementPointerInBounds(
+                    type = context.builtin.integerType.wrappedType,
+                    pointer = string,
+                    index = context.builtin.createInteger(1L).value,
+                    name = "stringLengthGEP"
+                )
+                val stringLength = context.instructionsBuilder.createLoad(stringLengthGEP, context.builtin.integerType.wrappedType, "stringLength")
 
                 context.instructionsBuilder.createSystemCall(
                     1,
-                    listOf(standardOutputFileDescription, stringAddress, stringLength),
+                    listOf(standardOutputFileDescription, stringGutsAddress, stringLength),
                     "syscall_write"
                 )
-                context.instructionsBuilder.createReturnVoid()
-            }
-        }
-
-        // System.printV2(string: StringV2)
-        systemPrintV2Function = FunctionBuilder.register(context) {
-            declaringType(systemType)
-            identifier("printV2")
-            parameters("string" to stringV2Type)
-            implementation { string ->
                 context.instructionsBuilder.createReturnVoid()
             }
         }
@@ -164,10 +208,10 @@ class Builtin(
     }
 
     private fun CompilerContext.registerOperatorFunction(
-        lhs: Type,
-        rhs: Type,
+        lhs: DeclaredType,
+        rhs: DeclaredType,
         simpleIdentifier: String,
-        returnType: Type,
+        returnType: DeclaredType,
         getResult: (lhs: LLVMValue, rhs: LLVMValue) -> LLVMValue
     ) = FunctionBuilder.register(this) {
         declaringType(lhs)
@@ -179,5 +223,15 @@ class Builtin(
             val result = getResult(lhs, rhs)
             instructionsBuilder.createReturn(result)
         }
+    }
+
+    fun createBoolean(value: Boolean): Reference {
+        val constantValue = (booleanType.wrappedType as LLVMIntegerType).constantValue(value.toInt().toLong(), isSigned = false)
+        return Reference.Anonymous(booleanType, constantValue)
+    }
+
+    fun createInteger(value: Long): Reference {
+        val constantValue = (integerType.wrappedType as LLVMIntegerType).constantValue(value, isSigned = true)
+        return Reference.Anonymous(integerType, constantValue)
     }
 }

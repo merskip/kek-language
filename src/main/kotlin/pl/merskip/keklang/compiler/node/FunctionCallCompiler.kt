@@ -4,7 +4,6 @@ import pl.merskip.keklang.ast.node.FunctionCallASTNode
 import pl.merskip.keklang.ast.node.StatementASTNode
 import pl.merskip.keklang.ast.node.StaticFunctionCallASTNode
 import pl.merskip.keklang.compiler.*
-import pl.merskip.keklang.compiler.Function
 
 class FunctionCallCompiler(
     context: CompilerContext
@@ -36,7 +35,7 @@ abstract class FunctionCallCompilerBase(
             arguments = parameters.map(Reference::value),
             name = if (function.returnType.isVoid) null else "call_$functionIdentifier"
         )
-        return Reference(null, function.returnType, value)
+        return Reference.Anonymous(function.returnType, value)
     }
 
     private fun compileParameters(parameters: List<StatementASTNode>): List<Reference> {
@@ -46,7 +45,7 @@ abstract class FunctionCallCompilerBase(
         }
     }
 
-    private fun findFunction(declaringTypeIdentifier: Identifier?, functionIdentifier: String, parameters: List<Identifier>): Function {
+    private fun findFunction(declaringTypeIdentifier: Identifier?, functionIdentifier: String, parameters: List<Identifier>): DeclaredFunction {
         val typeIdentifier = if (declaringTypeIdentifier !== null) {
             val declaringType = context.typesRegister.find(declaringTypeIdentifier)
                 ?: throw Exception("Not found type: $declaringTypeIdentifier")

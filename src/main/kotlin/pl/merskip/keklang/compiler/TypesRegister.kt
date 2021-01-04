@@ -6,28 +6,28 @@ class TypesRegister {
 
     private val logger = Logger(this::class)
 
-    val types = mutableListOf<Type>()
+    val types = mutableListOf<DeclaredType>()
 
-    fun register(type: Type) {
+    fun register(type: DeclaredType) {
         if (types.any { it.identifier == type.identifier })
             throw RegisteringTypeAlreadyExistsException(type)
         types.add(type)
         logger.verbose("Registered type: ${type.getDebugDescription()}, ${type.identifier.mangled}")
     }
 
-    fun find(identifier: Identifier.Function): Function? {
-        return types.mapNotNull { it as? Function }
+    fun find(identifier: Identifier.Function): DeclaredFunction? {
+        return types.mapNotNull { it as? DeclaredFunction }
             .firstOrNull { it.identifier == identifier }
     }
 
-    fun find(identifier: Identifier): Type? {
+    fun find(identifier: Identifier): DeclaredType? {
         return types.firstOrNull { it.identifier == identifier }
     }
 
-    inline fun <reified T: Type> find(predicate: (type: T) -> Boolean): T? {
+    inline fun <reified T: DeclaredType> find(predicate: (type: T) -> Boolean): T? {
         @Suppress("UNCHECKED_CAST")
         return types.mapNotNull { it as? T }.find { predicate(it) }
     }
 
-    class RegisteringTypeAlreadyExistsException(type: Type) : Exception("Registering type already exists: ${type.getDebugDescription()}")
+    class RegisteringTypeAlreadyExistsException(type: DeclaredType) : Exception("Registering type already exists: ${type.getDebugDescription()}")
 }

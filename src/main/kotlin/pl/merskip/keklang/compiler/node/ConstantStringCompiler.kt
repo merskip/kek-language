@@ -19,25 +19,24 @@ class ConstantStringCompiler(
         val stringLength = LLVM.LLVMGetArrayLength(arrayType.reference)
         println("String length: $stringLength")
 
-        val stringStruct = context.instructionsBuilder.createAlloca(context.builtin.stringV2Type.type, "string")
-        val stringPointer = context.instructionsBuilder.buildCast(stringGlobal, context.builtin.bytePointerType.type, name = "str_pointer")
+        val stringStruct = context.instructionsBuilder.createAlloca(context.builtin.stringType.wrappedType, "string")
+        val stringPointer = context.instructionsBuilder.buildCast(stringGlobal, context.builtin.bytePointerType.wrappedType, name = "str_pointer")
         val stringGuts = context.instructionsBuilder.createGetElementPointerInBounds(
-            type = context.builtin.bytePointerType.type,
+            type = context.builtin.bytePointerType.wrappedType,
             pointer = stringStruct,
-            index = context.builtin.integerType.type.constantValue(0L, false),
+            index = context.builtin.createInteger(0L).value,
             name = "stringGuts"
         )
         context.instructionsBuilder.createStore(stringGuts, stringPointer)
 
         val stringLengthValue = context.instructionsBuilder.createGetElementPointerInBounds(
-            type = context.builtin.integerType.type,
+            type = context.builtin.integerType.wrappedType,
             pointer = stringStruct,
-            index = context.builtin.integerType.type.constantValue(1L, false),
+            index = context.builtin.createInteger(1L).value,
             name = "stringLength"
         )
-        context.instructionsBuilder.createStore(stringLengthValue, context.builtin.integerType.type.constantValue(stringLength.toLong(), false))
+        context.instructionsBuilder.createStore(stringLengthValue, context.builtin.createInteger(stringLength.toLong() - 1).value)
 
-        val stringValue = context.instructionsBuilder.createLoad(stringStruct, context.builtin.stringV2Type.type, null)
-        return Reference(null, context.builtin.stringV2Type, stringValue)
+        return Reference.Anonymous(context.builtin.stringType, stringStruct)
     }
 }

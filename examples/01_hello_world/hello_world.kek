@@ -1,7 +1,7 @@
 
 func sayHello() {
-    System.printV2("Hello world!\n")
-    System.printV2("Witaj świecie!\n")
+    System.print("Hello world!\n")
+    System.print("Witaj świecie!\n")
 }
 
 func main() {

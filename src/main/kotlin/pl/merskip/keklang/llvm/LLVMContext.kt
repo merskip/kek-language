@@ -18,8 +18,8 @@ class LLVMContext(
         return LLVMIntegerType(LLVMIntTypeInContext(reference, bits))
     }
 
-    fun createPointerType(dataType: LLVMType): LLVMPointerType {
-        return LLVMPointerType(LLVMPointerType(dataType.reference, 0))
+    fun createPointerType(elementType: LLVMType): LLVMPointerType {
+        return LLVMPointerType(LLVMPointerType(elementType.reference, 0))
     }
 
     fun createAnonymousStructure(types: List<LLVMType>, isPacked: Boolean): LLVMStructureType {

@@ -18,7 +18,7 @@ class CompilerContext(
     val debugBuilder: DebugInformationBuilder
 ) {
 
-    lateinit var entryPointFunction: Function
+    lateinit var entryPointFunction: DeclaredFunction
 
     var nodesCompilers = mutableListOf<ASTNodeCompiling<*>>()
 

@@ -62,8 +62,4 @@ class LLVMPointerType(reference: LLVMTypeRef) : LLVMType(reference)
 
 class LLVMStructureType(reference: LLVMTypeRef) : LLVMType(reference)
 
-abstract class LLVMVectorType(reference: LLVMTypeRef) : LLVMType(reference)
-
-class LLVMFixedVectorType(reference: LLVMTypeRef) : LLVMVectorType(reference)
-
-class LLVMScalableVectorType(reference: LLVMTypeRef) : LLVMVectorType(reference)
+class LLVMVectorType(reference: LLVMTypeRef) : LLVMType(reference)

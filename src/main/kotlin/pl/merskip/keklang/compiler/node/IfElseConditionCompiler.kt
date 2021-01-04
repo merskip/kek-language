@@ -38,7 +38,7 @@ class IfElseConditionCompiler(
             values = lastValuesInBlocks.map { it.second to it.first },
             name = "if_result"
         )
-        return Reference(null, context.builtin.integerType, phi)
+        return Reference.Anonymous(context.builtin.integerType, phi)
     }
 
     private fun compileIfCondition(

@@ -2,9 +2,9 @@ package pl.merskip.keklang.compiler.node
 
 import pl.merskip.keklang.ast.node.BinaryOperatorNodeAST
 import pl.merskip.keklang.compiler.CompilerContext
-import pl.merskip.keklang.compiler.Function
+import pl.merskip.keklang.compiler.DeclaredFunction
+import pl.merskip.keklang.compiler.DeclaredType
 import pl.merskip.keklang.compiler.Reference
-import pl.merskip.keklang.compiler.Type
 
 class BinaryOperatorCompiler(
     val context: CompilerContext
@@ -17,14 +17,14 @@ class BinaryOperatorCompiler(
         val function = getFunctionForOperator(node.identifier, lhs.type, rhs.type)
         val result = context.instructionsBuilder.createCall(
             function = function.value,
-            functionType = function.type,
+            functionType = function.wrappedType,
             arguments = listOf(lhs.value, rhs.value),
             name = "call_${function.identifier.canonical}"
         )
-        return Reference(null, function.returnType, result)
+        return Reference.Anonymous(function.returnType, result)
     }
 
-    private fun getFunctionForOperator(operator: String, lhsType: Type, rhsType: Type): Function {
+    private fun getFunctionForOperator(operator: String, lhsType: DeclaredType, rhsType: DeclaredType): DeclaredFunction {
         val builtin = context.builtin
         return when (operator) {
             "+" -> builtin.integerAddFunction

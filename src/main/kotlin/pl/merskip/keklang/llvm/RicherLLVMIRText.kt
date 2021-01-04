@@ -2,7 +2,7 @@ package pl.merskip.keklang.llvm
 
 import pl.merskip.keklang.Color
 import pl.merskip.keklang.colored
-import pl.merskip.keklang.compiler.Function
+import pl.merskip.keklang.compiler.DeclaredFunction
 import pl.merskip.keklang.compiler.TypesRegister
 import pl.merskip.keklang.logger.Logger
 
@@ -168,7 +168,7 @@ class RicherLLVMIRText(
         for (line in lineIterator) {
             val mangledIdentifier = globalIdentifierRegex.find(line)?.value?.substring(1)
             if (line.contains("define") && mangledIdentifier != null) {
-                val type = typesRegister.find<Function> { it.identifier.mangled == mangledIdentifier }
+                val type = typesRegister.find<DeclaredFunction> { it.identifier.mangled == mangledIdentifier }
                 if (type != null) {
                     logger.verbose("Matched \"${mangledIdentifier}\" to \"${type.getDebugDescription()}\"")
                     lineIterator.addBefore(line.getIndent() + "; " + type.getDebugDescription())

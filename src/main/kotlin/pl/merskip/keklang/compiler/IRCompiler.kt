@@ -50,9 +50,9 @@ class IRCompiler(
         return LLVMAddGlobal(module, type, uniqueIdentifier)
     }
 
-    fun declareFunction(uniqueIdentifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
-        val parametersTypeRefPointer = parameters.map { it.type.type.reference }.toTypeRefPointer()
-        val functionTypeRef = LLVMFunctionType(returnType.type.reference, parametersTypeRefPointer, parameters.size, 0)
+    fun declareFunction(uniqueIdentifier: String, parameters: List<DeclaredFunction.Parameter>, returnType: DeclaredType): Pair<LLVMTypeRef, LLVMValueRef> {
+        val parametersTypeRefPointer = parameters.map { it.type.wrappedType.reference }.toTypeRefPointer()
+        val functionTypeRef = LLVMFunctionType(returnType.wrappedType.reference, parametersTypeRefPointer, parameters.size, 0)
         val functionValueRef = LLVMAddFunction(module, uniqueIdentifier, functionTypeRef)
 
         (parameters zip functionValueRef.getFunctionParametersValues())
@@ -63,7 +63,7 @@ class IRCompiler(
         return Pair(functionTypeRef, functionValueRef)
     }
 
-    fun beginFunctionEntry(function: Function): LLVMBasicBlockRef {
+    fun beginFunctionEntry(function: DeclaredFunction): LLVMBasicBlockRef {
         val entryBlock = LLVMAppendBasicBlockInContext(context, function.value.reference, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)
         return entryBlock
@@ -96,11 +96,11 @@ class IRCompiler(
         LLVMBuildUnreachable(builder)
     }
 
-    fun createConstantIntegerValue(value: Long, type: Type): LLVMValueRef {
-        return LLVMConstInt(type.type.reference, value, 1)
+    fun createConstantIntegerValue(value: Long, type: DeclaredType): LLVMValueRef {
+        return LLVMConstInt(type.wrappedType.reference, value, 1)
     }
 
-    fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef =
+    fun createCallFunction(function: DeclaredFunction, arguments: List<LLVMValueRef>): LLVMValueRef =
         createCallFunction(function.value.reference, if (function.returnType.isVoid) null else function.identifier.canonical, arguments)
 
     fun createCallFunction(functionValueRef: LLVMValueRef, simpleIdentifier: String? = null, arguments: List<LLVMValueRef>): LLVMValueRef {
@@ -254,11 +254,11 @@ class IRCompiler(
         LLVMSetCurrentDebugLocation2(builder, location)
     }
 
-    fun setFunctionDebugSubprogram(function: Function, subprogram: LLVMMetadataRef?) {
+    fun setFunctionDebugSubprogram(function: DeclaredFunction, subprogram: LLVMMetadataRef?) {
         LLVMSetSubprogram(function.value.reference, subprogram)
     }
 
-    fun verifyFunction(function: Function): Boolean {
+    fun verifyFunction(function: DeclaredFunction): Boolean {
         if (LLVMVerifyFunction(function.value.reference, LLVMPrintMessageAction) != 0) {
             LLVMDumpModule(module)
             return false
