@@ -54,7 +54,7 @@ class Builtin(
                     PrimitiveType(Identifier.Type("Integer"), createIntegerType(64))
                 }
                 bytePointerType = registerType {
-                    PointerType(Identifier.Type("BytePointer"), createPointerType(byteType.wrappedType))
+                    byteType.asPointer(Identifier.Type("BytePointer"))
                 }
             }
             else -> error("Unsupported arch: ${target.archType}")
@@ -85,16 +85,6 @@ class Builtin(
         val type = getType(context)
         typesRegister.register(type)
         return type
-    }
-
-    private fun registerPointerTypeOf(
-        identifier: String,
-        getType: LLVMContext.() -> LLVMType
-    ): PointerType {
-        val type = getType(context)
-        val pointerType = PointerType(Identifier.Type(identifier), context.createPointerType(type))
-        typesRegister.register(pointerType)
-        return pointerType
     }
 
     private fun registerSystemFunctions(context: CompilerContext) {
@@ -130,11 +120,11 @@ class Builtin(
 //        }
 
         // System.print(string: String)
-        val stringTypePointer = stringType.asPointer()
+
         systemPrintFunction = FunctionBuilder.register(context) {
             declaringType(systemType)
             identifier("print")
-            parameters("string" to stringTypePointer)
+            parameters("string" to stringType)
             implementation { (string) ->
                 val standardOutputFileDescription = createInteger(1L).value
 

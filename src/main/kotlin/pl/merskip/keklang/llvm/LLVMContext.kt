@@ -2,6 +2,7 @@ package pl.merskip.keklang.llvm
 
 import org.bytedeco.llvm.LLVM.LLVMContextRef
 import org.bytedeco.llvm.global.LLVM.*
+import pl.merskip.keklang.llvm.enum.AttributeKind
 import pl.merskip.keklang.toInt
 import pl.merskip.keklang.toPointerPointer
 
@@ -37,7 +38,7 @@ class LLVMContext(
         return LLVMStructureType(typeRef)
     }
 
-    fun createEnumAttribute(kindId: Int, value: Long): Attribute {
-        return Attribute(LLVMCreateEnumAttribute(reference, kindId, value))
+    fun createAttribute(attribute: AttributeKind, value: Long = 0L): Attribute {
+        return Attribute(LLVMCreateEnumAttribute(reference, attribute.rawValue, value))
     }
 }

@@ -26,6 +26,7 @@ class PrimitiveType(
 
 class PointerType(
     identifier: Identifier,
+    val elementType: DeclaredType,
     override val wrappedType: LLVMPointerType
 ) : DeclaredType(identifier, wrappedType) {
 
@@ -67,10 +68,10 @@ class DeclaredFunction(
     private fun getParametersDescription() = parameters.joinToString(", ") { "${it.name}: ${it.type.identifier.canonical}" }
 }
 
-
 /* Utils */
 
-fun DeclaredType.asPointer() = PointerType(Identifier.Type(this.identifier.canonical), wrappedType.getContext().createPointerType(this.wrappedType))
+fun DeclaredType.asPointer(identifier: Identifier) =
+    PointerType(identifier, this, wrappedType.asPointer())
 
 val List<DeclaredFunction.Parameter>.types: List<DeclaredType> get() = map { it.type }
 

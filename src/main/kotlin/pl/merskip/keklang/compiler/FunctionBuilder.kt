@@ -2,6 +2,7 @@ package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.llvm.LLVMValue
+import pl.merskip.keklang.llvm.enum.AttributeKind
 
 typealias ImplementationBuilder = (List<LLVMValue>) -> Unit
 
@@ -65,11 +66,15 @@ class FunctionBuilder {
 
         val functionType = LLVMFunctionType(
             result = returnType.wrappedType,
-            parameters = parameters.types.map { it.wrappedType },
+            parameters = parameters.types.map {
+                if (it is StructureType) it.wrappedType.asPointer() else it.wrappedType
+            },
             isVariadicArguments = false
         )
         val functionValue = context.module.addFunction(identifier.mangled, functionType)
-        if (isInline) functionValue.setInline(true)
+        if (isInline) {
+            functionValue.setAsAlwaysInline()
+        }
 
         val function = DeclaredFunction(
             declaringType = declaringType,
@@ -80,8 +85,13 @@ class FunctionBuilder {
             value = functionValue
         )
 
-        functionValue.getParametersValues().zip(parameters).forEachIndexed { index, (parameterValue, functionParameter) ->
-            parameterValue.setName(functionParameter.name)
+        functionValue.getParametersValues().zip(parameters).forEachIndexed { index, (parameterValue, parameter) ->
+            parameterValue.setName(parameter.name)
+
+            if (parameter.type is StructureType) {
+                val byValueAttribute = context.context.createAttribute(AttributeKind.ByVal)
+                functionValue.addParameterAttribute(byValueAttribute, index)
+            }
         }
 
         if (implementation != null) {

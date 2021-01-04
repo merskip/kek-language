@@ -22,6 +22,10 @@ abstract class LLVMType(
         return LLVMContext(LLVMGetTypeContext(reference))
     }
 
+    fun asPointer(): LLVMPointerType {
+        return getContext().createPointerType(this)
+    }
+
     override fun toString() = getStringRepresentable().quotedIfNeeded()
 
     fun getStringRepresentable(): String {

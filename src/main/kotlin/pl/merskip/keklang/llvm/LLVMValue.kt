@@ -64,18 +64,18 @@ class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
     /**
      * Set the function as private and always inline
      */
-    fun setInline(isInline: Boolean) {
+    fun setAsAlwaysInline() {
         setLinkage(Linkage.Private)
-        addAttribute(
-            getContext().createEnumAttribute(
-                kindId = 3, // "alwaysinline"
-                value = 0L // ignore
-            )
-        )
+        addAttribute(getContext().createAttribute(AttributeKind.AlwaysInline), AttributeIndex.Function)
     }
 
-    fun addAttribute(attribute: Attribute) {
-        LLVMAddAttributeAtIndex(reference, AttributeIndex.Function.rawValue, attribute.reference)
+    fun addParameterAttribute(attribute: Attribute, parameterIndex: Int) {
+        val index = AttributeIndex.FirstArgument.rawValue + parameterIndex
+        LLVMAddAttributeAtIndex(reference, index, attribute.reference)
+    }
+
+    fun addAttribute(attribute: Attribute, index: AttributeIndex) {
+        LLVMAddAttributeAtIndex(reference, index.rawValue, attribute.reference)
     }
 
     fun setLinkage(linkage: Linkage) {
