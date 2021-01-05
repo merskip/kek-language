@@ -25,17 +25,18 @@ class BinaryOperatorCompiler(
     }
 
     private fun getFunctionForOperator(operator: String, lhsType: DeclaredType, rhsType: DeclaredType): DeclaredFunction {
-        val builtin = context.builtin
-        return when (operator) {
-            "+" -> builtin.integerAddFunction
-            "-" -> builtin.integerSubtractFunction
-            "*" -> builtin.integerMultipleFunction
-            "==" -> when {
-                lhsType == builtin.integerType && rhsType == builtin.integerType -> builtin.integerIsEqualFunction
-                lhsType == builtin.booleanType && rhsType == builtin.booleanType -> builtin.booleanIsEqualFunction
-                else -> null
-            }
-            else -> null
+        val functionIdentifier = when (operator) {
+            "+" -> "add"
+            "-" -> "subtract"
+            "*" -> "multiple"
+            "==" -> "isEqual"
+            else -> throw Exception("Unknown operator: $operator")
+        }
+        return context.typesRegister.find {
+            it.identifier.canonical == functionIdentifier
+                    && it.parameters.size == 2
+                    && it.parameters[0].type == lhsType
+                    && it.parameters[1].type == lhsType
         } ?: throw Exception("Not found function for operator: $operator" +
                 " and lhs ${lhsType.getDebugDescription()}" +
                 " and rhs ${rhsType.getDebugDescription()}")

@@ -1,7 +1,6 @@
 package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.llvm.LLVMFunctionType
-import pl.merskip.keklang.llvm.LLVMValue
 import pl.merskip.keklang.llvm.enum.AttributeKind
 
 typealias ImplementationBuilder = (List<Reference>) -> Unit
@@ -59,7 +58,7 @@ class FunctionBuilder {
 
         val identifier = getFunctionIdentifier()
         val functionType = LLVMFunctionType(
-            result = returnType.wrappedType,
+            result = if (returnType is StructureType) returnType.wrappedType.asPointer() else returnType.wrappedType,
             parameters = parameters.types.map {
                 if (it is StructureType) it.wrappedType.asPointer() else it.wrappedType
             },

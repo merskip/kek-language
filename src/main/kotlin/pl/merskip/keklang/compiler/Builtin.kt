@@ -1,6 +1,9 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.llvm.*
+import pl.merskip.keklang.llvm.LLVMContext
+import pl.merskip.keklang.llvm.LLVMIntegerType
+import pl.merskip.keklang.llvm.LLVMModule
+import pl.merskip.keklang.llvm.LLVMValue
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.logger.Logger
@@ -28,13 +31,6 @@ class Builtin(
 
     /* String type */
     val stringType: StructureType
-
-    /* Operators */
-    lateinit var integerAddFunction: DeclaredFunction private set
-    lateinit var integerSubtractFunction: DeclaredFunction private set
-    lateinit var integerMultipleFunction: DeclaredFunction private set
-    lateinit var integerIsEqualFunction: DeclaredFunction private set
-    lateinit var booleanIsEqualFunction: DeclaredFunction private set
 
     init {
         val target = module.getTargetTriple()
@@ -127,7 +123,7 @@ class Builtin(
     }
 
     private fun registerOperatorsFunctions(context: CompilerContext) {
-        integerAddFunction = context.registerOperatorFunction(
+        context.registerOperatorFunction(
             lhs = integerType,
             rhs = integerType,
             simpleIdentifier = "add",
@@ -135,7 +131,7 @@ class Builtin(
             context.instructionsBuilder.createAddition(lhs, rhs, "add")
         }
 
-        integerSubtractFunction = context.registerOperatorFunction(
+        context.registerOperatorFunction(
             lhs = integerType,
             rhs = integerType,
             simpleIdentifier = "subtract",
@@ -143,7 +139,7 @@ class Builtin(
             context.instructionsBuilder.createSubtraction(lhs, rhs, "sub")
         }
 
-        integerMultipleFunction = context.registerOperatorFunction(
+        context.registerOperatorFunction(
             lhs = integerType,
             rhs = integerType,
             simpleIdentifier = "multiple",
@@ -151,7 +147,7 @@ class Builtin(
             context.instructionsBuilder.createMultiplication(lhs, rhs, "mul")
         }
 
-        integerIsEqualFunction = context.registerOperatorFunction(
+        context.registerOperatorFunction(
             lhs = integerType,
             rhs = integerType,
             simpleIdentifier = "isEqual",
@@ -159,12 +155,23 @@ class Builtin(
             context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs, rhs, "isEqual")
         }
 
-        booleanIsEqualFunction = context.registerOperatorFunction(
+        context.registerOperatorFunction(
             lhs = booleanType,
             rhs = booleanType,
             simpleIdentifier = "isEqual",
             returnType = booleanType) { lhs, rhs ->
             context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs, rhs, "isEqual")
+        }
+
+        context.registerOperatorFunction(
+            lhs = stringType,
+            rhs = stringType,
+            simpleIdentifier = "add",
+            returnType = stringType,
+            isInline = false
+        ) { lhs, rhs ->
+            // TODO: Impl
+            context.instructionsBuilder.createUnreachable()
         }
     }
 
@@ -173,13 +180,14 @@ class Builtin(
         rhs: DeclaredType,
         simpleIdentifier: String,
         returnType: DeclaredType,
+        isInline: Boolean = true,
         getResult: (lhs: LLVMValue, rhs: LLVMValue) -> LLVMValue
     ) = FunctionBuilder.register(this) {
         declaringType(lhs)
         identifier(simpleIdentifier)
         parameters("lhs" to lhs, "rhs" to rhs)
         returnType(returnType)
-        isInline(true)
+        isInline(isInline)
         implementation { (lhs, rhs) ->
             val result = getResult(lhs.value, rhs.value)
             instructionsBuilder.createReturn(result)

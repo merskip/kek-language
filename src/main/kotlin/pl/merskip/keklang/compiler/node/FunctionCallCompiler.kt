@@ -53,6 +53,6 @@ abstract class FunctionCallCompilerBase(
             Identifier.Function(functionIdentifier, parameters)
         }
         return context.typesRegister.find(typeIdentifier)
-            ?: throw Exception("Not found function: $typeIdentifier")
+            ?: throw Exception("Not found function: $typeIdentifier, ${typeIdentifier.mangled}")
     }
 }
