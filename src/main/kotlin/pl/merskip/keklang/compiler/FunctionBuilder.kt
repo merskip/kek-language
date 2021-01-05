@@ -4,7 +4,7 @@ import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.llvm.LLVMValue
 import pl.merskip.keklang.llvm.enum.AttributeKind
 
-typealias ImplementationBuilder = (List<LLVMValue>) -> Unit
+typealias ImplementationBuilder = (List<Reference>) -> Unit
 
 class FunctionBuilder {
 
@@ -56,14 +56,8 @@ class FunctionBuilder {
 
     private fun build(context: CompilerContext): DeclaredFunction {
         assert(this::canonicalIdentifier.isInitialized) { "You must call identifier() method" }
-        val parametersIdentifiers = parameters.types.map { it.identifier }
-        val identifier =
-            when {
-                isExtern -> Identifier.ExternType(canonicalIdentifier)
-                declaringType != null -> Identifier.Function(declaringType!!, canonicalIdentifier, parametersIdentifiers)
-                else -> Identifier.Function(canonicalIdentifier, parametersIdentifiers)
-            }
 
+        val identifier = getFunctionIdentifier()
         val functionType = LLVMFunctionType(
             result = returnType.wrappedType,
             parameters = parameters.types.map {
@@ -85,20 +79,31 @@ class FunctionBuilder {
             value = functionValue
         )
 
-        functionValue.getParametersValues().zip(parameters).forEachIndexed { index, (parameterValue, parameter) ->
+        val parameterReferences = functionValue.getParametersValues().zip(parameters).mapIndexed { index, (parameterValue, parameter) ->
             parameterValue.setName(parameter.name)
 
-            if (parameter.type is StructureType) {
+            if (parameter.isByValue) {
                 val byValueAttribute = context.context.createAttribute(AttributeKind.ByVal)
                 functionValue.addParameterAttribute(byValueAttribute, index)
             }
+
+            Reference.Named(parameter.name, parameter.type, parameterValue)
         }
 
         if (implementation != null) {
             context.instructionsBuilder.appendBasicBlockAtEnd(functionValue, "entry")
-            implementation?.invoke(functionValue.getParametersValues())
+            implementation?.invoke(parameterReferences)
         }
 
         return function
+    }
+
+    private fun getFunctionIdentifier(): Identifier {
+        val parametersIdentifiers = parameters.types.map { it.identifier }
+        return when {
+                isExtern -> Identifier.ExternType(canonicalIdentifier)
+                declaringType != null -> Identifier.Function(declaringType!!, canonicalIdentifier, parametersIdentifiers)
+                else -> Identifier.Function(canonicalIdentifier, parametersIdentifiers)
+            }
     }
 }

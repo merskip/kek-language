@@ -21,7 +21,7 @@ class PrimitiveType(
     wrappedType: LLVMType
 ) : DeclaredType(identifier, wrappedType) {
 
-    override fun getDebugDescription() = "$identifier=Primitive($wrappedType)"
+    override fun getDebugDescription() = "$identifier=Primitive[$wrappedType]"
 }
 
 class PointerType(
@@ -30,15 +30,29 @@ class PointerType(
     override val wrappedType: LLVMPointerType
 ) : DeclaredType(identifier, wrappedType) {
 
-    override fun getDebugDescription() = "${identifier}=Pointer($wrappedType)"
+    override fun getDebugDescription() = "${identifier}=Pointer[$wrappedType](${elementType.identifier.canonical})"
 }
 
 class StructureType(
     identifier: Identifier,
+    val fields: List<Field>,
     override val wrappedType: LLVMStructureType
 ) : DeclaredType(identifier, wrappedType) {
 
-    override fun getDebugDescription() = "${identifier}=Structure($wrappedType)"
+    class Field(
+        val name: String,
+        val type: DeclaredType
+    )
+
+    fun getFieldType(name: String): DeclaredType =
+        fields.first { it.name == name }.type
+
+    fun getFieldIndex(name: String): Long =
+        fields.indexOfFirst { it.name == name }.toLong()
+
+    override fun getDebugDescription() = "${identifier}=Structure[$wrappedType](${getFieldsDescription()})"
+
+    private fun getFieldsDescription() = fields.joinToString(", ") { "${it.name}: ${it.type.identifier.canonical}" }
 }
 
 class DeclaredFunction(
@@ -49,6 +63,9 @@ class DeclaredFunction(
     override val wrappedType: LLVMFunctionType,
     val value: LLVMFunctionValue
 ) : DeclaredType(identifier, wrappedType) {
+
+    val isReturnVoid: Boolean
+        get() = returnType.isVoid
 
     class Parameter(
         val name: String,
@@ -81,5 +98,41 @@ val List<DeclaredFunction.Parameter>.types: List<DeclaredType> get() = map { it.
 fun IRInstructionsBuilder.createCall(
     function: DeclaredFunction,
     arguments: List<LLVMValue>,
-    name: String?
-) = createCall(function.value, function.wrappedType, arguments, name)
+    name: String? = null
+): LLVMInstructionValue {
+    val effectiveName = name ?: if (function.isReturnVoid) null else function.identifier.canonical + "Call"
+    return createCall(function.value, function.wrappedType, arguments, effectiveName)
+}
+
+fun IRInstructionsBuilder.createStructureStore(
+    structure: Reference,
+    fieldName: String,
+    value: LLVMValue
+): LLVMInstructionValue {
+    val fieldPointer = createGetStructureFieldPointer(structure, fieldName)
+    return createStore(fieldPointer, value)
+}
+
+fun IRInstructionsBuilder.createStructureLoad(
+    structure: Reference,
+    fieldName: String
+): Reference {
+    val structureType = structure.type as StructureType
+    val fieldPointer = createGetStructureFieldPointer(structure, fieldName)
+    val fieldType = structureType.getFieldType(fieldName)
+    val value = createLoad(fieldPointer, fieldType.wrappedType, fieldName)
+    return Reference.Anonymous(fieldType, value)
+}
+
+fun IRInstructionsBuilder.createGetStructureFieldPointer(
+    structure: Reference,
+    fieldName: String
+): LLVMValue {
+    val structureType = structure.type as StructureType
+    return createGetElementPointerInBounds(
+        type = structureType.getFieldType(fieldName).wrappedType,
+        dataPointer = structure.value,
+        index = context.createByteConstant(structureType.getFieldIndex(fieldName)),
+        name = fieldName + "Pointer"
+    )
+}

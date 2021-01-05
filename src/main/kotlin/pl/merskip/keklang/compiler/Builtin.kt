@@ -65,11 +65,18 @@ class Builtin(
             PrimitiveType(Identifier.Type("System"), voidType.wrappedType)
         }
         stringType = registerType {
-            StructureType(Identifier.Type("String"), createStructure(
-                name = "String",
-                types = listOf(bytePointerType.wrappedType, integerType.wrappedType),
-                isPacked = false
-            ))
+            StructureType(
+                identifier = Identifier.Type("String"),
+                fields = listOf(
+                    StructureType.Field("guts", bytePointerType),
+                    StructureType.Field("length", integerType)
+                ),
+                wrappedType = createStructure(
+                    name = "String",
+                    types = listOf(bytePointerType.wrappedType, integerType.wrappedType),
+                    isPacked = false
+                )
+            )
         }
     }
 
@@ -94,60 +101,24 @@ class Builtin(
             identifier("exit")
             parameters("exitCode" to integerType)
             implementation { (exitCode) ->
-                context.instructionsBuilder.createSystemCall(60, listOf(exitCode), "syscall_exit")
+                context.instructionsBuilder.createSystemCall(60, listOf(exitCode.value), "syscall_exit")
                 context.instructionsBuilder.createUnreachable()
             }
         }
 
-//        // System.print(string: String)
-//        systemPrintFunction = FunctionBuilder.register(context) {
-//            declaringType(systemType)
-//            identifier("print")
-//            parameters("string" to stringType)
-//            implementation { (string) ->
-//                val standardOutputFileDescription = integerType.wrappedType.constantValue(1, false)
-//                val stringAddress = context.instructionsBuilder.buildCast(string, integerType.wrappedType, "string_address")
-//                // TODO: Calculate length of string
-//                val stringLength = integerType.wrappedType.constantValue(16, false)
-//
-//                context.instructionsBuilder.createSystemCall(
-//                    1,
-//                    listOf(standardOutputFileDescription, stringAddress, stringLength),
-//                    "syscall_write"
-//                )
-//                context.instructionsBuilder.createReturnVoid()
-//            }
-//        }
-
         // System.print(string: String)
-
         systemPrintFunction = FunctionBuilder.register(context) {
             declaringType(systemType)
             identifier("print")
             parameters("string" to stringType)
             implementation { (string) ->
-                val standardOutputFileDescription = createInteger(1L).value
-
-                val stringGutsGEP = context.instructionsBuilder.createGetElementPointerInBounds(
-                    type = context.builtin.bytePointerType.wrappedType,
-                    pointer = string,
-                    index = context.builtin.createInteger(0L).value,
-                    name = "stringGutsGEP"
-                )
-                val stringGuts = context.instructionsBuilder.createLoad(stringGutsGEP, bytePointerType.wrappedType, "stringGuts")
-                val stringGutsAddress = context.instructionsBuilder.buildCast(stringGuts, integerType.wrappedType, "stringGuts")
-
-                val stringLengthGEP = context.instructionsBuilder.createGetElementPointerInBounds(
-                    type = context.builtin.integerType.wrappedType,
-                    pointer = string,
-                    index = context.builtin.createInteger(1L).value,
-                    name = "stringLengthGEP"
-                )
-                val stringLength = context.instructionsBuilder.createLoad(stringLengthGEP, context.builtin.integerType.wrappedType, "stringLength")
+                val standardOutput = createInteger(1L).value
+                val guts = context.instructionsBuilder.createStructureLoad(string, "guts")
+                val length = context.instructionsBuilder.createStructureLoad(string, "length")
 
                 context.instructionsBuilder.createSystemCall(
                     1,
-                    listOf(standardOutputFileDescription, stringGutsAddress, stringLength),
+                    listOf(standardOutput, guts.value, length.value),
                     "syscall_write"
                 )
                 context.instructionsBuilder.createReturnVoid()
@@ -210,7 +181,7 @@ class Builtin(
         returnType(returnType)
         isInline(true)
         implementation { (lhs, rhs) ->
-            val result = getResult(lhs, rhs)
+            val result = getResult(lhs.value, rhs.value)
             instructionsBuilder.createReturn(result)
         }
     }

@@ -56,8 +56,8 @@ class CompilerV2(
                         logger.warning("Not found main function. Define `func main()` or `func main() -> Integer` function")
                         context.builtin.createInteger(0L)
                     }
-                    mainFunction.returnType.isVoid -> {
-                        context.instructionsBuilder.createCall(mainFunction, emptyList(), null)
+                    mainFunction.isReturnVoid -> {
+                        context.instructionsBuilder.createCall(mainFunction, emptyList())
                         context.builtin.createInteger(0L)
                     }
                     mainFunction.returnType == context.builtin.integerType -> {
@@ -73,8 +73,7 @@ class CompilerV2(
 
                 context.instructionsBuilder.createCall(
                     function = context.builtin.systemExitFunction,
-                    arguments = listOf(exitCode.value),
-                    name = null
+                    arguments = listOf(exitCode.value)
                 )
                 context.instructionsBuilder.createUnreachable()
             }

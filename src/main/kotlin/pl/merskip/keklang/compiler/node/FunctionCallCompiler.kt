@@ -32,8 +32,7 @@ abstract class FunctionCallCompilerBase(
         val function = findFunction(typeIdentifier, functionIdentifier, parameters.map { it.type.identifier })
         val value = context.instructionsBuilder.createCall(
             function = function,
-            arguments = parameters.map(Reference::value),
-            name = if (function.returnType.isVoid) null else "call_$functionIdentifier"
+            arguments = parameters.map(Reference::value)
         )
         return Reference.Anonymous(function.returnType, value)
     }

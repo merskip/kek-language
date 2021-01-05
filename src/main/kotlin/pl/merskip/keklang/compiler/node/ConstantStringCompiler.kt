@@ -23,7 +23,7 @@ class ConstantStringCompiler(
         val stringPointer = context.instructionsBuilder.buildCast(stringGlobal, context.builtin.bytePointerType.wrappedType, name = "str_pointer")
         val stringGuts = context.instructionsBuilder.createGetElementPointerInBounds(
             type = context.builtin.bytePointerType.wrappedType,
-            pointer = stringStruct,
+            dataPointer = stringStruct,
             index = context.builtin.createInteger(0L).value,
             name = "stringGuts"
         )
@@ -31,7 +31,7 @@ class ConstantStringCompiler(
 
         val stringLengthValue = context.instructionsBuilder.createGetElementPointerInBounds(
             type = context.builtin.integerType.wrappedType,
-            pointer = stringStruct,
+            dataPointer = stringStruct,
             index = context.builtin.createInteger(1L).value,
             name = "stringLength"
         )

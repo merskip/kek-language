@@ -11,7 +11,7 @@ import pl.merskip.keklang.toPointerPointer
  * Intermediate representation instructions (LLVM IR) builder
  */
 class IRInstructionsBuilder(
-    private val context: LLVMContext,
+    val context: LLVMContext,
     private val targetTriple: LLVMTargetTriple
 ) {
 
@@ -120,7 +120,7 @@ class IRInstructionsBuilder(
 
     fun createGetElementPointerInBounds(
         type: LLVMType,
-        pointer: LLVMValue,
+        dataPointer: LLVMValue,
         index: LLVMValue,
         name: String?
     ): LLVMInstructionValue {
@@ -128,7 +128,7 @@ class IRInstructionsBuilder(
             LLVMBuildInBoundsGEP2(
                 irBuilder,
                 type.reference,
-                pointer.reference,
+                dataPointer.reference,
                 listOf(index.reference).toValueRefPointer(),
                 1,
                 name ?: ""
@@ -303,7 +303,7 @@ class IRInstructionsBuilder(
             .flatten().joinToString(",")
 
         val inlineAssemblerType = LLVMFunctionType(
-            parameters = input.map { context.createIntegerType(64) },
+            parameters = input.map { it.getType() },
             isVariadicArguments = false,
             result = outputType
         )
