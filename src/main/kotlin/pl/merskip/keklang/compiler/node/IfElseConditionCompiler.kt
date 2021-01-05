@@ -32,7 +32,7 @@ class IfElseConditionCompiler(
         context.instructionsBuilder.insertBasicBlock(finallyBlock)
         context.instructionsBuilder.moveAtEnd(finallyBlock)
 
-        val resultType = lastValuesInBlocks[0].second.getType() // TODO: Check if all has the same type
+        val resultType = lastValuesInBlocks[0].second.getAnyType() // TODO: Check if all has the same type
         val phi = context.instructionsBuilder.createPhi(
             type = resultType,
             values = lastValuesInBlocks.map { it.second to it.first },

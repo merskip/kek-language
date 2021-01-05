@@ -295,7 +295,7 @@ class IRInstructionsBuilder(
             .flatten().joinToString(",")
 
         val inlineAssemblerType = LLVMFunctionType(
-            parameters = input.map { it.getType() },
+            parameters = input.map { it.getAnyType() },
             isVariadicArguments = false,
             result = outputType
         )

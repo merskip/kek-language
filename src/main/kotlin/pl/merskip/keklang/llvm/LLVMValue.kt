@@ -9,9 +9,11 @@ abstract class LLVMValue(
     override val reference: LLVMValueRef
 ) : LLVMReferencing<LLVMValueRef> {
 
-    fun getType(): LLVMType {
-        return LLVMType.just(LLVMTypeOf(reference))
-    }
+    fun getAnyType() = getType<LLVMType>()
+
+    @Suppress("UNCHECKED_CAST")
+    fun <Type: LLVMType> getType(): Type =
+        LLVMType.from(LLVMTypeOf(reference)) as Type
 
     /**
      * Set the string name of a value
@@ -35,9 +37,6 @@ abstract class LLVMValue(
     }
 
     companion object {
-
-        fun empty(): LLVMValue =
-            object : LLVMValue(LLVMValueRef()) {}
 
         // TODO: Recognize value kind and return different subclass of LLVMValue
         fun just(reference: LLVMValueRef) =
