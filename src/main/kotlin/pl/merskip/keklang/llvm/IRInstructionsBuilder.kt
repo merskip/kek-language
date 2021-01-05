@@ -5,6 +5,7 @@ import pl.merskip.keklang.compiler.llvm.toValueRefPointer
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
+import pl.merskip.keklang.shortHash
 import pl.merskip.keklang.toPointerPointer
 
 /**
@@ -103,19 +104,10 @@ class IRInstructionsBuilder(
 
     /**
      * Creates a '@str_HASH = constant [LENGTH x i8] c"<value>\0"' global constant
-     */
-    fun createGlobalStringPointer(value: String): LLVMConstantValue {
-        val hash = "%08x".format(value.hashCode())
-        return LLVMConstantValue(LLVMBuildGlobalStringPtr(irBuilder, value, "str_${hash}_ptr"))
-    }
-
-    /**
-     * Creates a '@str_HASH = constant [LENGTH x i8] c"<value>\0"' global constant
      * @return Value of type [LENGTH x i8]*
      */
     fun createGlobalString(value: String): LLVMConstantValue {
-        val hash = "%08x".format(value.hashCode())
-        return LLVMConstantValue(LLVMBuildGlobalString(irBuilder, value, "str_$hash"))
+        return LLVMConstantValue(LLVMBuildGlobalString(irBuilder, value, "str_${value.shortHash()}"))
     }
 
     fun createGetElementPointerInBounds(

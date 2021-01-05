@@ -195,4 +195,9 @@ class Builtin(
         val constantValue = (integerType.wrappedType as LLVMIntegerType).constantValue(value, isSigned = true)
         return Reference.Anonymous(integerType, constantValue)
     }
+
+    fun createCastToBytePointer(context: CompilerContext, value: LLVMValue, name: String? = null): Reference {
+        val cast = context.instructionsBuilder.buildCast(value, bytePointerType.wrappedType, name)
+        return Reference.Anonymous(integerType, cast)
+    }
 }

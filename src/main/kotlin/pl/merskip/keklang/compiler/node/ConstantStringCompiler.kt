@@ -4,7 +4,9 @@ import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.node.ConstantStringASTNode
 import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.Reference
+import pl.merskip.keklang.compiler.createStructureInitialize
 import pl.merskip.keklang.llvm.LLVMType
+import pl.merskip.keklang.shortHash
 
 class ConstantStringCompiler(
     val context: CompilerContext
@@ -12,31 +14,20 @@ class ConstantStringCompiler(
 
     override fun compile(node: ConstantStringASTNode): Reference {
         val string = node.string.replace("\\n", "\n")
-        val stringGlobal = context.instructionsBuilder.createGlobalString(string)
+        val stringArray = context.instructionsBuilder.createGlobalString(string)
 
-        val arrayType = LLVMType.just(LLVM.LLVMGetElementType(stringGlobal.getType().reference))
+        val arrayType = LLVMType.just(LLVM.LLVMGetElementType(stringArray.getType().reference))
         println("${arrayType.getStringRepresentable()} type kind: ${arrayType.getTypeKind()}")
         val stringLength = LLVM.LLVMGetArrayLength(arrayType.reference)
         println("String length: $stringLength")
 
-        val stringStruct = context.instructionsBuilder.createAlloca(context.builtin.stringType.wrappedType, "string")
-        val stringPointer = context.instructionsBuilder.buildCast(stringGlobal, context.builtin.bytePointerType.wrappedType, name = "str_pointer")
-        val stringGuts = context.instructionsBuilder.createGetElementPointerInBounds(
-            type = context.builtin.bytePointerType.wrappedType,
-            dataPointer = stringStruct,
-            index = context.builtin.createInteger(0L).value,
-            name = "stringGuts"
+        return context.instructionsBuilder.createStructureInitialize(
+            structureType = context.builtin.stringType,
+            fields = mapOf(
+                "guts" to context.builtin.createCastToBytePointer(context, stringArray).value,
+                "length" to context.builtin.createInteger(stringLength.toLong() - 1).value
+            ),
+            name = "string_${string.shortHash()}"
         )
-        context.instructionsBuilder.createStore(stringGuts, stringPointer)
-
-        val stringLengthValue = context.instructionsBuilder.createGetElementPointerInBounds(
-            type = context.builtin.integerType.wrappedType,
-            dataPointer = stringStruct,
-            index = context.builtin.createInteger(1L).value,
-            name = "stringLength"
-        )
-        context.instructionsBuilder.createStore(stringLengthValue, context.builtin.createInteger(stringLength.toLong() - 1).value)
-
-        return Reference.Anonymous(context.builtin.stringType, stringStruct)
     }
 }

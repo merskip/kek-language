@@ -1,5 +1,6 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.llvm.*
 
 abstract class DeclaredType(
@@ -102,6 +103,31 @@ fun IRInstructionsBuilder.createCall(
 ): LLVMInstructionValue {
     val effectiveName = name ?: if (function.isReturnVoid) null else function.identifier.canonical + "Call"
     return createCall(function.value, function.wrappedType, arguments, effectiveName)
+}
+
+fun IRInstructionsBuilder.createStructureInitialize(
+    structureType: StructureType,
+    fields: Map<String, LLVMValue>,
+    name: String?
+): Reference {
+    checkFields(fields.keys, structureType)
+    val structurePointer = createAlloca(structureType.wrappedType, name)
+    val structure = Reference.Anonymous(structureType, structurePointer)
+
+    for ((fieldName, value) in fields) {
+        createStructureStore(structure, fieldName, value)
+    }
+    return structure
+}
+
+private fun checkFields(passedFields: Set<String>, structureType: StructureType) {
+    val fields = structureType.fields.map { it.name }
+    val missingFields = fields.subtract(passedFields)
+    val unknownFields = passedFields.subtract(fields)
+
+    if (missingFields.isNotEmpty() || unknownFields.isNotEmpty())
+        throw Exception("The passed fields aren't equal to structure' fields. " +
+                "Missing fields: $missingFields, unknown fields: $unknownFields")
 }
 
 fun IRInstructionsBuilder.createStructureStore(
