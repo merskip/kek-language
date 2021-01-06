@@ -12,6 +12,11 @@ class FunctionCompiler(
     private val logger = Logger(this::class)
 
     fun registerFunction(node: FunctionDefinitionNodeAST): DeclaredFunction {
+        val declaringType = if (node.declaringType != null)
+            context.typesRegister.find(Identifier.Type(node.declaringType))
+                ?: throw Exception("Not found type: ${node.declaringType}")
+        else null
+
         val parameters = node.parameters.map {
             val type = context.typesRegister.find(Identifier.Type(it.type.identifier))
                 ?: throw Exception("Not found type: ${it.type.identifier}")
@@ -20,7 +25,9 @@ class FunctionCompiler(
         val returnType = if (node.returnType != null)
             (context.typesRegister.find(Identifier.Type(node.returnType.identifier))
                 ?: throw Exception("Not found type: ${node.returnType.identifier}")) else context.builtin.voidType
-        val identifier = Identifier.Function(node.identifier, parameters.map { it.type.identifier })
+        val identifier = if (declaringType != null)
+            Identifier.Function(declaringType, node.identifier, parameters.map { it.type.identifier })
+        else Identifier.Function(node.identifier, parameters.map { it.type.identifier })
 
         val functionType = LLVMFunctionType(
             parameters = parameters.types.map { it.wrappedType },
@@ -35,7 +42,7 @@ class FunctionCompiler(
 
         val function = DeclaredFunction(
             identifier = identifier,
-            declaringType = null,
+            declaringType = declaringType,
             parameters = parameters,
             returnType = returnType,
             wrappedType = functionType,
