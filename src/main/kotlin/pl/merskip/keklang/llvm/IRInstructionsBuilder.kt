@@ -1,7 +1,6 @@
 package pl.merskip.keklang.llvm
 
 import org.bytedeco.llvm.global.LLVM.*
-import pl.merskip.keklang.compiler.llvm.toValueRefPointer
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
@@ -52,6 +51,12 @@ class IRInstructionsBuilder(
     fun createStore(storage: LLVMValue, value: LLVMValue): LLVMInstructionValue {
         return LLVMInstructionValue(LLVMBuildStore(irBuilder, value.reference, storage.reference))
     }
+
+    /**
+     * Create a 'load <type>, <storage>' instruction
+     */
+    fun createLoad(storage: LLVMValue, name: String?): LLVMInstructionValue =
+        createLoad(storage, storage.getType<LLVMPointerType>().getAnyElementType(), name)
 
     /**
      * Create a 'load <type>, <storage>' instruction
@@ -110,22 +115,35 @@ class IRInstructionsBuilder(
         return LLVMConstantValue(LLVMBuildGlobalString(irBuilder, value, "str_${value.shortHash()}"))
     }
 
-    fun createGetElementPointerInBounds(
-        type: LLVMType,
-        dataPointer: LLVMValue,
-        index: LLVMValue,
+    fun createStructureGetElementPointer(
+        structurePointer: LLVMValue,
+        index: Int,
         name: String?
     ): LLVMInstructionValue {
-        return LLVMInstructionValue(
-            LLVMBuildInBoundsGEP2(
-                irBuilder,
-                type.reference,
-                dataPointer.reference,
-                listOf(index.reference).toValueRefPointer(),
-                1,
-                name ?: ""
-            )
-        )
+        val structureType = structurePointer.getType<LLVMPointerType>().getAnyElementType()
+        return LLVMInstructionValue(LLVMBuildStructGEP2(
+            irBuilder,
+            structureType.reference,
+            structurePointer.reference,
+            index,
+            name ?: ""
+        ))
+    }
+
+    fun createGetElementPointer(
+        type: LLVMType,
+        storage: LLVMValue,
+        indices: List<LLVMValue>,
+        name: String?
+    ): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildGEP2(
+            irBuilder,
+            type.reference,
+            storage.reference,
+            indices.toPointerPointer(),
+            indices.size,
+            name ?: ""
+        ))
     }
 
     /**
@@ -160,6 +178,12 @@ class IRInstructionsBuilder(
         return LLVMInstructionValue(LLVMBuildICmp(irBuilder, predicate.rawValue, lhs.reference, rhs.reference, name ?: ""))
     }
 
+    fun createBranch(
+        block: LLVMBasicBlockValue
+    ): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildBr(irBuilder, block.blockReference))
+    }
+
     class ConditionBlock(
         val label: String,
         val builder: () -> LLVMValue?,
@@ -168,6 +192,21 @@ class IRInstructionsBuilder(
     ) {
 
         lateinit var block: LLVMBasicBlockValue
+    }
+
+    /**
+     * Creates a 'br <type of condition> <condition>, label <ifTrue>, label <ifFalse>' instruction
+     */
+    fun createConditionalBranch(
+        condition: LLVMValue,
+        ifTrue: LLVMBasicBlockValue,
+        ifFalse: LLVMBasicBlockValue
+    ): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildCondBr(irBuilder,
+            condition.reference,
+            ifTrue.blockReference,
+            ifFalse.blockReference
+        ))
     }
 
     /**
@@ -231,6 +270,7 @@ class IRInstructionsBuilder(
     fun createSystemCall(
         number: Long,
         parameters: List<LLVMValue>,
+        outputType: LLVMType,
         name: String?
     ): LLVMInstructionValue {
         if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
@@ -245,23 +285,26 @@ class IRInstructionsBuilder(
 
             val instructions = mutableListOf<String>()
 
+            val startIndex = if (outputType.isVoid()) 0 else 1
+
             // Set parameters in input registers
             inputValues.forEachIndexed { index, _ ->
                 val register = inputRegisters[index]
-                instructions += "mov \$${index + 1}, %$register" // Starts from $1, because of the result is $0
+                instructions += "mov \$${index + startIndex}, %$register" // Starts from $1, because of the result is $0
                 usedInputRegister += "{$register}"
             }
             // Cal system call
             instructions += "syscall"
 
-            // Get result
-            instructions += "mov %rax, $0"
+            // Get result if needed
+            if (!outputType.isVoid())
+                instructions += "mov %rax, $0"
 
             return createAssembler(
                 input = inputValues,
-                outputType = registerType,
+                outputType = outputType,
                 instructions = instructions,
-                outputConstraints = listOf("={rax}"),
+                outputConstraints = if (outputType.isVoid()) emptyList() else listOf("={rax}"),
                 inputConstraints = usedInputRegister,
                 clobberConstraints = emptyList(),
                 name = name

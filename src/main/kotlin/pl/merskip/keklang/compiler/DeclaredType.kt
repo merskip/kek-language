@@ -1,6 +1,5 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.llvm.*
 
 abstract class DeclaredType(
@@ -48,8 +47,9 @@ class StructureType(
     fun getFieldType(name: String): DeclaredType =
         fields.first { it.name == name }.type
 
-    fun getFieldIndex(name: String): Long =
-        fields.indexOfFirst { it.name == name }.toLong()
+    fun getFieldIndex(name: String): Int =
+        fields.indexOfFirst { it.name == name }
+            .takeIf { it >= 0 } ?: throw Exception("Not found field with name: '$name'")
 
     override fun getDebugDescription() = "${identifier}=Structure[$wrappedType](${getFieldsDescription()})"
 
@@ -155,10 +155,9 @@ fun IRInstructionsBuilder.createGetStructureFieldPointer(
     fieldName: String
 ): LLVMValue {
     val structureType = structure.type as StructureType
-    return createGetElementPointerInBounds(
-        type = structureType.getFieldType(fieldName).wrappedType,
-        dataPointer = structure.value,
-        index = context.createByteConstant(structureType.getFieldIndex(fieldName)),
+    return createStructureGetElementPointer(
+        structurePointer = structure.value,
+        index = structureType.getFieldIndex(fieldName),
         name = fieldName + "Pointer"
     )
 }

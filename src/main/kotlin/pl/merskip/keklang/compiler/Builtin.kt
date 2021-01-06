@@ -29,6 +29,11 @@ class Builtin(
     lateinit var systemExitFunction: DeclaredFunction private set
     lateinit var systemPrintFunction: DeclaredFunction private set
 
+    /* Memory type */
+    val memoryType: DeclaredType
+    lateinit var memoryAllocateFunction: DeclaredFunction private set
+    lateinit var memoryCopyFunction: DeclaredFunction private set
+
     /* String type */
     val stringType: StructureType
 
@@ -60,6 +65,9 @@ class Builtin(
         systemType = registerType {
             PrimitiveType(Identifier.Type("System"), voidType.wrappedType)
         }
+        memoryType = registerType {
+            PrimitiveType(Identifier.Type("Memory"), voidType.wrappedType)
+        }
         stringType = registerType {
             StructureType(
                 identifier = Identifier.Type("String"),
@@ -79,6 +87,7 @@ class Builtin(
     fun registerFunctions(context: CompilerContext) {
         logger.debug("Registering builtin functions")
         registerSystemFunctions(context)
+        registerMemoryFunctions(context)
         registerOperatorsFunctions(context)
     }
 
@@ -97,7 +106,12 @@ class Builtin(
             identifier("exit")
             parameters("exitCode" to integerType)
             implementation { (exitCode) ->
-                context.instructionsBuilder.createSystemCall(60, listOf(exitCode.value), "syscall_exit")
+                context.instructionsBuilder.createSystemCall(
+                    60,
+                    listOf(exitCode.value),
+                    voidType.wrappedType,
+                    null
+                )
                 context.instructionsBuilder.createUnreachable()
             }
         }
@@ -115,8 +129,94 @@ class Builtin(
                 context.instructionsBuilder.createSystemCall(
                     1,
                     listOf(standardOutput, guts.value, length.value),
-                    "syscall_write"
+                    voidType.wrappedType,
+                    null
                 )
+                context.instructionsBuilder.createReturnVoid()
+            }
+        }
+    }
+
+    private fun registerMemoryFunctions(context: CompilerContext) {
+        // Memory.allocate(size: Integer)
+        memoryAllocateFunction = FunctionBuilder.register(context) {
+            declaringType(memoryType)
+            identifier("allocate")
+            parameters("size" to integerType)
+            returnType(bytePointerType)
+            implementation { (size) ->
+                /* void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) */
+                val address = context.instructionsBuilder.createSystemCall(
+                    0x09,
+                    listOf(
+                        /* addr= */ createInteger(0L).value,
+                        /* length= */ createInteger(255L).value,
+                        /* prot= */ createInteger(0x3 /* PROT_READ | PROT_WRITE */).value,
+                        /* flags = */ createInteger(0x22 /* MAP_ANONYMOUS | MAP_PRIVATE */).value,
+                        /* fd= */ createInteger(-1).value,
+                        /* offset= */ createInteger(0).value
+                    ),
+                    bytePointerType.wrappedType,
+                    "syscall_mmap"
+                )
+                context.instructionsBuilder.createReturn(address)
+            }
+        }
+
+        // Memory.copy(source: BytePointer, destination: BytePointer, size: Integer)
+        memoryCopyFunction = FunctionBuilder.register(context) {
+            declaringType(memoryType)
+            identifier("copy")
+            parameters(
+                "source" to bytePointerType,
+                "destination" to bytePointerType,
+                "size" to integerType
+            )
+            implementation { (source, destination, size) ->
+
+                val iterator = context.instructionsBuilder.createAlloca(integerType.wrappedType, "iterator")
+                context.instructionsBuilder.createStore(iterator, createInteger(0L).value)
+
+                val loopEntry = context.instructionsBuilder.createBasicBlock("loopEntry")
+                context.instructionsBuilder.createBranch(loopEntry)
+
+                val loopEnd = context.instructionsBuilder.createBasicBlock("loopEnd")
+
+                context.instructionsBuilder.insertBasicBlock(loopEntry)
+                context.instructionsBuilder.moveAtEnd(loopEntry)
+
+                val iteratorValue = context.instructionsBuilder.createLoad(iterator, "iteratorValue")
+
+                val sourceAddress = context.instructionsBuilder.createGetElementPointer(
+                    byteType.wrappedType,
+                    source.value,
+                    listOf(iteratorValue),
+                    "sourceAddress"
+                )
+
+                val destinationAddress = context.instructionsBuilder.createGetElementPointer(
+                    byteType.wrappedType,
+                    destination.value,
+                    listOf(iteratorValue),
+                    "destinationAddress"
+                )
+
+                val value = context.instructionsBuilder.createLoad(sourceAddress, "value")
+                context.instructionsBuilder.createStore(destinationAddress, value)
+
+                val nextIteratorValue = context.instructionsBuilder.createAddition(iteratorValue, createInteger(1L).value, "nextIteratorValue")
+                context.instructionsBuilder.createStore(iterator, nextIteratorValue)
+
+                val isEnd = context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, nextIteratorValue, size.value, "isEqual")
+
+                context.instructionsBuilder.createConditionalBranch(
+                    condition = isEnd,
+                    ifTrue = loopEnd,
+                    ifFalse = loopEntry
+                )
+                context.instructionsBuilder.insertBasicBlock(loopEnd)
+                context.instructionsBuilder.moveAtEnd(loopEnd)
+
                 context.instructionsBuilder.createReturnVoid()
             }
         }
@@ -128,7 +228,7 @@ class Builtin(
             rhs = integerType,
             simpleIdentifier = "add",
             returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createAddition(lhs, rhs, "add")
+            context.instructionsBuilder.createAddition(lhs.value, rhs.value, "add")
         }
 
         context.registerOperatorFunction(
@@ -136,7 +236,7 @@ class Builtin(
             rhs = integerType,
             simpleIdentifier = "subtract",
             returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createSubtraction(lhs, rhs, "sub")
+            context.instructionsBuilder.createSubtraction(lhs.value, rhs.value, "sub")
         }
 
         context.registerOperatorFunction(
@@ -144,7 +244,7 @@ class Builtin(
             rhs = integerType,
             simpleIdentifier = "multiple",
             returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createMultiplication(lhs, rhs, "mul")
+            context.instructionsBuilder.createMultiplication(lhs.value, rhs.value, "mul")
         }
 
         context.registerOperatorFunction(
@@ -152,7 +252,7 @@ class Builtin(
             rhs = integerType,
             simpleIdentifier = "isEqual",
             returnType = booleanType) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs, rhs, "isEqual")
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.value, rhs.value, "isEqual")
         }
 
         context.registerOperatorFunction(
@@ -160,7 +260,7 @@ class Builtin(
             rhs = booleanType,
             simpleIdentifier = "isEqual",
             returnType = booleanType) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs, rhs, "isEqual")
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.value, rhs.value, "isEqual")
         }
 
         context.registerOperatorFunction(
@@ -170,8 +270,39 @@ class Builtin(
             returnType = stringType,
             isInline = false
         ) { lhs, rhs ->
-            // TODO: Impl
-            context.instructionsBuilder.createUnreachable()
+
+            val lhsLength = context.instructionsBuilder.createStructureLoad(lhs, "length").value
+            val rhsLength = context.instructionsBuilder.createStructureLoad(rhs, "length").value
+            val resultStringLength = context.instructionsBuilder.createAddition(lhsLength, rhsLength, "resultLength")
+            val resultStringGuts = context.instructionsBuilder.createCall(
+                function = memoryAllocateFunction,
+                arguments = listOf(resultStringLength),
+                name = "stringGuts"
+            )
+
+            val lhsGuts = context.instructionsBuilder.createStructureLoad(lhs, "guts").value
+            context.instructionsBuilder.createCall(
+                function = memoryCopyFunction,
+                arguments = listOf(lhsGuts, resultStringGuts, lhsLength)
+            )
+
+            val rhsGuts = context.instructionsBuilder.createStructureLoad(rhs, "guts").value
+            val resultStringGutsRhs = context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, resultStringGuts, listOf(lhsLength), "resultStringGutsRhs")
+            context.instructionsBuilder.createCall(
+                function = memoryCopyFunction,
+                arguments = listOf(rhsGuts, resultStringGutsRhs, rhsLength)
+            )
+
+            val resultString = context.instructionsBuilder.createStructureInitialize(
+                structureType = context.builtin.stringType,
+                fields = mapOf(
+                    "guts" to resultStringGuts,
+                    "length" to resultStringLength
+                ),
+                name = "resultString"
+            )
+
+            resultString.value
         }
     }
 
@@ -181,7 +312,7 @@ class Builtin(
         simpleIdentifier: String,
         returnType: DeclaredType,
         isInline: Boolean = true,
-        getResult: (lhs: LLVMValue, rhs: LLVMValue) -> LLVMValue
+        getResult: (lhs: Reference, rhs: Reference) -> LLVMValue
     ) = FunctionBuilder.register(this) {
         declaringType(lhs)
         identifier(simpleIdentifier)
@@ -189,7 +320,7 @@ class Builtin(
         returnType(returnType)
         isInline(isInline)
         implementation { (lhs, rhs) ->
-            val result = getResult(lhs.value, rhs.value)
+            val result = getResult(lhs, rhs)
             instructionsBuilder.createReturn(result)
         }
     }

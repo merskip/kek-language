@@ -115,6 +115,7 @@ fun main(args: Array<String>) = mainBody {
                 withReadSources(sources) { filename, content ->
                     processSource(filename, content, compiler)
                 }
+
                 if (compiler.context.module.isValid)
                     processModule(compiler.context)
             }

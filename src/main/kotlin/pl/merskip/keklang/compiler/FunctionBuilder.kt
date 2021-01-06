@@ -1,6 +1,10 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.javacpp.BytePointer
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.llvm.LLVMFunctionType
+import pl.merskip.keklang.llvm.LLVMModule
+import pl.merskip.keklang.llvm.disposable
 import pl.merskip.keklang.llvm.enum.AttributeKind
 
 typealias ImplementationBuilder = (List<Reference>) -> Unit
@@ -24,6 +28,12 @@ class FunctionBuilder {
 
             builder(functionBuilder)
             val function = functionBuilder.build(context)
+
+            val message = BytePointer()
+            println("Veryfing function ${function.getDebugDescription()}")
+            if (LLVM.LLVMVerifyFunction(function.value.reference, LLVM.LLVMReturnStatusAction) != 0)
+                throw LLVMModule.FailedVerifyModule(message.disposable.string)
+
             context.typesRegister.register(function)
             return function
         }

@@ -1,4 +1,4 @@
 
 func main() {
-    System.print("Hello" + "świecie!\n")
+    System.print("Hello " + "świecie!\n")
 }
