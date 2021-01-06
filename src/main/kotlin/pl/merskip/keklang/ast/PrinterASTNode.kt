@@ -37,6 +37,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         print(
             node = node,
             parameters = mapOf(
+                "declaringType" to node.declaringType,
                 "identifier" to node.identifier
             ),
             children = mapOf(
@@ -80,7 +81,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
     override fun visitFunctionCallNode(node: FunctionCallASTNode) {
         print(
             node = node,
-            parameters =  mapOf("identifier" to node.identifier),
+            parameters = mapOf("identifier" to node.identifier),
             children = mapOf(
                 "parameters" to node.parameters
             )
@@ -90,7 +91,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
     override fun visitStaticFunctionCallNode(node: StaticFunctionCallASTNode) {
         print(
             node = node,
-            parameters =  mapOf(
+            parameters = mapOf(
                 "identifier" to node.identifier
             ),
             children = mapOf(
@@ -104,11 +105,11 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         when (node) {
             is IntegerConstantASTNode -> print(
                 node = node,
-                parameters =  mapOf("value" to node.value.toString())
+                parameters = mapOf("value" to node.value.toString())
             )
             is DecimalConstantValueNodeAST -> print(
                 node = node,
-                parameters =  mapOf("value" to node.value.toString())
+                parameters = mapOf("value" to node.value.toString())
             )
         }
     }
@@ -161,7 +162,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
 
     private fun print(
         node: ASTNode,
-        parameters: Map<String, String> = emptyMap(),
+        parameters: Map<String, String?> = emptyMap(),
         children: Map<String, List<ASTNode>> = emptyMap()
     ) {
         output += "$indent[${node::class.simpleName?.colored(Color.Blue)}"
@@ -169,7 +170,8 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         if (parameters.isNotEmpty()) {
             output += " "
             output += parameters.map {
-                it.key + "=" + it.value.escapeParamValue().colored(Color.White)
+                val value = it.value?.escapeParamValue()
+                it.key + "=" + (value?.colored(Color.White) ?: "null".colored(Color.LightGray))
             }.joinToString(" ")
         }
         output += try {
@@ -184,30 +186,28 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
             children
                 .filter { it.value.isNotEmpty() }
                 .forEach { childEntry ->
-                output += "$indent - " + childEntry.key.colored(Color.Green) + ":\n"
-                indentLevel++
-                childEntry.value.forEach { childNode ->
-                    printNode(childNode)
+                    output += "$indent - " + childEntry.key.colored(Color.Green) + ":\n"
+                    indentLevel++
+                    childEntry.value.forEach { childNode ->
+                        printNode(childNode)
+                    }
+                    indentLevel--
                 }
-                indentLevel--
-            }
 
             output += "$indent]\n"
-        }
-        else output += "]\n"
+        } else output += "]\n"
     }
 
     private fun String.escapeParamValue(): String =
-            let {
-                var newString = ""
-                it.forEach { char ->
-                    if (!char.isISOControl()) newString += char
-                    else newString += "\\${char.toHex()}"
-                }
-                newString
+        let {
+            var newString = ""
+            it.forEach { char ->
+                if (!char.isISOControl()) newString += char
+                else newString += "\\${char.toHex()}"
             }
-        .let { "\"$it\"" }
+            newString
+        }
+            .let { "\"$it\"" }
 
-    private fun Char.toHex()
-            = toByte().toString(16).padStart(2, '0').toUpperCase()
+    private fun Char.toHex() = toByte().toString(16).padStart(2, '0').toUpperCase()
 }

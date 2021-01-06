@@ -91,7 +91,13 @@ class ParserAST(
     }
 
     private fun parseFunctionDefinition(funcToken: Token.Func): FunctionDefinitionNodeAST {
-        val identifierToken = getNextToken<Token.Identifier>()
+        var identifierToken = getNextToken<Token.Identifier>()
+        val declaringType = if (isNextToken<Token.Dot>()) {
+            val declaringType = identifierToken
+            getNextToken<Token.Dot>()
+            identifierToken = getNextToken()
+            declaringType
+        } else null
 
         val parameters = parseFunctionParameters()
         val returnType = if (isNextToken<Token.Arrow>()) {
@@ -100,7 +106,7 @@ class ParserAST(
         } else null
         val codeBlock = parseCodeBlock()
 
-        return FunctionDefinitionNodeAST(identifierToken.text, parameters, returnType, codeBlock)
+        return FunctionDefinitionNodeAST(declaringType?.text, identifierToken.text, parameters, returnType, codeBlock)
             .sourceLocation(funcToken.sourceLocation, codeBlock.sourceLocation)
     }
 
