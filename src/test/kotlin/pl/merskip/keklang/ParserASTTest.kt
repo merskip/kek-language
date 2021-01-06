@@ -72,7 +72,7 @@ internal class ParserASTTest {
         assertEquals("b", secondFuncDef.identifier)
 
         val callNode = secondFuncDef.body.statements.single()
-                as FunctionCallNodeAST
+                as FunctionCallASTNode
         assertEquals("a", callNode.identifier)
         assertTrue(callNode.parameters.isEmpty())
     }
@@ -92,11 +92,11 @@ internal class ParserASTTest {
         assertEquals("c", secondFuncDef.identifier)
 
         val callNode = secondFuncDef.body.statements.single()
-                as FunctionCallNodeAST
+                as FunctionCallASTNode
         assertEquals("a", callNode.identifier)
 
         val argument = callNode.parameters.single()
-                as IntegerConstantValueNodeAST
+                as IntegerConstantASTNode
         assertEquals(1, argument.value)
     }
 
@@ -178,17 +178,17 @@ internal class ParserASTTest {
         assertConstValue(2, multipleOperator.rhs)
     }
 
-    private fun parse(source: String): FileNodeAST {
+    private fun parse(source: String): FileASTNode {
         val tokens = Lexer().parse(null, source)
         return ParserAST(source, tokens).parse()
     }
 
-    private inline fun <reified T: StatementNodeAST> CodeBlockNodeAST.single(): T {
+    private inline fun <reified T: StatementASTNode> CodeBlockASTNode.single(): T {
         return statements.single() as T
     }
 
     private fun assertConstValue(expected: Long, node: ASTNode) {
-        val integerConstantValueNode = node as IntegerConstantValueNodeAST
+        val integerConstantValueNode = node as IntegerConstantASTNode
         assertEquals(expected, integerConstantValueNode.value)
     }
 }

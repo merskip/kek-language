@@ -2,14 +2,13 @@ package pl.merskip.keklang
 
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
-import org.bytedeco.llvm.LLVM.LLVMModuleRef
-import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
-import pl.merskip.keklang.ast.PrinterNodeAST
+import pl.merskip.keklang.ast.PrinterASTNode
 import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
+import pl.merskip.keklang.llvm.*
 import java.io.File
 
 
@@ -29,18 +28,20 @@ fun withInterpreter(callback: (inputText: String) -> Unit) {
 }
 
 fun withReadSources(sources: List<String>, callback: (filename: String, content: String) -> Unit) {
-    println("Compiling sources...")
     sources.forEach { filename ->
         val file = File(filename)
-        println("Compiling ${file.absolutePath}...")
         val content = file.readText()
         callback(filename, content)
     }
 }
 
-fun ApplicationArguments.processSource(filename: String?, content: String, compiler: Compiler) {
+fun ApplicationArguments.processSource(filename: String?, content: String, compiler: CompilerV2) {
     try {
-        tryProcessSources(filename, content, compiler)
+        val file = when {
+            filename != null -> File(filename)
+            else -> File("")
+        }
+        tryProcessSources(file, content, compiler)
     } catch (exception: SourceLocationException) {
         assert(exception.sourceLocation.startIndex.line == exception.sourceLocation.endIndex.line)
 
@@ -58,59 +59,79 @@ fun ApplicationArguments.processSource(filename: String?, content: String, compi
     }
 }
 
-fun ApplicationArguments.tryProcessSources(filename: String?, content: String, compiler: Compiler) {
-    val tokens = Lexer().parse(filename, content)
+fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler: CompilerV2) {
+    val tokens = Lexer(file, content).parse()
 
     if (tokensDump) {
         println(tokens.joinToString("\n") { token -> token.toString() })
     }
 
-    val parserNodeAST = ParserAST(filename?.let { File(it).absoluteFile }, content, tokens)
+    val parserNodeAST = ParserAST(file, content, tokens)
     val fileNode = parserNodeAST.parse()
 
     if (astDump) {
-        println(PrinterNodeAST().print(fileNode))
+        println(PrinterASTNode().print(fileNode))
     }
 
-    compiler.compile(fileNode)
+    compiler.compile(listOf(fileNode))
 }
 
-fun ApplicationArguments.processModule(module: LLVMModuleRef) {
+fun ApplicationArguments.processModule(context: CompilerContext) {
     output?.let { outputFilename ->
         val outputFile = outputFilename.withExtensionIfNoExists(".o")
         println("Output file: $outputFile")
-        val backendCompiler = BackendCompiler(module)
+        val backendCompiler = BackendCompiler(context)
         backendCompiler.compile(outputFile, asmDump, bitcode)
-    }
-
-    if (llvmIRDump) {
-        println(LLVM.LLVMPrintModuleToString(module).string.colorizeLLVMIR())
     }
 }
 
 fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
-        val irCompiler = IRCompiler("kek-lang", targetTriple)
-        val diBuilder = DIBuilder(irCompiler.context, irCompiler.module)
-        val typeRegister = TypesRegister(typesDump)
-        val compiler = Compiler(irCompiler, diBuilder, typeRegister)
+        val context = LLVMContext()
+        val module = LLVMModule("kek-lang", context, targetTriple?.let { LLVMTargetTriple.fromString(it) })
+        val typesRegister = TypesRegister()
+        val builtin = Builtin(context, module, typesRegister)
+        val compiler = CompilerV2(
+            CompilerContext(
+                context,
+                module,
+                typesRegister,
+                builtin,
+                ScopesStack(),
+                IRInstructionsBuilder(context, module.getTargetTriple()),
+                DebugInformationBuilder(context, module)
+            )
+        )
 
-        if (isInterpreterMode()) {
-            withInterpreter { inputText ->
-                processSource(null, inputText, compiler)
-                processModule(compiler.module)
+        try {
+            if (isInterpreterMode()) {
+                withInterpreter { inputText ->
+                    processSource(null, inputText, compiler)
+                    if (compiler.context.module.isValid)
+                        processModule(compiler.context)
+                }
+            } else {
+                withReadSources(sources) { filename, content ->
+                    processSource(filename, content, compiler)
+                }
+
+                if (compiler.context.module.isValid)
+                    processModule(compiler.context)
             }
-        } else {
-            withReadSources(sources) { filename, content ->
-                processSource(filename, content, compiler)
+
+            if (runJIT) {
+                val mainFunction = compiler.context.typesRegister.find<DeclaredFunction> { it.identifier.canonical == "main" }
+                    ?: throw Exception("Not found main function")
+                JIT(compiler.context.module.reference).run(mainFunction)
             }
-            processModule(compiler.module)
         }
-
-        if (runJIT) {
-            val mainFunction = typeRegister.findFunction(TypeIdentifier("main"))
-            JIT(irCompiler.module).run(mainFunction)
+        finally {
+            if (llvmIRDump) {
+                val plainIR = compiler.context.module.getIntermediateRepresentation()
+                val richIR = RicherLLVMIRText(plainIR, compiler.context.typesRegister).rich()
+                println(richIR)
+            }
         }
     }
 }

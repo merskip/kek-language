@@ -1,6 +1,6 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.NodeASTVisitor
+import pl.merskip.keklang.ast.ASTNodeVisitor
 import java.math.BigDecimal
 
 data class DecimalConstantValueNodeAST(
@@ -9,5 +9,5 @@ data class DecimalConstantValueNodeAST(
     val value: BigDecimal
 ) : ConstantValueNodeAST() {
 
-    override fun <T> accept(visitor: NodeASTVisitor<T>) = visitor.visitConstantValueNode(this)
+    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitConstantValueNode(this)
 }

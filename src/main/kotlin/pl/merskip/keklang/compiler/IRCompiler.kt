@@ -2,13 +2,18 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.javacpp.PointerPointer
-import org.bytedeco.llvm.LLVM.*
+import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
+import org.bytedeco.llvm.LLVM.LLVMMetadataRef
+import org.bytedeco.llvm.LLVM.LLVMTypeRef
+import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.compiler.llvm.createInt32
-import pl.merskip.keklang.compiler.llvm.getTargetTriple
 import pl.merskip.keklang.compiler.llvm.toTypeRefPointer
 import pl.merskip.keklang.compiler.llvm.toValueRefPointer
 import pl.merskip.keklang.getFunctionParametersValues
+import pl.merskip.keklang.llvm.LLVMModule
+import pl.merskip.keklang.llvm.LLVMTargetTriple
+import pl.merskip.keklang.llvm.enum.ArchType
 
 class IRCompiler(
     moduleId: String,
@@ -18,11 +23,11 @@ class IRCompiler(
     val context = LLVMContextCreate()
     val module = LLVMModuleCreateWithNameInContext(moduleId, context)!!
     val builder = LLVMCreateBuilder()
-    val target: TargetTriple
+    val target: LLVMTargetTriple
 
     init {
         LLVMSetTarget(module, targetTriple ?: LLVMGetDefaultTargetTriple().string)
-        target = LLVMGetTarget(module).getTargetTriple()
+        target = LLVMTargetTriple.fromString(LLVMGetTarget(module).string)
 
         LLVMAddModuleFlag(
             module, LLVMModuleFlagBehaviorWarning,
@@ -45,21 +50,21 @@ class IRCompiler(
         return LLVMAddGlobal(module, type, uniqueIdentifier)
     }
 
-    fun declareFunction(uniqueIdentifier: String, parameters: List<Function.Parameter>, returnType: Type): Pair<LLVMTypeRef, LLVMValueRef> {
-        val parametersTypeRefPointer = parameters.map { it.type.typeRef }.toTypeRefPointer()
-        val functionTypeRef = LLVMFunctionType(returnType.typeRef, parametersTypeRefPointer, parameters.size, 0)
+    fun declareFunction(uniqueIdentifier: String, parameters: List<DeclaredFunction.Parameter>, returnType: DeclaredType): Pair<LLVMTypeRef, LLVMValueRef> {
+        val parametersTypeRefPointer = parameters.map { it.type.wrappedType.reference }.toTypeRefPointer()
+        val functionTypeRef = LLVMFunctionType(returnType.wrappedType.reference, parametersTypeRefPointer, parameters.size, 0)
         val functionValueRef = LLVMAddFunction(module, uniqueIdentifier, functionTypeRef)
 
         (parameters zip functionValueRef.getFunctionParametersValues())
             .forEach { (parameter, value) ->
-                LLVMSetValueName(value, parameter.identifier)
+                LLVMSetValueName(value, parameter.name)
             }
 
         return Pair(functionTypeRef, functionValueRef)
     }
 
-    fun beginFunctionEntry(function: Function): LLVMBasicBlockRef {
-        val entryBlock = LLVMAppendBasicBlockInContext(context, function.valueRef, "entry")
+    fun beginFunctionEntry(function: DeclaredFunction): LLVMBasicBlockRef {
+        val entryBlock = LLVMAppendBasicBlockInContext(context, function.value.reference, "entry")
         LLVMPositionBuilderAtEnd(builder, entryBlock)
         return entryBlock
     }
@@ -91,12 +96,12 @@ class IRCompiler(
         LLVMBuildUnreachable(builder)
     }
 
-    fun createConstantIntegerValue(value: Long, type: Type): LLVMValueRef {
-        return LLVMConstInt(type.typeRef, value, 1)
+    fun createConstantIntegerValue(value: Long, type: DeclaredType): LLVMValueRef {
+        return LLVMConstInt(type.wrappedType.reference, value, 1)
     }
 
-    fun createCallFunction(function: Function, arguments: List<LLVMValueRef>): LLVMValueRef =
-        createCallFunction(function.valueRef, if (function.returnType.isVoid) null else function.identifier.simpleIdentifier, arguments)
+    fun createCallFunction(function: DeclaredFunction, arguments: List<LLVMValueRef>): LLVMValueRef =
+        createCallFunction(function.value.reference, if (function.isReturnVoid) null else function.identifier.canonical, arguments)
 
     fun createCallFunction(functionValueRef: LLVMValueRef, simpleIdentifier: String? = null, arguments: List<LLVMValueRef>): LLVMValueRef {
 
@@ -183,9 +188,9 @@ class IRCompiler(
         LLVMBuildICmp(builder, LLVMIntEQ, lhsValueRef, rhsValueRef, "cmpEq")
 
     fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
-        val target = LLVMGetTarget(module).getTargetTriple()
+        val target = LLVMModule(module).getTargetTriple()
         when (target.archType) {
-            TargetTriple.ArchType.x86_64 -> {
+            ArchType.X86_64 -> {
                 val registersNames = listOf("rax", "rdi", "rsi", "rdx", "r10", "r8", "r9")
                 val registersParameters = listOf(
                     LLVMConstInt(LLVMInt64TypeInContext(context), number, 1),
@@ -249,12 +254,12 @@ class IRCompiler(
         LLVMSetCurrentDebugLocation2(builder, location)
     }
 
-    fun setFunctionDebugSubprogram(function: Function, subprogram: LLVMMetadataRef?) {
-        LLVMSetSubprogram(function.valueRef, subprogram)
+    fun setFunctionDebugSubprogram(function: DeclaredFunction, subprogram: LLVMMetadataRef?) {
+        LLVMSetSubprogram(function.value.reference, subprogram)
     }
 
-    fun verifyFunction(function: Function): Boolean {
-        if (LLVMVerifyFunction(function.valueRef, LLVMPrintMessageAction) != 0) {
+    fun verifyFunction(function: DeclaredFunction): Boolean {
+        if (LLVMVerifyFunction(function.value.reference, LLVMPrintMessageAction) != 0) {
             LLVMDumpModule(module)
             return false
         }

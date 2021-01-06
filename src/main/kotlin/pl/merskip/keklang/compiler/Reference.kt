@@ -1,9 +1,14 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMValueRef
+import pl.merskip.keklang.llvm.LLVMValue
 
-class Reference(
+sealed class Reference(
     val identifier: String?,
-    val type: Type,
-    val valueRef: LLVMValueRef
-)
+    val type: DeclaredType,
+    val value: LLVMValue
+) {
+
+    class Anonymous(type: DeclaredType, value: LLVMValue) : Reference(null, type, value)
+
+    class Named(identifier: String, type: DeclaredType, value: LLVMValue) : Reference(identifier, type, value)
+}

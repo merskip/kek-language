@@ -1,0 +1,4 @@
+
+func main() {
+    System.print("Hello " + "świecie!\n")
+}

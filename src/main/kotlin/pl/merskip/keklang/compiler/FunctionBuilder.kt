@@ -1,79 +1,108 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.LLVM.LLVMValueRef
-import pl.merskip.keklang.compiler.llvm.setPrivateAndAlwaysInline
-import pl.merskip.keklang.getFunctionParametersValues
+import pl.merskip.keklang.llvm.LLVMFunctionType
+import pl.merskip.keklang.llvm.enum.AttributeKind
 
-typealias Implementation = (IRCompiler, List<LLVMValueRef>) -> Unit
+typealias ImplementationBuilder = (List<Reference>) -> Unit
 
 class FunctionBuilder {
 
-    private lateinit var simpleIdentifier: String
-    private lateinit var parameters: List<Function.Parameter>
-    private lateinit var returnType: Type
-    private var calleeType: Type? = null
-    private var noOverload: Boolean = false
-    private var inline: Boolean = false
-    private var implementation: Implementation? = null
+    private lateinit var canonicalIdentifier: String
+    private lateinit var parameters: List<DeclaredFunction.Parameter>
+    private lateinit var returnType: DeclaredType
+    private var declaringType: DeclaredType? = null
+    private var isExtern: Boolean = false
+    private var isInline: Boolean = false
+    private var implementation: ImplementationBuilder? = null
 
     companion object {
 
-        fun register(typesRegister: TypesRegister, irCompiler: IRCompiler, builder: FunctionBuilder.() -> Unit): Function {
+        fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): DeclaredFunction {
             val functionBuilder = FunctionBuilder()
+            functionBuilder.parameters = emptyList()
+            functionBuilder.returnType = context.builtin.voidType
+
             builder(functionBuilder)
-            val function = functionBuilder.build(irCompiler)
-            typesRegister.register(function)
+            val function = functionBuilder.build(context)
+            context.typesRegister.register(function)
             return function
         }
     }
 
-    fun simpleIdentifier(simpleIdentifier: String) =
-        apply { this.simpleIdentifier = simpleIdentifier }
+    fun identifier(identifier: String) =
+        apply { this.canonicalIdentifier = identifier }
 
-    fun parameters(parameters: List<Function.Parameter>) =
+    fun parameters(parameters: List<DeclaredFunction.Parameter>) =
         apply { this.parameters = parameters }
 
-    fun parameters(vararg parameters: Pair<String, Type>) =
-        apply { this.parameters = parameters.map { Function.Parameter(it.first, it.second) } }
+    fun parameters(vararg parameters: Pair<String, DeclaredType>) =
+        apply { this.parameters = parameters.map { DeclaredFunction.Parameter(it.first, it.second) } }
 
-    fun returnType(returnType: Type) =
+    fun returnType(returnType: DeclaredType) =
         apply { this.returnType = returnType }
 
-    fun calleeType(calleeType: Type?) =
-        apply { this.calleeType = calleeType }
+    fun declaringType(declaringType: DeclaredType?) =
+        apply { this.declaringType = declaringType }
 
-    fun noOverload(noOverload: Boolean) =
-        apply { this.noOverload = noOverload }
+    fun isExtern(isExtern: Boolean = true) =
+        apply { this.isExtern = isExtern }
 
-    fun inline(inline: Boolean) =
-        apply { this.inline = inline }
+    fun isInline(inline: Boolean = true) =
+        apply { this.isInline = inline }
 
-    fun implementation(implementation: Implementation) =
+    fun implementation(implementation: ImplementationBuilder) =
         apply { this.implementation = implementation }
 
-    fun build(irCompiler: IRCompiler): Function {
-        if (noOverload && calleeType != null)
-            throw IllegalStateException("Forbidden is set the extern function and callee type")
+    private fun build(context: CompilerContext): DeclaredFunction {
+        assert(this::canonicalIdentifier.isInitialized) { "You must call identifier() method" }
 
-        val identifier =
-            if (!noOverload) TypeIdentifier.create(simpleIdentifier, parameters.map { it.type }, calleeType)
-            else TypeIdentifier(simpleIdentifier, simpleIdentifier)
-        val parameters = if (calleeType == null) parameters else TypeFunction.createParameters(calleeType!!, parameters)
-        val (typeRef, valueRef) = irCompiler.declareFunction(identifier.uniqueIdentifier, parameters, returnType)
-        val function =
-            if (calleeType == null) Function(identifier, parameters, returnType, typeRef, valueRef)
-            else TypeFunction(calleeType!!, identifier, parameters, returnType, typeRef, valueRef)
-
-        if (inline)
-            function.valueRef.setPrivateAndAlwaysInline(irCompiler.context)
-
-        implementation?.let { implementation ->
-            val parametersValues = function.valueRef.getFunctionParametersValues()
-            irCompiler.beginFunctionEntry(function)
-            implementation(irCompiler, parametersValues)
+        val identifier = getFunctionIdentifier()
+        val functionType = LLVMFunctionType(
+            result = if (returnType is StructureType) returnType.wrappedType.asPointer() else returnType.wrappedType,
+            parameters = parameters.types.map {
+                if (it is StructureType) it.wrappedType.asPointer() else it.wrappedType
+            },
+            isVariadicArguments = false
+        )
+        val functionValue = context.module.addFunction(identifier.mangled, functionType)
+        if (isInline) {
+            functionValue.setAsAlwaysInline()
         }
 
-//        irCompiler.verifyFunction(function)
+        val function = DeclaredFunction(
+            declaringType = declaringType,
+            identifier = identifier,
+            parameters = parameters,
+            returnType = returnType,
+            wrappedType = functionType,
+            value = functionValue
+        )
+
+        val parameterReferences = functionValue.getParametersValues().zip(parameters).mapIndexed { index, (parameterValue, parameter) ->
+            parameterValue.setName(parameter.name)
+
+            if (parameter.isByValue) {
+                val byValueAttribute = context.context.createAttribute(AttributeKind.ByVal)
+                functionValue.addParameterAttribute(byValueAttribute, index)
+            }
+
+            Reference.Named(parameter.name, parameter.type, parameterValue)
+        }
+
+        if (implementation != null) {
+            context.instructionsBuilder.appendBasicBlockAtEnd(functionValue, "entry")
+            implementation?.invoke(parameterReferences)
+        }
+
         return function
+    }
+
+    private fun getFunctionIdentifier(): Identifier {
+        val parametersIdentifiers = parameters.types.map { it.identifier }
+        return when {
+                isExtern -> Identifier.ExternType(canonicalIdentifier)
+                declaringType != null -> Identifier.Function(declaringType!!, canonicalIdentifier, parametersIdentifiers)
+                else -> Identifier.Function(canonicalIdentifier, parametersIdentifiers)
+            }
     }
 }

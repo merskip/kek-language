@@ -4,7 +4,7 @@ import java.io.File
 import kotlin.math.abs
 
 data class SourceLocation(
-    val file: File?,
+    val file: File,
     val text: String,
     val startIndex: Index,
     val endIndex: Index,
@@ -23,9 +23,13 @@ data class SourceLocation(
         override fun toString() = "$line:$column"
     }
 
+    override fun toString(): String {
+        return "${file}@${startIndex}..${endIndex}"
+    }
+
     companion object {
 
-        fun from(file: File?, source: String, offset: Int, length: Int): SourceLocation {
+        fun from(file: File, source: String, offset: Int, length: Int): SourceLocation {
             val text = source.substring(offset, offset + length)
             val startIndex = calculateIndex(source, offset)
             val endIndex = calculateIndex(source, offset + length - 1)

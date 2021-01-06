@@ -8,7 +8,7 @@
             "target": "hello_world",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
-            "autorun": ["b main"],
+            "autorun": ["b _start"]
         }
     ]
 }

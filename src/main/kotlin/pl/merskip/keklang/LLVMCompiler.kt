@@ -8,8 +8,8 @@ import org.bytedeco.llvm.LLVM.LLVMTypeRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.ast.node.*
-import pl.merskip.keklang.compiler.TargetTriple
-import pl.merskip.keklang.compiler.llvm.getTargetTriple
+import pl.merskip.keklang.llvm.LLVMModule
+import pl.merskip.keklang.llvm.enum.ArchType
 
 
 @Deprecated("", replaceWith = ReplaceWith("pl.merskip.keklang.compiler.Compiler"))
@@ -36,9 +36,9 @@ class LLVMCompiler(
         defineBuiltinPrintFunction()
     }
 
-    fun compile(fileNodeAST: FileNodeAST) {
+    fun compile(fileASTNode: FileASTNode) {
 
-        fileNodeAST.nodes.forEach { functionDefinition ->
+        fileASTNode.nodes.forEach { functionDefinition ->
             compileFunctionDefinition(functionDefinition)
         }
         val err = BytePointer(1024L)
@@ -52,7 +52,7 @@ class LLVMCompiler(
             LLVMInt64TypeInContext(context)
         )
         val returnType = LLVMVoidTypeInContext(context)
-        val functionType = LLVMFunctionType(returnType, parameters.toPointer(), parameters.size, 0)
+        val functionType = LLVMFunctionType(returnType, parameters.toPointerPointer(), parameters.size, 0)
         val functionValue = LLVMAddFunction(module, ".kek.sys.exit", functionType)
 
         val entryBlock = LLVMAppendBasicBlockInContext(context, functionValue, "entry")
@@ -131,9 +131,9 @@ class LLVMCompiler(
     }
 
     private fun createSysCall(number: Long, vararg parameters: LLVMValueRef): LLVMValueRef {
-        val target = LLVMGetTarget(module).getTargetTriple()
+        val target = LLVMModule(module).getTargetTriple()
         when (target.archType) {
-            TargetTriple.ArchType.x86_64 -> {
+            ArchType.X86_64 -> {
                 val paramsRegisters = listOf("%rdi", "%rsi", "%rdx")
 
                 val asm = mutableListOf("movq $0, %rax")
@@ -215,20 +215,20 @@ class LLVMCompiler(
         variableScopeStack.leaveScope()
     }
 
-    private fun compileStatement(statement: StatementNodeAST): LLVMValueRef {
+    private fun compileStatement(statement: StatementASTNode): LLVMValueRef {
         return when (statement) {
-            is FunctionCallNodeAST -> compileFunctionCall(statement)
+            is FunctionCallASTNode -> compileFunctionCall(statement)
             is BinaryOperatorNodeAST -> compileBinaryOperator(statement)
             is ConstantValueNodeAST -> compileConstantValue(statement)
             is IfConditionNodeAST -> compileIfCondition(statement)
-            is CodeBlockNodeAST -> compileCodeBlock(statement)
-            is ConstantStringNodeAST -> compileConstantStringValue(statement)
-            is ReferenceNodeAST -> variableScopeStack.getReference(statement.identifier)
+            is CodeBlockASTNode -> compileCodeBlock(statement)
+            is ConstantStringASTNode -> compileConstantStringValue(statement)
+            is ReferenceASTNode -> variableScopeStack.getReference(statement.identifier)
             else -> throw Exception("Unexpected statement: $statement")
         }
     }
 
-    private fun compileFunctionCall(functionCall: FunctionCallNodeAST): LLVMValueRef {
+    private fun compileFunctionCall(functionCall: FunctionCallASTNode): LLVMValueRef {
         val identifier = if (functionCall.identifier == "printf") ".kek.builtin.print" else functionCall.identifier
         val functionValue = LLVMGetNamedFunction(module, identifier)
             ?: throw Exception("Not found function: ${functionCall.identifier}")
@@ -262,7 +262,7 @@ class LLVMCompiler(
                 LLVMDoubleTypeInContext(context),
                 constantValue.value.toDouble()
             )
-            is IntegerConstantValueNodeAST -> LLVMConstInt(
+            is IntegerConstantASTNode -> LLVMConstInt(
                 LLVMInt32TypeInContext(context),
                 constantValue.value.toLong(),
                 1
@@ -271,7 +271,7 @@ class LLVMCompiler(
         }
     }
 
-    private fun compileConstantStringValue(constantStringNodeAST: ConstantStringNodeAST): LLVMValueRef {
+    private fun compileConstantStringValue(constantStringNodeAST: ConstantStringASTNode): LLVMValueRef {
         val hash = "%02x".format(constantStringNodeAST.string.hashCode())
         return LLVMBuildGlobalStringPtr(builder, constantStringNodeAST.string, ".str.$hash")
     }
@@ -299,7 +299,7 @@ class LLVMCompiler(
         return ifBlockValue
     }
 
-    private fun compileCodeBlock(codeBlockNodeAST: CodeBlockNodeAST): LLVMValueRef {
+    private fun compileCodeBlock(codeBlockNodeAST: CodeBlockASTNode): LLVMValueRef {
         var lastValue: LLVMValueRef? = null
         codeBlockNodeAST.statements.forEach { statement ->
             lastValue = compileStatement(statement)

@@ -1,32 +1,33 @@
 package pl.merskip.keklang.compiler
 
-class TypesRegister(
-    val dump: Boolean // TODO: Impl via Logger
-) {
+import pl.merskip.keklang.logger.Logger
 
-    private val types = mutableListOf<Type>()
+class TypesRegister {
 
-    fun register(type: Type) {
+    private val logger = Logger(this::class)
+
+    val types = mutableListOf<DeclaredType>()
+
+    fun register(type: DeclaredType) {
         if (types.any { it.identifier == type.identifier })
-            error("Duplicated type for identifier: ${type.identifier}")
+            throw RegisteringTypeAlreadyExistsException(type)
         types.add(type)
-        if (dump)
-            println("Registered type: $type")
+        logger.verbose("Registered type: ${type.getDebugDescription()}, ${type.identifier.mangled}")
     }
 
-    fun findType(simpleIdentifier: String) = findType(TypeIdentifier.create(simpleIdentifier))
-
-    fun findType(identifier: TypeIdentifier): Type {
-        return types.firstOrNull { it.identifier == identifier }
-            ?: error("Not found type with identifier: $identifier")
-    }
-
-    fun findFunction(calleeType: Type?, simpleIdentifier: String, parameters: List<Type>): Function =
-        findFunction(TypeIdentifier.create(simpleIdentifier, parameters, calleeType))
-
-    fun findFunction(identifier: TypeIdentifier): Function {
-        return types.mapNotNull { it as? Function }
+    fun find(identifier: Identifier.Function): DeclaredFunction? {
+        return types.mapNotNull { it as? DeclaredFunction }
             .firstOrNull { it.identifier == identifier }
-            ?: error("Not found function with identifier: $identifier")
     }
+
+    fun find(identifier: Identifier): DeclaredType? {
+        return types.firstOrNull { it.identifier == identifier }
+    }
+
+    inline fun <reified T: DeclaredType> find(predicate: (type: T) -> Boolean): T? {
+        @Suppress("UNCHECKED_CAST")
+        return types.mapNotNull { it as? T }.find { predicate(it) }
+    }
+
+    class RegisteringTypeAlreadyExistsException(type: DeclaredType) : Exception("Registering type already exists: ${type.getDebugDescription()}")
 }
