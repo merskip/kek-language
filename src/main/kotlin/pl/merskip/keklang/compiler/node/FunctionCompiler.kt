@@ -38,11 +38,7 @@ class FunctionCompiler(
         logger.verbose("Compiling function: ${function.getDebugDescription()}")
         context.scopesStack.createScope {
             function.value.getParametersValues().zip(function.parameters).forEach { (parameterValue, parameter) ->
-                context.scopesStack.current.addReference(
-                    identifier = parameter.name,
-                    type = parameter.type,
-                    value = parameterValue
-                )
+                context.scopesStack.current.addReference(Reference.Named(parameter.name, parameter.type, parameterValue))
             }
 
             context.instructionsBuilder.appendBasicBlockAtEnd(function.value, "entry")

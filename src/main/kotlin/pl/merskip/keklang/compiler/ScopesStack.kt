@@ -16,10 +16,9 @@ class ScopesStack {
 
         private val references: MutableList<Reference> = mutableListOf()
 
-        fun addReference(identifier: String, type: DeclaredType, value: LLVMValue): Reference {
-            if (current.references.any { it.identifier == identifier })
-                throw IllegalStateException("Already exists reference to \"$identifier\" in this scope.")
-            val reference = Reference.Named(identifier, type, value)
+        fun addReference(reference: Reference): Reference {
+            if (current.references.any { it.identifier == reference.identifier })
+                throw IllegalStateException("Already exists reference to \"$reference.identifier\" in this scope.")
             current.references.add(reference)
             return reference
         }

@@ -8,7 +8,8 @@ class ReferenceCompiler(
     val context: CompilerContext
 ) : ASTNodeCompiling<ReferenceASTNode> {
 
-    override fun compile(node: ReferenceASTNode): Reference? {
+    override fun compile(node: ReferenceASTNode): Reference {
         return context.scopesStack.current.getReferenceOrNull(node.identifier)
+            ?: throw Exception("Not found reference with identifier: ${node.identifier}")
     }
 }
