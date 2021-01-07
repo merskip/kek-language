@@ -8,6 +8,7 @@ import pl.merskip.keklang.lexer.Token
 import pl.merskip.keklang.lexer.Token.*
 import pl.merskip.keklang.lexer.Token.Number
 import pl.merskip.keklang.lexer.Token.Operator
+import java.io.File
 import kotlin.reflect.KClass
 
 internal class LexerTest {
@@ -142,7 +143,7 @@ internal class LexerTest {
     }
 
     private infix fun String.assertTokens(callback: TokenTester.() -> Unit) {
-        val tokens = Lexer().parse(null, this.trimIndent())
+        val tokens = Lexer(File(""), this.trimIndent()).parse()
         val tester = TokenTester(tokens)
         callback(tester)
         tester.expectNoMoreTokens()

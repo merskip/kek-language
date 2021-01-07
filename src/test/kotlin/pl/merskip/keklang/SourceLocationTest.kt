@@ -3,6 +3,7 @@ package pl.merskip.keklang
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import pl.merskip.keklang.lexer.SourceLocation
+import java.io.File
 
 
 class SourceLocationTest {
@@ -11,7 +12,7 @@ class SourceLocationTest {
     fun `single character source`() {
         val source = "a"
 
-        val sourceLocation = SourceLocation.from(null, source, 0, 1)
+        val sourceLocation = SourceLocation.from(File(""), source, 0, 1)
 
         assertEquals(1, sourceLocation.startIndex.line)
         assertEquals(1, sourceLocation.startIndex.column)
@@ -30,7 +31,7 @@ class SourceLocationTest {
 
         val index = source.indexOf("adipiscing")
         val size = "adipiscing".length
-        val sourceLocation = SourceLocation.from(null, source, index, size)
+        val sourceLocation = SourceLocation.from(File(""), source, index, size)
 
         assertEquals(2, sourceLocation.startIndex.line)
         assertEquals(13, sourceLocation.startIndex.column)

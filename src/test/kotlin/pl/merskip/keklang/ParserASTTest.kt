@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.lexer.Lexer
+import java.io.File
 
 internal class ParserASTTest {
 
@@ -179,8 +180,9 @@ internal class ParserASTTest {
     }
 
     private fun parse(source: String): FileASTNode {
-        val tokens = Lexer().parse(null, source)
-        return ParserAST(source, tokens).parse()
+        val file = File("")
+        val tokens = Lexer(file, source).parse()
+        return ParserAST(file, source, tokens).parse()
     }
 
     private inline fun <reified T: StatementASTNode> CodeBlockASTNode.single(): T {
