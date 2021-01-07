@@ -27,6 +27,7 @@ class CompilerV2(
         context.addNodeCompiler(BinaryOperatorCompiler(context))
         context.addNodeCompiler(IfElseConditionCompiler(context))
         context.addNodeCompiler(VariableDeclarationCompiler(context))
+        context.addNodeCompiler(FieldReferenceCompiler(context))
     }
 
     fun compile(filesNodes: List<FileASTNode>) {
