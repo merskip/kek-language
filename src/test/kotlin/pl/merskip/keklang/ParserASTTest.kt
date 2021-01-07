@@ -197,6 +197,22 @@ internal class ParserASTTest {
         assertConstValue(2, multipleOperator.rhs)
     }
 
+    @Test
+    fun `parse variable declaration`() {
+        val source = """
+            func foo() {
+                var bar: Integer
+            }
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single()
+
+        val variableDeclaration = funcDef.body.single<VariableDeclarationASTNode>()
+        assertEquals("bar", variableDeclaration.identifier)
+        assertEquals("Integer", variableDeclaration.type.identifier)
+    }
+
     private fun parse(source: String): FileASTNode {
         val file = File("")
         val tokens = Lexer(file, source).parse()

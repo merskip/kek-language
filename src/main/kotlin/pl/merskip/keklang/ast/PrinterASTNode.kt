@@ -160,6 +160,16 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
+    override fun visitVariableDeclaration(node: VariableDeclarationASTNode) {
+        print(
+            node = node,
+            parameters = mapOf("identifier" to node.identifier),
+            children = mapOf(
+                "type" to listOf(node.type)
+            )
+        )
+    }
+
     private fun print(
         node: ASTNode,
         parameters: Map<String, String?> = emptyMap(),

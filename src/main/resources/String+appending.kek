@@ -1,5 +1,6 @@
 
 func String.appending(lhs: String, rhs: String) -> String {
+    var resultLength: Integer
 #    var resultLength: Integer = lhs.length + rhs.length
 #    var resultGuts: BytePointer = Memory.allocate(resultLength)
 #    Memory.copy(lhs.guts, resultGuts, lhs.length)
