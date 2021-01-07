@@ -26,6 +26,7 @@ class CompilerV2(
         context.addNodeCompiler(StaticFunctionCallCompiler(context))
         context.addNodeCompiler(BinaryOperatorCompiler(context))
         context.addNodeCompiler(IfElseConditionCompiler(context))
+        context.addNodeCompiler(VariableDeclarationCompiler(context))
     }
 
     fun compile(filesNodes: List<FileASTNode>) {
