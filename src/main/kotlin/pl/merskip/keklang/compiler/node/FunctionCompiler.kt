@@ -25,31 +25,13 @@ class FunctionCompiler(
         val returnType = if (node.returnType != null)
             (context.typesRegister.find(Identifier.Type(node.returnType.identifier))
                 ?: throw Exception("Not found type: ${node.returnType.identifier}")) else context.builtin.voidType
-        val identifier = if (declaringType != null)
-            Identifier.Function(declaringType, node.identifier, parameters.map { it.type.identifier })
-        else Identifier.Function(node.identifier, parameters.map { it.type.identifier })
 
-        val functionType = LLVMFunctionType(
-            parameters = parameters.types.map { it.wrappedType },
-            isVariadicArguments = false,
-            result = returnType.wrappedType
-        )
-        val functionValue = context.module.addFunction(identifier.mangled, functionType)
-
-        functionValue.getParametersValues().zip(parameters).forEach { (parameterValue, parameter) ->
-            parameterValue.setName(parameter.name)
+        return FunctionBuilder.register(context) {
+            declaringType(declaringType)
+            identifier(node.identifier)
+            parameters(parameters)
+            returnType(returnType)
         }
-
-        val function = DeclaredFunction(
-            identifier = identifier,
-            declaringType = declaringType,
-            parameters = parameters,
-            returnType = returnType,
-            wrappedType = functionType,
-            value = functionValue
-        )
-        context.typesRegister.register(function)
-        return function
     }
 
     fun compileFunction(node: FunctionDefinitionNodeAST, function: DeclaredFunction) {
