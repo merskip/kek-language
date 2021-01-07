@@ -31,7 +31,7 @@ class Lexer(
             isLineCommentHead(char) -> consumeLineComment() // Consume # Lorem ipsum\n
             isNumberHead(char) -> consumeNumber() // Consume [0-9]+
             isIdentifierHead(char) -> consumeIdentifierOrKeyword() // Consume [_a-Z][_a-Z0-9]
-            isOperatorHead(char) -> consumeOperatorOrArrow(char) // Consume +, -, *, /, == and ->
+            isOperatorHead(char) -> consumeOperatorOrArrow(char) // Consume +, -, *, /, =, == and ->
             isStringLiteralHead(char) -> consumeStringLiteral()
             char == '(' -> Token.LeftParenthesis(createSourceLocation())
             char == ')' -> Token.RightParenthesis(createSourceLocation())
@@ -83,8 +83,10 @@ class Lexer(
     private fun consumeOperatorOrArrow(char: Char): Token {
         if (char == '=') {
             val nextChar = getNextCharacter()
-            if (nextChar != '=')
-                return Token.Unknown(createSourceLocation())
+            if (nextChar != '=') {
+                backToPreviousCharacter()
+                return Token.Operator(createSourceLocation())
+            }
         }
         if (char == '-') {
             if (getNextCharacterIf { it == '>' } != null) {

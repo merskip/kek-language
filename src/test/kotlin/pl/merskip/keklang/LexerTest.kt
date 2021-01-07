@@ -9,7 +9,6 @@ import pl.merskip.keklang.lexer.Token.*
 import pl.merskip.keklang.lexer.Token.Number
 import pl.merskip.keklang.lexer.Token.Operator
 import java.io.File
-import kotlin.reflect.KClass
 
 internal class LexerTest {
 
@@ -151,6 +150,17 @@ internal class LexerTest {
             expect<Colon>(":")
             expectWhitespace()
             expect<Identifier>("Integer")
+        }
+    }
+
+    @Test
+    fun `parse assign value to variable`() {
+        "foo = 2" assertTokens {
+            expect<Identifier>("foo")
+            expectWhitespace()
+            expect<Operator>("=")
+            expectWhitespace()
+            expect<Number>("2")
         }
     }
 
