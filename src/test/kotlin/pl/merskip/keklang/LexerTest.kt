@@ -142,6 +142,19 @@ internal class LexerTest {
         }
     }
 
+    @Test
+    fun `parse variable declaration`() {
+        "var foo: Integer" assertTokens {
+            expect<Var>("var")
+            expectWhitespace()
+            expect<Identifier>("foo")
+            expect<Colon>(":")
+            expectWhitespace()
+            expect<Identifier>("Integer")
+        }
+    }
+
+
     private infix fun String.assertTokens(callback: TokenTester.() -> Unit) {
         val tokens = Lexer(File(""), this.trimIndent()).parse()
         val tester = TokenTester(tokens)
@@ -204,12 +217,5 @@ internal class LexerTest {
             assertEquals(expectedNextLine, token.sourceLocation.startIndex.line, "Expected line $expectedNextLine for $token")
             expectedNextColumn = token.sourceLocation.endIndex.column + 1
         }
-    }
-
-    private fun <T: Token> assertToken(tokenClass: KClass<T>, text: String, line: Int, column: Int, token: Token) {
-        assertEquals(tokenClass, token::class)
-        assertEquals(text, token.text)
-        assertEquals(line, token.sourceLocation.startIndex.line)
-        assertEquals(column, token.sourceLocation.startIndex.column)
     }
 }

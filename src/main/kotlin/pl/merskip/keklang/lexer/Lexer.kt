@@ -68,7 +68,7 @@ class Lexer(
     }
 
     private fun consumeNumber(): Token.Number {
-        consumeCharactersWhile { it.isDigit() || it == '.'}
+        consumeCharactersWhile { it.isDigit() || it == '.' }
         return Token.Number(createSourceLocation())
     }
 
@@ -105,6 +105,7 @@ class Lexer(
             "func" -> Token.Func(createSourceLocation())
             "if" -> Token.If(createSourceLocation())
             "else" -> Token.Else(createSourceLocation())
+            "var" -> Token.Var(createSourceLocation())
             else -> null
         }
     }
