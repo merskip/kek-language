@@ -55,6 +55,7 @@ class ParserAST(
             is Token.LeftParenthesis -> parseParenthesis()
             is Token.Operator -> parseOperator(token, findOperator(token)!!, popStatement())
             is Token.StringLiteral -> parseConstantString(token)
+            is Token.Var -> parseVariableDeclaration(token)
             else -> throw UnexpectedTokenException(null, token::class.simpleName!!, token.sourceLocation)
         }
 
@@ -264,6 +265,21 @@ class ParserAST(
         val string = stringLiteral.text.removePrefix("\"").removeSuffix("\"")
         return ConstantStringASTNode(string)
             .sourceLocation(stringLiteral)
+    }
+
+    /**
+     * Parses `var foo: Integer` expression
+     * variable_declaration ::= 'var' variable_identifier ':' type_identifier
+     * variable_identifier ::= identifier
+     * type_identifier ::= identifier
+     */
+    private fun parseVariableDeclaration(varKeyword: Token.Var): VariableDeclarationASTNode {
+        val variableIdentifier = getNextToken<Token.Identifier>()
+        getNextToken<Token.Colon>()
+        val typeIdentifier = parseTypeReference()
+
+        return VariableDeclarationASTNode(variableIdentifier.text, typeIdentifier)
+            .sourceLocation(from = varKeyword.sourceLocation, to = typeIdentifier.sourceLocation)
     }
 
     private fun parseOperator(token: Token.Operator, operator: Operator, lhs: StatementASTNode): BinaryOperatorNodeAST {
