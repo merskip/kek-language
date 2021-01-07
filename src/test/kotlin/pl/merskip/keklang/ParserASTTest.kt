@@ -19,6 +19,24 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single()
 
+        assertEquals(null, funcDef.declaringType)
+        assertEquals("abc", funcDef.identifier)
+        assertTrue(funcDef.parameters.isEmpty())
+        assertNull(funcDef.returnType)
+        assertTrue(funcDef.body.statements.isEmpty())
+    }
+
+    @Test
+    fun `parsing function with declaring type`() {
+        val source = """
+            func Foo.abc() {
+            }
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single()
+
+        assertEquals("Foo", funcDef.declaringType)
         assertEquals("abc", funcDef.identifier)
         assertTrue(funcDef.parameters.isEmpty())
         assertNull(funcDef.returnType)
