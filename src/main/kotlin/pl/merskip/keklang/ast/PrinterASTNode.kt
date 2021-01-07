@@ -170,6 +170,17 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
+    override fun visitFieldReferenceNode(node: FieldReferenceASTNode) {
+        print(
+            node = node,
+            parameters = mapOf("fieldName" to node.fieldName),
+            children = mapOf(
+                "reference" to listOf(node.reference)
+            )
+        )
+    }
+
+
     private fun print(
         node: ASTNode,
         parameters: Map<String, String?> = emptyMap(),

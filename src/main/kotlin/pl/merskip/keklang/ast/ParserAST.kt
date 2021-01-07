@@ -212,14 +212,19 @@ class ParserAST(
             isNextToken<Token.Dot>() -> {
                 getNextToken<Token.Dot>()
 
-                val typeIdentifier = TypeReferenceASTNode(identifierToken.text)
+
+                val beforeDotIdentifier = TypeReferenceASTNode(identifierToken.text)
                     .sourceLocation(identifierToken)
-
-                val functionIdentifier = getNextToken<Token.Identifier>()
-                val (arguments, rightParenthesis) = parseArguments()
-
-                StaticFunctionCallASTNode(typeIdentifier, functionIdentifier.text, arguments)
-                    .sourceLocation(identifierToken, rightParenthesis)
+                val afterDotIdentifier = getNextToken<Token.Identifier>()
+                if (isNextToken<Token.LeftParenthesis>()) {
+                    val (arguments, rightParenthesis) = parseArguments()
+                    StaticFunctionCallASTNode(beforeDotIdentifier, afterDotIdentifier.text, arguments)
+                        .sourceLocation(identifierToken, rightParenthesis)
+                } else {
+                    val reference = ReferenceASTNode(beforeDotIdentifier.identifier)
+                    FieldReferenceASTNode(reference, afterDotIdentifier.text)
+                        .sourceLocation(identifierToken, afterDotIdentifier)
+                }
             }
             else -> {
                 ReferenceASTNode(identifierToken.text)

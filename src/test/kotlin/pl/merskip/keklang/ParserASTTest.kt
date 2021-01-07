@@ -213,6 +213,23 @@ internal class ParserASTTest {
         assertEquals("Integer", variableDeclaration.type.identifier)
     }
 
+    @Test
+    fun `parsing field reference`() {
+        val source = """
+            func Foo(bar: Bar) {
+                bar.field
+            }
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single()
+
+        val fieldReference = funcDef.body.single<FieldReferenceASTNode>()
+        assertEquals("bar", fieldReference.reference.identifier)
+        assertEquals("field", fieldReference.fieldName)
+    }
+
+
     private fun parse(source: String): FileASTNode {
         val file = File("")
         val tokens = Lexer(file, source).parse()
