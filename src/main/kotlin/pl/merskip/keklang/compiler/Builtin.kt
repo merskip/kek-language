@@ -1,6 +1,5 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.javacpp.BytePointer
 import pl.merskip.keklang.llvm.LLVMContext
 import pl.merskip.keklang.llvm.LLVMIntegerType
 import pl.merskip.keklang.llvm.LLVMModule
@@ -89,6 +88,7 @@ class Builtin(
         logger.debug("Registering builtin functions")
         registerSystemFunctions(context)
         registerMemoryFunctions(context)
+        registerStringFunctions(context)
         registerOperatorsFunctions(context)
     }
 
@@ -223,6 +223,30 @@ class Builtin(
         }
     }
 
+    private fun registerStringFunctions(context: CompilerContext) {
+        // String.init(guts: BytePointer, length: Integer) -> String
+         FunctionBuilder.register(context) {
+             declaringType(stringType)
+             identifier("init")
+             parameters(
+                 "guts" to bytePointerType,
+                 "length" to integerType
+             )
+             returnType(stringType)
+             implementation { (guts, length) ->
+                 val self = context.instructionsBuilder.createStructureInitialize(
+                     structureType = context.builtin.stringType,
+                     fields = mapOf(
+                         "guts" to guts.getValue(),
+                         "length" to length.getValue()
+                     ),
+                     name = null
+                 )
+                 context.instructionsBuilder.createReturn(self.rawValue)
+             }
+         }
+    }
+
     private fun registerOperatorsFunctions(context: CompilerContext) {
         context.registerOperatorFunction(
             lhs = integerType,
@@ -298,7 +322,8 @@ class Builtin(
             )
 
             val rhsGuts = context.instructionsBuilder.createStructureLoad(rhs, "guts").value
-            val resultStringGutsRhs = context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, resultStringGuts, listOf(lhsLength), "resultStringGutsRhs")
+            val resultStringGutsRhs =
+                context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, resultStringGuts, listOf(lhsLength), "resultStringGutsRhs")
             context.instructionsBuilder.createCall(
                 function = memoryCopyFunction,
                 arguments = listOf(rhsGuts, resultStringGutsRhs, rhsLength)
