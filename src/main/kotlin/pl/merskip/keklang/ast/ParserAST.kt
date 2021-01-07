@@ -20,11 +20,12 @@ class ParserAST(
     }.listIterator()
 
     private val operators = listOf(
-        Operator("==", 10),
-        Operator("+", 100),
-        Operator("-", 100),
-        Operator("*", 200),
-        Operator("/", 200)
+        Operator("=", 100),
+        Operator("==", 200),
+        Operator("+", 300),
+        Operator("-", 400),
+        Operator("*", 500),
+        Operator("/", 600)
     )
 
     public fun parse(): FileASTNode {

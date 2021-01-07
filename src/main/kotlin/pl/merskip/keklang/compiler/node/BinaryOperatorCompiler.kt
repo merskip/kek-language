@@ -14,14 +14,24 @@ class BinaryOperatorCompiler(
         val lhs = context.compile(node.lhs)!!
         val rhs = context.compile(node.rhs)!!
 
-        val function = getFunctionForOperator(node.identifier, lhs.type, rhs.type)
-        val result = context.instructionsBuilder.createCall(
-            function = function.value,
-            functionType = function.wrappedType,
-            arguments = listOf(lhs.value, rhs.value),
-            name = "call_${function.identifier.canonical}"
-        )
-        return Reference.Anonymous(function.returnType, result)
+        if (node.identifier == "=") {
+            return compileAssignOperator(lhs, rhs)
+        }
+        else {
+            val function = getFunctionForOperator(node.identifier, lhs.type, rhs.type)
+            val result = context.instructionsBuilder.createCall(
+                function = function.value,
+                functionType = function.wrappedType,
+                arguments = listOf(lhs.value, rhs.value),
+                name = "call_${function.identifier.canonical}"
+            )
+            return Reference.Anonymous(function.returnType, result)
+        }
+    }
+
+    private fun compileAssignOperator(lhs: Reference, rhs: Reference): Reference {
+        context.instructionsBuilder.createStore(lhs.value, rhs.value)
+        return rhs
     }
 
     private fun getFunctionForOperator(operator: String, lhsType: DeclaredType, rhsType: DeclaredType): DeclaredFunction {
