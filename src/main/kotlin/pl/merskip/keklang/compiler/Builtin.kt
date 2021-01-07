@@ -1,5 +1,6 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.javacpp.BytePointer
 import pl.merskip.keklang.llvm.LLVMContext
 import pl.merskip.keklang.llvm.LLVMIntegerType
 import pl.merskip.keklang.llvm.LLVMModule
@@ -261,6 +262,16 @@ class Builtin(
             simpleIdentifier = "isEqual",
             returnType = booleanType) { lhs, rhs ->
             context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.value, rhs.value, "isEqual")
+        }
+
+        context.registerOperatorFunction(
+            lhs = bytePointerType,
+            rhs = integerType,
+            simpleIdentifier = "add",
+            returnType = bytePointerType
+        ) { lhs, rhs ->
+            val newPointer = context.instructionsBuilder.createGetElementPointer(bytePointerType.wrappedType, lhs.getValue(), listOf(rhs.getValue()), null)
+            context.instructionsBuilder.createLoad(newPointer, null)
         }
 
         context.registerOperatorFunction(

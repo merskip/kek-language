@@ -1,14 +1,9 @@
 
-func String.appending(lhs: String, rhs: String) -> String {
+func String.appending(lhs: String, rhs: String) -> BytePointer {
     var resultLength: Integer = lhs.length
     var resultGuts: BytePointer = Memory.allocate(resultLength)
     Memory.copy(lhs.guts, resultGuts, lhs.length)
-    #    Memory.copy(rhs.guts, resultGuts + lhs.length, rhs.length)
+    Memory.copy(rhs.guts, resultGuts + lhs.length, rhs.length)
+    resultGuts
     #    return String.init(resultGuts, resultLength)
 }
-
-#    var resultLength: Integer = lhs.length + rhs.length
-#    var resultGuts: BytePointer = Memory.allocate(resultLength)
-#    Memory.copy(lhs.guts, resultGuts, lhs.length)
-#    Memory.copy(rhs.guts, resultGuts + lhs.length, rhs.length)
-#    return String.init(resultGuts, resultLength)

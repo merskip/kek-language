@@ -45,7 +45,7 @@ class FunctionCompiler(
             val lastValueReference = context.compile(node.body)
             when {
                 function.isReturnVoid -> context.instructionsBuilder.createReturnVoid()
-                lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.value)
+                lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.getValue())
                 else -> throw Exception("Expected return value of type ${function.returnType.getDebugDescription()} but got nothing")
             }
         }
