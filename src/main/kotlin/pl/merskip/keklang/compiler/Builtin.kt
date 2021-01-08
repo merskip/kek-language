@@ -251,7 +251,7 @@ class Builtin(
         context.registerOperatorFunction(
             lhs = integerType,
             rhs = integerType,
-            simpleIdentifier = "add",
+            simpleIdentifier = "adding",
             returnType = integerType) { lhs, rhs ->
             context.instructionsBuilder.createAddition(lhs.value, rhs.value, "add")
         }
@@ -291,54 +291,10 @@ class Builtin(
         context.registerOperatorFunction(
             lhs = bytePointerType,
             rhs = integerType,
-            simpleIdentifier = "add",
+            simpleIdentifier = "adding",
             returnType = bytePointerType
         ) { lhs, rhs ->
-            val newPointer = context.instructionsBuilder.createGetElementPointer(bytePointerType.wrappedType, lhs.getValue(), listOf(rhs.getValue()), null)
-            context.instructionsBuilder.createLoad(newPointer, null)
-        }
-
-        context.registerOperatorFunction(
-            lhs = stringType,
-            rhs = stringType,
-            simpleIdentifier = "add",
-            returnType = stringType,
-            isInline = false
-        ) { lhs, rhs ->
-
-            val lhsLength = context.instructionsBuilder.createStructureLoad(lhs, "length").value
-            val rhsLength = context.instructionsBuilder.createStructureLoad(rhs, "length").value
-            val resultStringLength = context.instructionsBuilder.createAddition(lhsLength, rhsLength, "resultLength")
-            val resultStringGuts = context.instructionsBuilder.createCall(
-                function = memoryAllocateFunction,
-                arguments = listOf(resultStringLength),
-                name = "stringGuts"
-            )
-
-            val lhsGuts = context.instructionsBuilder.createStructureLoad(lhs, "guts").value
-            context.instructionsBuilder.createCall(
-                function = memoryCopyFunction,
-                arguments = listOf(lhsGuts, resultStringGuts, lhsLength)
-            )
-
-            val rhsGuts = context.instructionsBuilder.createStructureLoad(rhs, "guts").value
-            val resultStringGutsRhs =
-                context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, resultStringGuts, listOf(lhsLength), "resultStringGutsRhs")
-            context.instructionsBuilder.createCall(
-                function = memoryCopyFunction,
-                arguments = listOf(rhsGuts, resultStringGutsRhs, rhsLength)
-            )
-
-            val resultString = context.instructionsBuilder.createStructureInitialize(
-                structureType = context.builtin.stringType,
-                fields = mapOf(
-                    "guts" to resultStringGuts,
-                    "length" to resultStringLength
-                ),
-                name = "resultString"
-            )
-
-            resultString.value
+            context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, lhs.getValue(), listOf(rhs.getValue()), null)
         }
     }
 

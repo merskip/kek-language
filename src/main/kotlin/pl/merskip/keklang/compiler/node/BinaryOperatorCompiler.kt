@@ -34,7 +34,7 @@ class BinaryOperatorCompiler(
         val functionIdentifier = Identifier.Function(
             declaringType = lhsType,
             canonical = when (operator) {
-                "+" -> "add"
+                "+" -> "adding"
                 "-" -> "subtract"
                 "*" -> "multiple"
                 "==" -> "isEqual"
@@ -45,6 +45,7 @@ class BinaryOperatorCompiler(
         return context.typesRegister.find(functionIdentifier)
             ?: throw Exception("Not found function for operator: \"$operator\"" +
                     " for lhs=${lhsType.getDebugDescription()}" +
-                    " and rhs=${rhsType.getDebugDescription()}")
+                    " and rhs=${rhsType.getDebugDescription()}" +
+                    " (${functionIdentifier.mangled}")
     }
 }
