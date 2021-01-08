@@ -1,12 +1,4 @@
 
-func String.adding(lhs: String, rhs: String) -> String {
-    var resultLength: Integer = lhs.length + rhs.length
-    var resultGuts: BytePointer = Memory.allocate(resultLength)
-    Memory.copy(lhs.guts, resultGuts, lhs.length)
-    Memory.copy(rhs.guts, resultGuts + lhs.length, rhs.length)
-    String.init(resultGuts, resultLength)
-}
-
 func main() {
     System.print("Hello " + "świecie!\n")
 }

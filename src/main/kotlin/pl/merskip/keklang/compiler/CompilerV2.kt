@@ -1,7 +1,9 @@
 package pl.merskip.keklang.compiler
 
+import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.node.FileASTNode
 import pl.merskip.keklang.compiler.node.*
+import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.logger.Logger
 
 class CompilerV2(
@@ -11,10 +13,7 @@ class CompilerV2(
     private val logger = Logger(this::class)
 
     init {
-
         logger.info("Preparing compiler")
-
-        context.builtin.registerFunctions(context)
 
         context.addNodeCompiler(FileCompiler(context, FunctionCompiler(context)))
         context.addNodeCompiler(CodeBlockCompiler(context))
@@ -28,6 +27,18 @@ class CompilerV2(
         context.addNodeCompiler(IfElseConditionCompiler(context))
         context.addNodeCompiler(VariableDeclarationCompiler(context))
         context.addNodeCompiler(FieldReferenceCompiler(context))
+
+        context.builtin.registerFunctions(context)
+
+        logger.debug("Compiling builtin files")
+        val builtinFilesNodes = context.builtin.getBuiltinFiles().map { file ->
+            val content = file.readText()
+            val tokens = Lexer(file, content).parse()
+
+            val parserNodeAST = ParserAST(file, content, tokens)
+            parserNodeAST.parse()
+        }
+        compileFiles(builtinFilesNodes)
     }
 
     fun compile(filesNodes: List<FileASTNode>) {
@@ -37,7 +48,6 @@ class CompilerV2(
     }
 
     private fun compileFiles(filesNodes: List<FileASTNode>) {
-        logger.info("Compiling files")
         for (fileNode in filesNodes) {
             context.compile(fileNode)
         }

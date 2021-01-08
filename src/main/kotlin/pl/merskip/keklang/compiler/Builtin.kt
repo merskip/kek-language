@@ -1,5 +1,8 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.llvm.global.LLVM
+import pl.merskip.keklang.ast.ParserAST
+import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.llvm.LLVMContext
 import pl.merskip.keklang.llvm.LLVMIntegerType
 import pl.merskip.keklang.llvm.LLVMModule
@@ -8,6 +11,8 @@ import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.logger.Logger
 import pl.merskip.keklang.toInt
+import java.io.File
+import kotlin.math.log
 
 class Builtin(
     private val context: LLVMContext,
@@ -315,6 +320,18 @@ class Builtin(
             val result = getResult(lhs, rhs)
             instructionsBuilder.createReturn(result)
         }
+    }
+
+    fun getBuiltinFiles(): List<File> {
+        val directory = this::class.java.classLoader.getResource("builtin")
+        if (directory == null) {
+            logger.warning("Not found builtin directory")
+            return emptyList()
+        }
+        return File(directory.file)
+            .walkTopDown()
+            .filter { it.extension == "kek" }
+            .toList()
     }
 
     fun createBoolean(value: Boolean): Reference {
