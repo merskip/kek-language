@@ -77,7 +77,10 @@ class Lexer(
     }
 
     private fun isOperatorHead(char: Char): Boolean {
-        return char == '+' || char == '-' || char == '*' || char == '/' || char == '='
+        return char == '+' || char == '-'
+                || char == '*' || char == '/'
+                || char == '='
+                || char == '<' || char == '>'
     }
 
     private fun consumeOperatorOrArrow(char: Char): Token {

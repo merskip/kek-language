@@ -11,17 +11,15 @@ class BinaryOperatorCompiler(
         val lhs = context.compile(node.lhs)!!
         val rhs = context.compile(node.rhs)!!
 
-        if (node.identifier == "=") {
-            return compileAssignOperator(lhs, rhs)
+        return if (node.identifier == "=") {
+            compileAssignOperator(lhs, rhs)
         } else {
             val function = getFunctionForOperator(node.identifier, lhs.type, rhs.type)
             val result = context.instructionsBuilder.createCall(
-                function = function.value,
-                functionType = function.wrappedType,
-                arguments = listOf(lhs.getValue(), rhs.getValue()),
-                name = "call_${function.identifier.canonical}"
+                function = function,
+                arguments = listOf(lhs.getValue(), rhs.getValue())
             )
-            return Reference.Anonymous(function.returnType, result)
+            Reference.Anonymous(function.returnType, result)
         }
     }
 
@@ -37,6 +35,8 @@ class BinaryOperatorCompiler(
                 "+" -> "adding"
                 "-" -> "subtract"
                 "*" -> "multiple"
+                "<" -> "isLessThan"
+                ">" -> "isGreaterThan"
                 "==" -> "isEqual"
                 else -> throw Exception("Unknown operator: $operator")
             },

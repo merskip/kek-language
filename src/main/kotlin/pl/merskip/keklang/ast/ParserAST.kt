@@ -21,6 +21,8 @@ class ParserAST(
 
     private val operators = listOf(
         Operator("=", 100),
+        Operator(">", 200),
+        Operator("<", 200),
         Operator("==", 200),
         Operator("+", 300),
         Operator("-", 400),
