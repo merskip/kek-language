@@ -37,7 +37,6 @@ class Builtin(
     /* Memory type */
     val memoryType: DeclaredType
     lateinit var memoryAllocateFunction: DeclaredFunction private set
-    lateinit var memoryCopyFunction: DeclaredFunction private set
 
     /* String type */
     val stringType: StructureType
@@ -169,60 +168,17 @@ class Builtin(
             }
         }
 
-        // Memory.copy(source: BytePointer, destination: BytePointer, size: Integer)
-        memoryCopyFunction = FunctionBuilder.register(context) {
+        // Memory.setValue(source: BytePointer, destination: BytePointer)
+        FunctionBuilder.register(context) {
             declaringType(memoryType)
-            identifier("copy")
+            identifier("setValue")
             parameters(
                 "source" to bytePointerType,
-                "destination" to bytePointerType,
-                "size" to integerType
+                "destination" to bytePointerType
             )
-            implementation { (source, destination, size) ->
-
-                val iterator = context.instructionsBuilder.createAlloca(integerType.wrappedType, "iterator")
-                context.instructionsBuilder.createStore(iterator, createInteger(0L).value)
-
-                val loopEntry = context.instructionsBuilder.createBasicBlock("loopEntry")
-                context.instructionsBuilder.createBranch(loopEntry)
-
-                val loopEnd = context.instructionsBuilder.createBasicBlock("loopEnd")
-
-                context.instructionsBuilder.insertBasicBlock(loopEntry)
-                context.instructionsBuilder.moveAtEnd(loopEntry)
-
-                val iteratorValue = context.instructionsBuilder.createLoad(iterator, "iteratorValue")
-
-                val sourceAddress = context.instructionsBuilder.createGetElementPointer(
-                    byteType.wrappedType,
-                    source.value,
-                    listOf(iteratorValue),
-                    "sourceAddress"
-                )
-
-                val destinationAddress = context.instructionsBuilder.createGetElementPointer(
-                    byteType.wrappedType,
-                    destination.value,
-                    listOf(iteratorValue),
-                    "destinationAddress"
-                )
-
-                val value = context.instructionsBuilder.createLoad(sourceAddress, "value")
-                context.instructionsBuilder.createStore(destinationAddress, value)
-
-                val nextIteratorValue = context.instructionsBuilder.createAddition(iteratorValue, createInteger(1L).value, "nextIteratorValue")
-                context.instructionsBuilder.createStore(iterator, nextIteratorValue)
-
-                val isEnd = context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, nextIteratorValue, size.value, "isEqual")
-
-                context.instructionsBuilder.createConditionalBranch(
-                    condition = isEnd,
-                    ifTrue = loopEnd,
-                    ifFalse = loopEntry
-                )
-                context.instructionsBuilder.insertBasicBlock(loopEnd)
-                context.instructionsBuilder.moveAtEnd(loopEnd)
-
+            implementation { (source, destination) ->
+                val value = context.instructionsBuilder.createLoad(source.rawValue, "value")
+                context.instructionsBuilder.createStore(destination.rawValue, value)
                 context.instructionsBuilder.createReturnVoid()
             }
         }
@@ -280,6 +236,24 @@ class Builtin(
         context.registerOperatorFunction(
             lhs = integerType,
             rhs = integerType,
+            simpleIdentifier = "isLessThan",
+            returnType = booleanType
+        ) { lhs, rhs ->
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.SLT, lhs.getValue(), rhs.getValue(), "isLessThan")
+        }
+
+        context.registerOperatorFunction(
+            lhs = integerType,
+            rhs = integerType,
+            simpleIdentifier = "isGreaterThan",
+            returnType = booleanType
+        ) { lhs, rhs ->
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.SGT, lhs.getValue(), rhs.getValue(), "isGreaterThan")
+        }
+
+        context.registerOperatorFunction(
+            lhs = integerType,
+            rhs = integerType,
             simpleIdentifier = "isEqual",
             returnType = booleanType) { lhs, rhs ->
             context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.value, rhs.value, "isEqual")
@@ -301,6 +275,17 @@ class Builtin(
         ) { lhs, rhs ->
             context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, lhs.getValue(), listOf(rhs.getValue()), null)
         }
+
+        context.registerOperatorFunction(
+            lhs = bytePointerType,
+            rhs = bytePointerType,
+            simpleIdentifier = "setValueFromPointer",
+            returnType = voidType
+        ) { lhs, rhs ->
+            val value = context.instructionsBuilder.createLoad(rhs.getValue(), "value")
+            context.instructionsBuilder.createStore(lhs.rawValue, value)
+            null
+        }
     }
 
     private fun CompilerContext.registerOperatorFunction(
@@ -309,7 +294,7 @@ class Builtin(
         simpleIdentifier: String,
         returnType: DeclaredType,
         isInline: Boolean = true,
-        getResult: (lhs: Reference, rhs: Reference) -> LLVMValue
+        getResult: (lhs: Reference, rhs: Reference) -> LLVMValue?
     ) = FunctionBuilder.register(this) {
         declaringType(lhs)
         identifier(simpleIdentifier)
@@ -318,7 +303,10 @@ class Builtin(
         isInline(isInline)
         implementation { (lhs, rhs) ->
             val result = getResult(lhs, rhs)
-            instructionsBuilder.createReturn(result)
+            if (result != null)
+                instructionsBuilder.createReturn(result)
+            else
+                instructionsBuilder.createReturnVoid()
         }
     }
 

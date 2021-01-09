@@ -27,6 +27,7 @@ class CompilerV2(
         context.addNodeCompiler(IfElseConditionCompiler(context))
         context.addNodeCompiler(VariableDeclarationCompiler(context))
         context.addNodeCompiler(FieldReferenceCompiler(context))
+        context.addNodeCompiler(WhileLoopCompiler(context))
 
         context.builtin.registerFunctions(context)
 
