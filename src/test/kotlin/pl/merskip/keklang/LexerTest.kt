@@ -164,6 +164,24 @@ internal class LexerTest {
         }
     }
 
+    @Test
+    fun `parse while loop`() {
+        "while (1 == 2) { }" assertTokens {
+            expect<While>("while")
+            expectWhitespace()
+            expect<LeftParenthesis>("(")
+            expect<Number>("1")
+            expectWhitespace()
+            expect<Operator>("==")
+            expectWhitespace()
+            expect<Number>("2")
+            expect<RightParenthesis>(")")
+            expectWhitespace()
+            expect<LeftBracket>("{")
+            expectWhitespace()
+            expect<RightBracket>("}")
+        }
+    }
 
     private infix fun String.assertTokens(callback: TokenTester.() -> Unit) {
         val tokens = Lexer(File(""), this.trimIndent()).parse()

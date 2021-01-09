@@ -23,6 +23,7 @@ sealed class Token(
     class Colon(sourceLocation: SourceLocation) : Token(sourceLocation) // :
     class Arrow(sourceLocation: SourceLocation) : Token(sourceLocation) // ->
     class Var(sourceLocation: SourceLocation) : Token(sourceLocation) // var
+    class While(sourceLocation: SourceLocation) : Token(sourceLocation) // while
 
     val text: String
         get() = sourceLocation.text

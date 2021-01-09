@@ -108,6 +108,7 @@ class Lexer(
             "if" -> Token.If(createSourceLocation())
             "else" -> Token.Else(createSourceLocation())
             "var" -> Token.Var(createSourceLocation())
+            "while" -> Token.While(createSourceLocation())
             else -> null
         }
     }
