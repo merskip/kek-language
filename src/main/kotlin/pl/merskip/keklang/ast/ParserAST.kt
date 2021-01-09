@@ -57,6 +57,7 @@ class ParserAST(
             is Token.Operator -> parseOperator(token, findOperator(token)!!, popStatement())
             is Token.StringLiteral -> parseConstantString(token)
             is Token.Var -> parseVariableDeclaration(token)
+            is Token.While -> parseWhileLoop(token)
             else -> throw UnexpectedTokenException(null, token::class.simpleName!!, token.sourceLocation)
         }
 
@@ -275,9 +276,9 @@ class ParserAST(
 
     /**
      * Parses `var foo: Integer` expression
-     * variable_declaration ::= 'var' variable_identifier ':' type_identifier
-     * variable_identifier ::= identifier
-     * type_identifier ::= identifier
+     * variable-declaration ::= 'var' variable-identifier ':' type-identifier
+     * variable-identifier ::= identifier
+     * type-identifier ::= identifier
      */
     private fun parseVariableDeclaration(varKeyword: Token.Var): VariableDeclarationASTNode {
         val variableIdentifier = getNextToken<Token.Identifier>()
@@ -286,6 +287,24 @@ class ParserAST(
 
         return VariableDeclarationASTNode(variableIdentifier.text, typeIdentifier)
             .sourceLocation(from = varKeyword.sourceLocation, to = typeIdentifier.sourceLocation)
+    }
+
+    /**
+     * Parses `while (<condition>) { <body> }` expression
+     * while-loop ::= "while" "(" condition ")" while-body
+     * while-body ::= "{" statements "}"
+     */
+    private fun parseWhileLoop(whileKeyword: Token.While): WhileLoopASTNode {
+        getNextToken<Token.LeftParenthesis>()
+        val conditionNode = parseNextToken()
+        if (conditionNode !is StatementASTNode)
+            throw Exception("Expected statement node AST, but got ${conditionNode::class}")
+
+        getNextToken<Token.RightParenthesis>()
+
+        val bodyNode = parseCodeBlock()
+        return WhileLoopASTNode(conditionNode, bodyNode)
+            .sourceLocation(whileKeyword.sourceLocation, bodyNode.sourceLocation)
     }
 
     private fun parseOperator(token: Token.Operator, operator: Operator, lhs: StatementASTNode): BinaryOperatorNodeAST {

@@ -229,6 +229,21 @@ internal class ParserASTTest {
         assertEquals("field", fieldReference.fieldName)
     }
 
+    @Test
+    fun `parse while loop`() {
+        val source = """
+            func foo() {
+                while (1 == 2) { 3 }
+            }
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single()
+
+        val whileLoop = funcDef.body.single<WhileLoopASTNode>()
+        assert(whileLoop.condition is BinaryOperatorNodeAST)
+        assert(whileLoop.body.statements[0] is IntegerConstantASTNode)
+    }
 
     private fun parse(source: String): FileASTNode {
         val file = File("")

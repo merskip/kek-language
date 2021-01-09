@@ -180,6 +180,15 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
+    override fun visitWhileLoopNode(node: WhileLoopASTNode) {
+        print(
+            node = node,
+            children = mapOf(
+                "condition" to listOf(node.condition),
+                "body" to listOf(node.body)
+            )
+        )
+    }
 
     private fun print(
         node: ASTNode,
