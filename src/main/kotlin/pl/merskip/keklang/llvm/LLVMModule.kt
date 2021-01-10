@@ -42,5 +42,5 @@ class LLVMModule(
         LLVMDisposeModule(reference)
     }
 
-    class FailedVerifyModule(message: String) : Exception(message)
+    class FailedVerifyModule(message: String) : Exception("Failed verify module:\n$message")
 }

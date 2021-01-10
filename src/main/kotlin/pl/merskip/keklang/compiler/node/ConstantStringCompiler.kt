@@ -24,8 +24,8 @@ class ConstantStringCompiler(
         return context.instructionsBuilder.createStructureInitialize(
             structureType = context.builtin.stringType,
             fields = mapOf(
-                "guts" to context.builtin.createCastToBytePointer(context, stringArrayPointer).value,
-                "length" to context.builtin.createInteger(stringLength - 1 /* null character */).value
+                "guts" to context.builtin.createCastToBytePointer(context, stringArrayPointer).get,
+                "length" to context.builtin.createInteger(stringLength - 1 /* null character */).get
             ),
             name = "string_${string.shortHash()}"
         )

@@ -32,9 +32,9 @@ abstract class FunctionCallCompilerBase(
         val function = findFunction(typeIdentifier, functionIdentifier, parameters.map { it.type.identifier })
         val value = context.instructionsBuilder.createCall(
             function = function,
-            arguments = parameters.map { it.getValue() }
+            arguments = parameters.map { it.get }
         )
-        return Reference.Anonymous(function.returnType, value)
+        return DirectlyReference(function.returnType, value)
     }
 
     private fun compileParameters(parameters: List<StatementASTNode>): List<Reference> {

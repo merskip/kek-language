@@ -14,20 +14,20 @@ class ScopesStack {
         var debugScope: LLVMLocalScopeMetadata? = null
     ) {
 
-        private val references: MutableList<Reference> = mutableListOf()
+        private val references: MutableList<IdentifiableReference> = mutableListOf()
 
-        fun addReference(reference: Reference): Reference {
+        fun addReference(reference: IdentifiableReference): Reference {
             if (current.references.any { it.identifier == reference.identifier })
                 throw IllegalStateException("Already exists reference to \"$reference.identifier\" in this scope.")
             current.references.add(reference)
-            return reference
+            return reference.reference
         }
 
-        fun getReferenceOrNull(identifier: String): Reference? {
+        fun getReferenceOrNull(identifier: Identifier): Reference? {
             scopes.reversed()
                 .forEach { scope ->
                     scope.references.firstOrNull { it.identifier == identifier }
-                        ?.let { return it }
+                        ?.let { return it.reference }
                 }
             return null
         }

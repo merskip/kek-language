@@ -79,14 +79,14 @@ class CompilerV2(
                             arguments = emptyList(),
                             name = "exit_code"
                         )
-                        Reference.Anonymous(mainFunction.returnType, value)
+                        DirectlyReference(mainFunction.returnType, value)
                     }
                     else -> throw Exception("The main function must return Integer or Void")
                 }
 
                 context.instructionsBuilder.createCall(
                     function = context.builtin.systemExitFunction,
-                    arguments = listOf(exitCode.value)
+                    arguments = listOf(exitCode.get)
                 )
                 context.instructionsBuilder.createUnreachable()
             }

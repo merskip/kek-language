@@ -1,6 +1,7 @@
 package pl.merskip.keklang.llvm
 
 import org.bytedeco.llvm.global.LLVM.*
+import pl.merskip.keklang.compiler.StructureType
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
@@ -400,8 +401,8 @@ class IRInstructionsBuilder(
     /**
      * Moves the position of builder after passed basic block
      */
-    fun moveAtEnd(basicBlock: LLVMBasicBlockValue) {
-        LLVMPositionBuilderAtEnd(irBuilder, basicBlock.blockReference)
+    fun moveAtEnd(basicBlock: LLVMBasicBlockValue?) {
+        LLVMPositionBuilderAtEnd(irBuilder, basicBlock?.blockReference)
     }
 
 }

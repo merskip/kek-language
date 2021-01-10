@@ -1,7 +1,6 @@
 package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.llvm.LLVMFunctionType
-import pl.merskip.keklang.llvm.enum.AttributeKind
 
 typealias ImplementationBuilder = (List<Reference>) -> Unit
 
@@ -14,20 +13,6 @@ class FunctionBuilder {
     private var isExtern: Boolean = false
     private var isInline: Boolean = false
     private var implementation: ImplementationBuilder? = null
-
-    companion object {
-
-        fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): DeclaredFunction {
-            val functionBuilder = FunctionBuilder()
-            functionBuilder.parameters = emptyList()
-            functionBuilder.returnType = context.builtin.voidType
-
-            builder(functionBuilder)
-            val function = functionBuilder.build(context)
-            context.typesRegister.register(function)
-            return function
-        }
-    }
 
     fun identifier(identifier: String) =
         apply { this.canonicalIdentifier = identifier }
@@ -58,10 +43,8 @@ class FunctionBuilder {
 
         val identifier = getFunctionIdentifier()
         val functionType = LLVMFunctionType(
-            result = if (returnType is StructureType) returnType.wrappedType.asPointer() else returnType.wrappedType,
-            parameters = parameters.types.map {
-                if (it is StructureType) it.wrappedType.asPointer() else it.wrappedType
-            },
+            result = returnType.wrappedType,
+            parameters = parameters.types.map { it.wrappedType },
             isVariadicArguments = false
         )
         val functionValue = context.module.addFunction(identifier.mangled, functionType)
@@ -78,20 +61,12 @@ class FunctionBuilder {
             value = functionValue
         )
 
-        val parameterReferences = functionValue.getParametersValues().zip(parameters).mapIndexed { index, (parameterValue, parameter) ->
+        functionValue.getParametersValues().zip(parameters).map { (parameterValue, parameter) ->
             parameterValue.setName(parameter.name)
-
-            if (parameter.isByValue) {
-                val byValueAttribute = context.context.createAttribute(AttributeKind.ByVal)
-                functionValue.addParameterAttribute(byValueAttribute, index)
-            }
-
-            Reference.Named(parameter.name, parameter.type, parameterValue)
         }
 
         if (implementation != null) {
-            context.instructionsBuilder.appendBasicBlockAtEnd(functionValue, "entry")
-            implementation?.invoke(parameterReferences)
+            buildImplementation(context, function, implementation!!)
         }
 
         return function
@@ -100,9 +75,40 @@ class FunctionBuilder {
     private fun getFunctionIdentifier(): Identifier {
         val parametersIdentifiers = parameters.types.map { it.identifier }
         return when {
-                isExtern -> Identifier.ExternType(canonicalIdentifier)
-                declaringType != null -> Identifier.Function(declaringType!!, canonicalIdentifier, parametersIdentifiers)
-                else -> Identifier.Function(canonicalIdentifier, parametersIdentifiers)
+            isExtern -> Identifier.ExternType(canonicalIdentifier)
+            declaringType != null -> Identifier.Function(declaringType!!, canonicalIdentifier, parametersIdentifiers)
+            else -> Identifier.Function(canonicalIdentifier, parametersIdentifiers)
+        }
+    }
+
+    companion object {
+
+        fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): DeclaredFunction {
+            val functionBuilder = FunctionBuilder()
+            functionBuilder.parameters = emptyList()
+            functionBuilder.returnType = context.builtin.voidType
+
+            builder(functionBuilder)
+            val function = functionBuilder.build(context)
+            context.typesRegister.register(function)
+            return function
+        }
+
+        fun buildImplementation(context: CompilerContext, function: DeclaredFunction, implementation: ImplementationBuilder) {
+            function.entryBlock = context.instructionsBuilder.appendBasicBlockAtEnd(function.value, "entry")
+            context.scopesStack.createScope {
+                val parameterReferences = function.value.getParametersValues().zip(function.parameters).map { (parameterValue, parameter) ->
+
+                    val parameterIdentifier = Identifier.Reference(parameter.name)
+
+                    val parameterAlloca = context.instructionsBuilder.createAlloca(parameter.type.wrappedType, "_" + parameter.name)
+                    context.instructionsBuilder.createStore(parameterAlloca, parameterValue)
+
+                    val reference = IdentifiableMemoryReference(parameterIdentifier, parameter.type, parameterAlloca, context.instructionsBuilder)
+                    context.scopesStack.current.addReference(reference)
+                }
+                implementation.invoke(parameterReferences)
             }
+        }
     }
 }

@@ -2,7 +2,6 @@ package pl.merskip.keklang.compiler.node
 
 import pl.merskip.keklang.ast.node.FunctionDefinitionNodeAST
 import pl.merskip.keklang.compiler.*
-import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.logger.Logger
 
 class FunctionCompiler(
@@ -36,16 +35,12 @@ class FunctionCompiler(
 
     fun compileFunction(node: FunctionDefinitionNodeAST, function: DeclaredFunction) {
         logger.verbose("Compiling function: ${function.getDebugDescription()}")
-        context.scopesStack.createScope {
-            function.value.getParametersValues().zip(function.parameters).forEach { (parameterValue, parameter) ->
-                context.scopesStack.current.addReference(Reference.Named(parameter.name, parameter.type, parameterValue))
-            }
 
-            context.instructionsBuilder.appendBasicBlockAtEnd(function.value, "entry")
+        FunctionBuilder.buildImplementation(context, function) {
             val lastValueReference = context.compile(node.body)
             when {
                 function.isReturnVoid -> context.instructionsBuilder.createReturnVoid()
-                lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.getValue())
+                lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.get)
                 else -> throw Exception("Expected return value of type ${function.returnType.getDebugDescription()} but got nothing")
             }
         }

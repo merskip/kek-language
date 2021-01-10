@@ -1,13 +1,18 @@
 package pl.merskip.keklang.llvm
 
+import org.bytedeco.javacpp.SizeTPointer
 import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.*
+import pl.merskip.keklang.logger.Logger
+import java.lang.Exception
 
 abstract class LLVMValue(
     override val reference: LLVMValueRef
 ) : LLVMReferencing<LLVMValueRef> {
+
+    private val logger = Logger(this::class)
 
     fun getAnyType() = getType<LLVMType>()
 
@@ -34,6 +39,15 @@ abstract class LLVMValue(
         val moduleRef = LLVMGetGlobalParent(reference)
         val contextRef = LLVMGetModuleContext(moduleRef)
         return LLVMContext(contextRef)
+    }
+
+    override fun toString(): String {
+        return try {
+            LLVMPrintValueToString(reference).disposable.string
+        } catch (e: Exception) {
+            logger.warning("Failed print LLVMValue to string", e)
+            super.toString()
+        }
     }
 
     companion object {

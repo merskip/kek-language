@@ -5,6 +5,8 @@ sealed class Identifier(
     val mangled: String
 ) {
 
+    class Reference(name: String) : Identifier(name, name)
+
     class Type(canonical: String) : Identifier(canonical, canonical.mangled())
 
     class ExternType(canonical: String) : Identifier(canonical, canonical)

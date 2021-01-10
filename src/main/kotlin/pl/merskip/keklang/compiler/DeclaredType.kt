@@ -68,10 +68,11 @@ class DeclaredFunction(
     val isReturnVoid: Boolean
         get() = returnType.isVoid
 
+    lateinit var entryBlock: LLVMBasicBlockValue
+
     class Parameter(
         val name: String,
-        val type: DeclaredType,
-        val isByValue: Boolean = type is StructureType
+        val type: DeclaredType
     )
 
     override fun getDebugDescription(): String {
@@ -112,7 +113,7 @@ fun IRInstructionsBuilder.createStructureInitialize(
 ): Reference {
     checkFields(fields.keys, structureType)
     val structurePointer = createAlloca(structureType.wrappedType, name)
-    val structure = Reference.Anonymous(structureType, structurePointer)
+    val structure = MemoryReference(structureType, structurePointer, this)
 
     for ((fieldName, value) in fields) {
         createStructureStore(structure, fieldName, value)
@@ -131,32 +132,32 @@ private fun checkFields(passedFields: Set<String>, structureType: StructureType)
 }
 
 fun IRInstructionsBuilder.createStructureStore(
-    structure: Reference,
+    reference: Reference,
     fieldName: String,
     value: LLVMValue
 ): LLVMInstructionValue {
-    val fieldPointer = createGetStructureFieldPointer(structure, fieldName)
+    val fieldPointer = createGetStructureFieldPointer(reference as MemoryReference, fieldName)
     return createStore(fieldPointer, value)
 }
 
 fun IRInstructionsBuilder.createStructureLoad(
-    structure: Reference,
+    reference: Reference,
     fieldName: String
 ): Reference {
-    val structureType = structure.type as StructureType
-    val fieldPointer = createGetStructureFieldPointer(structure, fieldName)
+    val structureType = reference.type as StructureType
+    val fieldPointer = createGetStructureFieldPointer(reference as MemoryReference, fieldName)
     val fieldType = structureType.getFieldType(fieldName)
     val value = createLoad(fieldPointer, fieldType.wrappedType, fieldName)
-    return Reference.Anonymous(fieldType, value)
+    return DirectlyReference(fieldType, value)
 }
 
-fun IRInstructionsBuilder.createGetStructureFieldPointer(
-    structure: Reference,
+private fun IRInstructionsBuilder.createGetStructureFieldPointer(
+    reference: MemoryReference,
     fieldName: String
 ): LLVMValue {
-    val structureType = structure.type as StructureType
+    val structureType = reference.type as StructureType
     return createStructureGetElementPointer(
-        structurePointer = structure.value,
+        structurePointer = reference.pointer,
         index = structureType.getFieldIndex(fieldName),
         name = fieldName + "Pointer"
     )

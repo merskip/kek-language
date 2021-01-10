@@ -12,19 +12,19 @@ class BinaryOperatorCompiler(
         val rhs = context.compile(node.rhs)!!
 
         return if (node.identifier == "=") {
-            compileAssignOperator(lhs, rhs)
+            compileAssignOperator(lhs as WriteableReference, rhs)
         } else {
             val function = getFunctionForOperator(node.identifier, lhs.type, rhs.type)
             val result = context.instructionsBuilder.createCall(
                 function = function,
-                arguments = listOf(lhs.getValue(), rhs.getValue())
+                arguments = listOf(lhs.get, rhs.get)
             )
-            Reference.Anonymous(function.returnType, result)
+            DirectlyReference(function.returnType, result)
         }
     }
 
-    private fun compileAssignOperator(lhs: Reference, rhs: Reference): Reference {
-        context.instructionsBuilder.createStore(lhs.rawValue, rhs.getValue())
+    private fun compileAssignOperator(lhs: WriteableReference, rhs: Reference): Reference {
+        lhs.set(rhs.get)
         return rhs
     }
 

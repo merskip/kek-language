@@ -1,8 +1,5 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.global.LLVM
-import pl.merskip.keklang.ast.ParserAST
-import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.llvm.LLVMContext
 import pl.merskip.keklang.llvm.LLVMIntegerType
 import pl.merskip.keklang.llvm.LLVMModule
@@ -12,7 +9,6 @@ import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.logger.Logger
 import pl.merskip.keklang.toInt
 import java.io.File
-import kotlin.math.log
 
 class Builtin(
     private val context: LLVMContext,
@@ -113,7 +109,7 @@ class Builtin(
             implementation { (exitCode) ->
                 context.instructionsBuilder.createSystemCall(
                     60,
-                    listOf(exitCode.value),
+                    listOf(exitCode.get),
                     voidType.wrappedType,
                     null
                 )
@@ -127,13 +123,13 @@ class Builtin(
             identifier("print")
             parameters("string" to stringType)
             implementation { (string) ->
-                val standardOutput = createInteger(1L).value
+                val standardOutput = createInteger(1L).get
                 val guts = context.instructionsBuilder.createStructureLoad(string, "guts")
                 val length = context.instructionsBuilder.createStructureLoad(string, "length")
 
                 context.instructionsBuilder.createSystemCall(
                     1,
-                    listOf(standardOutput, guts.value, length.value),
+                    listOf(standardOutput, guts.get, length.get),
                     voidType.wrappedType,
                     null
                 )
@@ -154,12 +150,12 @@ class Builtin(
                 val address = context.instructionsBuilder.createSystemCall(
                     0x09,
                     listOf(
-                        /* addr= */ createInteger(0L).value,
-                        /* length= */ createInteger(255L).value,
-                        /* prot= */ createInteger(0x3 /* PROT_READ | PROT_WRITE */).value,
-                        /* flags = */ createInteger(0x22 /* MAP_ANONYMOUS | MAP_PRIVATE */).value,
-                        /* fd= */ createInteger(-1).value,
-                        /* offset= */ createInteger(0).value
+                        /* addr= */ createInteger(0L).get,
+                        /* length= */ createInteger(255L).get, // TODO: Use size
+                        /* prot= */ createInteger(0x3 /* PROT_READ | PROT_WRITE */).get,
+                        /* flags = */ createInteger(0x22 /* MAP_ANONYMOUS | MAP_PRIVATE */).get,
+                        /* fd= */ createInteger(-1).get,
+                        /* offset= */ createInteger(0).get
                     ),
                     bytePointerType.wrappedType,
                     "syscall_mmap"
@@ -177,8 +173,8 @@ class Builtin(
                 "destination" to bytePointerType
             )
             implementation { (source, destination) ->
-                val value = context.instructionsBuilder.createLoad(source.rawValue, "value")
-                context.instructionsBuilder.createStore(destination.rawValue, value)
+                val value = context.instructionsBuilder.createLoad(source.get, "byteValue")
+                context.instructionsBuilder.createStore(destination.get, value)
                 context.instructionsBuilder.createReturnVoid()
             }
         }
@@ -195,15 +191,15 @@ class Builtin(
              )
              returnType(stringType)
              implementation { (guts, length) ->
-                 val self = context.instructionsBuilder.createStructureInitialize(
+                 val structure = context.instructionsBuilder.createStructureInitialize(
                      structureType = context.builtin.stringType,
                      fields = mapOf(
-                         "guts" to guts.getValue(),
-                         "length" to length.getValue()
+                         "guts" to guts.get,
+                         "length" to length.get
                      ),
                      name = null
                  )
-                 context.instructionsBuilder.createReturn(self.rawValue)
+                 context.instructionsBuilder.createReturn(structure.get)
              }
          }
     }
@@ -214,7 +210,7 @@ class Builtin(
             rhs = integerType,
             simpleIdentifier = "adding",
             returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createAddition(lhs.value, rhs.value, "add")
+            context.instructionsBuilder.createAddition(lhs.get, rhs.get, "add")
         }
 
         context.registerOperatorFunction(
@@ -222,7 +218,7 @@ class Builtin(
             rhs = integerType,
             simpleIdentifier = "subtract",
             returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createSubtraction(lhs.value, rhs.value, "sub")
+            context.instructionsBuilder.createSubtraction(lhs.get, rhs.get, "sub")
         }
 
         context.registerOperatorFunction(
@@ -230,7 +226,7 @@ class Builtin(
             rhs = integerType,
             simpleIdentifier = "multiple",
             returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createMultiplication(lhs.value, rhs.value, "mul")
+            context.instructionsBuilder.createMultiplication(lhs.get, rhs.get, "mul")
         }
 
         context.registerOperatorFunction(
@@ -239,7 +235,7 @@ class Builtin(
             simpleIdentifier = "isLessThan",
             returnType = booleanType
         ) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.SLT, lhs.getValue(), rhs.getValue(), "isLessThan")
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.SLT, lhs.get, rhs.get, "isLessThan")
         }
 
         context.registerOperatorFunction(
@@ -248,7 +244,7 @@ class Builtin(
             simpleIdentifier = "isGreaterThan",
             returnType = booleanType
         ) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.SGT, lhs.getValue(), rhs.getValue(), "isGreaterThan")
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.SGT, lhs.get, rhs.get, "isGreaterThan")
         }
 
         context.registerOperatorFunction(
@@ -256,7 +252,7 @@ class Builtin(
             rhs = integerType,
             simpleIdentifier = "isEqual",
             returnType = booleanType) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.value, rhs.value, "isEqual")
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.get, rhs.get, "isEqual")
         }
 
         context.registerOperatorFunction(
@@ -264,7 +260,7 @@ class Builtin(
             rhs = booleanType,
             simpleIdentifier = "isEqual",
             returnType = booleanType) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.value, rhs.value, "isEqual")
+            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.get, rhs.get, "isEqual")
         }
 
         context.registerOperatorFunction(
@@ -273,18 +269,7 @@ class Builtin(
             simpleIdentifier = "adding",
             returnType = bytePointerType
         ) { lhs, rhs ->
-            context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, lhs.getValue(), listOf(rhs.getValue()), null)
-        }
-
-        context.registerOperatorFunction(
-            lhs = bytePointerType,
-            rhs = bytePointerType,
-            simpleIdentifier = "setValueFromPointer",
-            returnType = voidType
-        ) { lhs, rhs ->
-            val value = context.instructionsBuilder.createLoad(rhs.getValue(), "value")
-            context.instructionsBuilder.createStore(lhs.rawValue, value)
-            null
+            context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, lhs.get, listOf(rhs.get), null)
         }
     }
 
@@ -324,16 +309,16 @@ class Builtin(
 
     fun createBoolean(value: Boolean): Reference {
         val constantValue = (booleanType.wrappedType as LLVMIntegerType).constantValue(value.toInt().toLong(), isSigned = false)
-        return Reference.Anonymous(booleanType, constantValue)
+        return DirectlyReference(booleanType, constantValue)
     }
 
     fun createInteger(value: Long): Reference {
         val constantValue = (integerType.wrappedType as LLVMIntegerType).constantValue(value, isSigned = true)
-        return Reference.Anonymous(integerType, constantValue)
+        return DirectlyReference(integerType, constantValue)
     }
 
     fun createCastToBytePointer(context: CompilerContext, value: LLVMValue, name: String? = null): Reference {
         val cast = context.instructionsBuilder.buildCast(value, bytePointerType.wrappedType, name)
-        return Reference.Anonymous(integerType, cast)
+        return DirectlyReference(integerType, cast)
     }
 }

@@ -92,19 +92,19 @@ fun main(args: Array<String>) = mainBody {
         val module = LLVMModule("kek-lang", context, targetTriple?.let { LLVMTargetTriple.fromString(it) })
         val typesRegister = TypesRegister()
         val builtin = Builtin(context, module, typesRegister)
-        val compiler = CompilerV2(
-            CompilerContext(
-                context,
-                module,
-                typesRegister,
-                builtin,
-                ScopesStack(),
-                IRInstructionsBuilder(context, module.getTargetTriple()),
-                DebugInformationBuilder(context, module)
-            )
-        )
-
         try {
+            val compiler = CompilerV2(
+                CompilerContext(
+                    context,
+                    module,
+                    typesRegister,
+                    builtin,
+                    ScopesStack(),
+                    IRInstructionsBuilder(context, module.getTargetTriple()),
+                    DebugInformationBuilder(context, module)
+                )
+            )
+
             if (isInterpreterMode()) {
                 withInterpreter { inputText ->
                     processSource(null, inputText, compiler)
@@ -125,11 +125,10 @@ fun main(args: Array<String>) = mainBody {
                     ?: throw Exception("Not found main function")
                 JIT(compiler.context.module.reference).run(mainFunction)
             }
-        }
-        finally {
+        } finally {
             if (llvmIRDump) {
-                val plainIR = compiler.context.module.getIntermediateRepresentation()
-                val richIR = RicherLLVMIRText(plainIR, compiler.context.typesRegister).rich()
+                val plainIR = module.getIntermediateRepresentation()
+                val richIR = RicherLLVMIRText(plainIR, typesRegister).rich()
                 println(richIR)
             }
         }

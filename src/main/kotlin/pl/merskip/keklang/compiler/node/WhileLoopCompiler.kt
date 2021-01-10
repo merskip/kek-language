@@ -19,12 +19,10 @@ class WhileLoopCompiler(
         context.instructionsBuilder.insertBasicBlock(loopEntryBlock)
         context.instructionsBuilder.moveAtEnd(loopEntryBlock)
 
-
-
         val condition = context.compile(node.condition)
             ?: context.builtin.createBoolean(false)
         context.instructionsBuilder.createConditionalBranch(
-            condition = condition.getValue(),
+            condition = condition.get,
             ifTrue = loopBodyBlock,
             ifFalse = finallyBlock
         )
