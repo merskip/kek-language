@@ -63,10 +63,10 @@ class CompilerV2(
         context.module.addFlag(ModuleFlagBehavior.Warning, "Dwarf Version", 2)
         context.module.addFlag(ModuleFlagBehavior.Warning, "Debug Info Version", LLVM.LLVMDebugMetadataVersion().toLong())
 
-        val file = context.debugBuilder.createFile(fileNode.sourceLocation.file.name, fileNode.sourceLocation.file.parent)
+        val debugFile = context.debugBuilder.createFile(fileNode.sourceLocation.file.name, fileNode.sourceLocation.file.parent)
         context.debugBuilder.createCompileUnit(
             sourceLanguage = SourceLanguage.C89,
-            file = file,
+            file = debugFile,
             producer = "KeK-Language Compiler",
             isOptimized = true,
             flags = "",
@@ -77,6 +77,7 @@ class CompilerV2(
             splitDebugInlining = false,
             debugInfoForProfiling = false
         )
+        context.debugFile = debugFile
     }
 
     private fun createEntryPoint() {

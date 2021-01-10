@@ -1,6 +1,9 @@
 package pl.merskip.keklang.compiler
 
+import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.llvm.LLVMFunctionType
+import pl.merskip.keklang.llvm.LLVMIntegerType
+import pl.merskip.keklang.llvm.enum.Encoding
 
 typealias ImplementationBuilder = (List<Reference>) -> Unit
 
@@ -12,6 +15,7 @@ class FunctionBuilder {
     private var declaringType: DeclaredType? = null
     private var isExtern: Boolean = false
     private var isInline: Boolean = false
+    private var sourceLocation: SourceLocation? = null
     private var implementation: ImplementationBuilder? = null
 
     fun identifier(identifier: String) =
@@ -34,6 +38,9 @@ class FunctionBuilder {
 
     fun isInline(inline: Boolean = true) =
         apply { this.isInline = inline }
+
+    fun sourceLocation(sourceLocation: SourceLocation) =
+        apply { this.sourceLocation = sourceLocation }
 
     fun implementation(implementation: ImplementationBuilder) =
         apply { this.implementation = implementation }
@@ -63,6 +70,35 @@ class FunctionBuilder {
 
         functionValue.getParametersValues().zip(parameters).map { (parameterValue, parameter) ->
             parameterValue.setName(parameter.name)
+        }
+
+        val (debugFile, sourceLocation) = Pair(context.debugFile, sourceLocation)
+
+        if (debugFile != null && sourceLocation != null) {
+            val subroutine = context.debugBuilder.createSubroutineType(
+                file = debugFile,
+                parametersTypes = parameters.map { parameter ->
+                    val sizeInBits = (parameter.type.wrappedType as? LLVMIntegerType)?.getSize() ?: 0
+                    context.debugBuilder.createBasicType(parameter.name, sizeInBits, Encoding.Signed, flags = 0)
+                },
+                flags = 0
+            )
+
+            val subprogram = context.debugBuilder.createSubprogram(
+                scope = debugFile,
+                name = function.getDebugDescription(),
+                linkageName = function.identifier.mangled,
+                file = debugFile,
+                lineNumber = sourceLocation.startIndex.line,
+                type = subroutine,
+                isLocalToUnit = false,
+                isDefinition = true,
+                scopeLine = sourceLocation.startIndex.line,
+                flags = 0,
+                isOptimized = true
+            )
+
+            function.setDebugSubprogram(subprogram)
         }
 
         if (implementation != null) {

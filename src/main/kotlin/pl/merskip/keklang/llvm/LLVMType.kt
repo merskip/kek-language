@@ -76,6 +76,10 @@ class LLVMVoidType(reference: LLVMTypeRef) : LLVMType(reference)
 
 class LLVMIntegerType(reference: LLVMTypeRef) : LLVMType(reference) {
 
+    fun getSize(): Long {
+        return LLVMGetIntTypeWidth(reference).toLong()
+    }
+
     fun constantValue(value: Long, isSigned: Boolean): LLVMConstantValue {
         return LLVMConstantValue(LLVMConstInt(reference, value, isSigned.toInt()))
     }

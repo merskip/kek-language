@@ -1,6 +1,5 @@
 package pl.merskip.keklang.llvm
 
-import org.bytedeco.javacpp.SizeTPointer
 import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
 import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
@@ -98,7 +97,7 @@ class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
     /**
      * Set the subprogram attached to a function
      */
-    fun setDebugSubprogram(subprogram: Subprogram) {
+    fun setDebugSubprogram(subprogram: LLVMSubprogramMetadata) {
         LLVMSetSubprogram(reference, subprogram.reference)
     }
 }

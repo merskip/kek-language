@@ -1,5 +1,6 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.*
 
 abstract class DeclaredType(
@@ -69,11 +70,16 @@ class DeclaredFunction(
         get() = returnType.isVoid
 
     lateinit var entryBlock: LLVMBasicBlockValue
+    lateinit var debugScope: LLVMLocalScopeMetadata
 
     class Parameter(
         val name: String,
         val type: DeclaredType
     )
+
+    fun setDebugSubprogram(subprogram: LLVMSubprogramMetadata) {
+        LLVMSetSubprogram(value.reference, subprogram.reference)
+    }
 
     override fun getDebugDescription(): String {
         var description = ""

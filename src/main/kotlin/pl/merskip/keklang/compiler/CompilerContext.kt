@@ -2,10 +2,7 @@ package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.ast.node.ASTNode
 import pl.merskip.keklang.compiler.node.ASTNodeCompiling
-import pl.merskip.keklang.llvm.DebugInformationBuilder
-import pl.merskip.keklang.llvm.IRInstructionsBuilder
-import pl.merskip.keklang.llvm.LLVMContext
-import pl.merskip.keklang.llvm.LLVMModule
+import pl.merskip.keklang.llvm.*
 import java.lang.reflect.ParameterizedType
 
 class CompilerContext(
@@ -19,6 +16,7 @@ class CompilerContext(
 ) {
 
     lateinit var entryPointFunction: DeclaredFunction
+    var debugFile: LLVMFileMetadata? = null
 
     var nodesCompilers = mutableListOf<ASTNodeCompiling<*>>()
 

@@ -26,7 +26,7 @@ class RicherLLVMIRText(
     private val typeIntegerRegex = Regex("[^.a-zA-Z0-9]i[0-9]+\\**")
     private val typeFloatingPointRegex = Regex("(half|bfloat|float|double|fp128|x86_fp80|ppc_fp128)\\**")
     private val typeArrayRegex = Regex("\\[\\d+ x .+?]\\**")
-    private val typeStructure = Regex("\\{ .*? }\\*8")
+    private val typeStructure = Regex("\\{ .*? }\\**")
     private val anyTypeRegex = oneOf(typeVoidRegex, typeIntegerRegex, typeFloatingPointRegex, typeArrayRegex, typeStructure)
 
     /** See [https://llvm.org/docs/LangRef.html#constants] */
@@ -49,7 +49,7 @@ class RicherLLVMIRText(
 
     private val stringRegex = Regex("\"(.*?)\"")
     private val labelRegex = Regex(".*:")
-    private val terminatorInstructionRegex = Regex("ret|br|switch|indirectbr|invoke|callbr|resume|catchswitch|catchret|cleanupret|unreachable")
+    private val terminatorInstructionRegex = Regex("ret|br|switch|indirectbr|invoke|callbr|resume|catchswitch|catchret|cleanupret|unreachable").spaceAround()
 
     fun rich(): String {
         val lines = plainLLVMIR.lineSequence().toMutableList()
@@ -185,7 +185,7 @@ class RicherLLVMIRText(
                     .colored(localIdentifierRegex, Color.Cyan)
                     .colored(unnamedIdentifierRegex, Color.Cyan)
                     .colored(metadataRegex, Color.Red)
-                    .colored(attributeRegex, Color.Red)
+                    .colored(attributeRegex, Color.BrightRed)
                     .colored(anyConstantRegex, Color.White)
                     .colored(anyTypeRegex, Color.Green)
                     .colored(labelRegex, Color.Magenta)
@@ -217,7 +217,10 @@ class RicherLLVMIRText(
     }
 
     private fun Regex.spaceBefore(): Regex =
-        Regex("\\s$pattern")
+        Regex("\\s(?:$pattern)")
+
+    private fun Regex.spaceAround(): Regex =
+        Regex("(?:^|\\s)(?:$pattern)(?:\\s|$)")
 
     private fun oneOf(vararg items: Regex): Regex =
         Regex(items.joinToString("|") { "(?:${it.pattern})" })
@@ -226,6 +229,9 @@ class RicherLLVMIRText(
         isInsideStringOrComment(range.first) || isInsideStringOrComment(range.last)
 
     private fun String.isInsideStringOrComment(index: Int): Boolean {
+        if (index < 0 || index >= length)
+            return false
+
         var isInsideString = false
         subSequence(0, index).forEach { character ->
             if (character == stringLimiterCharacter) isInsideString = !isInsideString

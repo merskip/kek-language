@@ -30,6 +30,7 @@ class FunctionCompiler(
             identifier(node.identifier)
             parameters(parameters)
             returnType(returnType)
+            sourceLocation(node.sourceLocation)
         }
     }
 

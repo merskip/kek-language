@@ -105,7 +105,7 @@ class DebugInformationBuilder(
      * @param flags e.g. is this function prototyped or not. These flags are used to emit dwarf attributes.
      * @param isOptimized True if optimization is ON
      */
-    fun createFunction(
+    fun createSubprogram(
         scope: LLVMScopeMetadata,
         name: String,
         linkageName: String?,
@@ -117,7 +117,7 @@ class DebugInformationBuilder(
         scopeLine: Int,
         flags: Int,
         isOptimized: Boolean
-    ): Subprogram {
+    ): LLVMSubprogramMetadata {
         return LLVMDIBuilderCreateFunction(
             diBuilder,
             scope.reference,
@@ -133,7 +133,7 @@ class DebugInformationBuilder(
             scopeLine,
             flags,
             isOptimized.toInt()
-        ).let { Subprogram(it) }
+        ).let { LLVMSubprogramMetadata(it) }
     }
 
     /**

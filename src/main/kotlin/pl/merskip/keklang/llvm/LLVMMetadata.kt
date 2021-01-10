@@ -24,7 +24,7 @@ abstract class LLVMLocalScopeMetadata(
     reference: LLVMMetadataRef
 ) : LLVMScopeMetadata(reference)
 
-class Subprogram(
+class LLVMSubprogramMetadata(
     reference: LLVMMetadataRef
 ) : LLVMLocalScopeMetadata(reference)
 
