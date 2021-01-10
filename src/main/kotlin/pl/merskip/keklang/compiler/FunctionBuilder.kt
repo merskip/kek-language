@@ -132,7 +132,7 @@ class FunctionBuilder {
 
         fun buildImplementation(context: CompilerContext, function: DeclaredFunction, implementation: ImplementationBuilder) {
             function.entryBlock = context.instructionsBuilder.appendBasicBlockAtEnd(function.value, "entry")
-            context.scopesStack.createScope {
+            context.scopesStack.createScope(function.debugScope) {
                 val parameterReferences = function.value.getParametersValues().zip(function.parameters).map { (parameterValue, parameter) ->
 
                     val parameterIdentifier = Identifier.Reference(parameter.name)

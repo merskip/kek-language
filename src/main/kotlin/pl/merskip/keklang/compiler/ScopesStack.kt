@@ -1,7 +1,6 @@
 package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.llvm.LLVMLocalScopeMetadata
-import pl.merskip.keklang.llvm.LLVMValue
 
 class ScopesStack {
 
@@ -33,19 +32,17 @@ class ScopesStack {
         }
     }
 
-    fun createScope(block: () -> Unit) {
-        enterScope()
+    fun createScope(debugScope: LLVMLocalScopeMetadata? = null, block: () -> Unit) {
+        scopes.add(Scope(debugScope))
         block()
-        leaveScope()
-    }
-
-    private fun enterScope() {
-        scopes.add(Scope())
-    }
-
-    private fun leaveScope() {
         if (scopes.size == 1)
             throw IllegalStateException("Try to leave from root scope, but there are always must be root scope.")
         scopes.dropLast(1)
+    }
+
+    fun getDebugScope(): LLVMLocalScopeMetadata? {
+        return scopes.reversed()
+            .mapNotNull { it.debugScope }
+            .firstOrNull()
     }
 }
