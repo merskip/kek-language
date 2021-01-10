@@ -151,7 +151,7 @@ class Builtin(
                     0x09,
                     listOf(
                         /* addr= */ createInteger(0L).get,
-                        /* length= */ createInteger(255L).get, // TODO: Use size
+                        /* length= */ size.get,
                         /* prot= */ createInteger(0x3 /* PROT_READ | PROT_WRITE */).get,
                         /* flags = */ createInteger(0x22 /* MAP_ANONYMOUS | MAP_PRIVATE */).get,
                         /* fd= */ createInteger(-1).get,
