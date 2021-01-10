@@ -73,7 +73,7 @@ fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler
         println(PrinterASTNode().print(fileNode))
     }
 
-    compiler.compile(listOf(fileNode))
+    compiler.compile(fileNode)
 }
 
 fun ApplicationArguments.processModule(context: CompilerContext) {

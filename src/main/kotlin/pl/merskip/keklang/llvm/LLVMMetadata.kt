@@ -61,3 +61,7 @@ class LLVMExpressionMetadata(
 class LLVMLocationMetadata(
     reference: LLVMMetadataRef
 ) : LLVMMetadata(reference)
+
+class LLVMValueAsMetadata(
+    reference: LLVMMetadataRef
+) : LLVMMetadata(reference)

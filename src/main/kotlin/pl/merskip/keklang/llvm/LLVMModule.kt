@@ -3,6 +3,7 @@ package pl.merskip.keklang.llvm
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM.*
+import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
 
 class LLVMModule(
     val reference: LLVMModuleRef
@@ -19,6 +20,23 @@ class LLVMModule(
 
     fun addFunction(name: String, type: LLVMFunctionType): LLVMFunctionValue {
         return LLVMFunctionValue(LLVMAddFunction(reference, name, type.reference))
+    }
+
+    fun addFlag(behavior: ModuleFlagBehavior, key: String, value: Long) {
+        val metadata = LLVMValueAsMetadata(LLVMValueAsMetadata(
+            LLVMConstInt(LLVMInt32Type(), value, 0)
+        ))
+        addFlag(behavior, key, metadata)
+    }
+
+    fun addFlag(behavior: ModuleFlagBehavior, key: String, metadata: LLVMMetadata) {
+        LLVMAddModuleFlag(
+            reference,
+            behavior.rawValue,
+            key,
+            key.length.toLong(),
+            metadata.reference
+        )
     }
 
     fun getTargetTriple(): LLVMTargetTriple {
