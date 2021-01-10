@@ -8,6 +8,8 @@ class BinaryOperatorCompiler(
 ) : ASTNodeCompiling<BinaryOperatorNodeAST> {
 
     override fun compile(node: BinaryOperatorNodeAST): Reference {
+        context.setSourceLocation(node.sourceLocation)
+
         val lhs = context.compile(node.lhs)!!
         val rhs = context.compile(node.rhs)!!
 

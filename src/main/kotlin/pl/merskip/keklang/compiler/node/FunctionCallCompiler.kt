@@ -4,14 +4,13 @@ import pl.merskip.keklang.ast.node.FunctionCallASTNode
 import pl.merskip.keklang.ast.node.StatementASTNode
 import pl.merskip.keklang.ast.node.StaticFunctionCallASTNode
 import pl.merskip.keklang.compiler.*
-import pl.merskip.keklang.lexer.SourceLocation
 
 class FunctionCallCompiler(
     context: CompilerContext
 ) : FunctionCallCompilerBase(context), ASTNodeCompiling<FunctionCallASTNode> {
 
     override fun compile(node: FunctionCallASTNode): Reference {
-        return compileCall(null, node.identifier, node.parameters, node.sourceLocation)
+        return compileCall(null, node.identifier, node.parameters)
     }
 }
 
@@ -20,7 +19,7 @@ class StaticFunctionCallCompiler(
 ) : FunctionCallCompilerBase(context), ASTNodeCompiling<StaticFunctionCallASTNode> {
 
     override fun compile(node: StaticFunctionCallASTNode): Reference {
-        return compileCall(Identifier.Type(node.type.identifier), node.identifier, node.parameters, node.sourceLocation)
+        return compileCall(Identifier.Type(node.type.identifier), node.identifier, node.parameters)
     }
 }
 
@@ -31,21 +30,11 @@ abstract class FunctionCallCompilerBase(
     protected fun compileCall(
         typeIdentifier: Identifier?,
         functionIdentifier: String,
-        parametersNodes: List<StatementASTNode>,
-        sourceLocation: SourceLocation
+        parametersNodes: List<StatementASTNode>
     ): Reference {
         val parameters = compileParameters(parametersNodes)
         val function = findFunction(typeIdentifier, functionIdentifier, parameters.map { it.type.identifier })
 
-        val debugScope = context.scopesStack.getDebugScope()
-        if (debugScope != null) {
-            val debugLocation = context.debugBuilder.createDebugLocation(
-                line = sourceLocation.startIndex.line,
-                column = sourceLocation.startIndex.column,
-                scope = context.scopesStack.getDebugScope()!!
-            )
-            context.instructionsBuilder.setCurrentDebugLocation(debugLocation)
-        }
         val value = context.instructionsBuilder.createCall(
             function = function,
             arguments = parameters.map { it.get }

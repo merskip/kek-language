@@ -9,6 +9,7 @@ class StatementCompiler(
 ): ASTNodeCompiling<StatementASTNode> {
 
     override fun compile(node: StatementASTNode): Reference? {
+        context.setSourceLocation(node.sourceLocation)
         return when (node) {
             is ReferenceASTNode -> context.compile(node)
             is IntegerConstantASTNode -> context.compile(node)

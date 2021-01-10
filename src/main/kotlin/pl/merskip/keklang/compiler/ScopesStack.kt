@@ -39,10 +39,4 @@ class ScopesStack {
             throw IllegalStateException("Try to leave from root scope, but there are always must be root scope.")
         scopes.dropLast(1)
     }
-
-    fun getDebugScope(): LLVMLocalScopeMetadata? {
-        return scopes.reversed()
-            .mapNotNull { it.debugScope }
-            .firstOrNull()
-    }
 }

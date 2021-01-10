@@ -2,7 +2,9 @@ package pl.merskip.keklang.compiler
 
 import pl.merskip.keklang.ast.node.ASTNode
 import pl.merskip.keklang.compiler.node.ASTNodeCompiling
+import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.llvm.*
+import pl.merskip.keklang.logger.Logger
 import java.lang.reflect.ParameterizedType
 
 class CompilerContext(
@@ -14,6 +16,8 @@ class CompilerContext(
     val instructionsBuilder: IRInstructionsBuilder,
     val debugBuilder: DebugInformationBuilder
 ) {
+
+    private val logger = Logger(this::class)
 
     lateinit var entryPointFunction: DeclaredFunction
     var debugFile: LLVMFileMetadata? = null
@@ -38,5 +42,20 @@ class CompilerContext(
 
     fun <T: ASTNode> addNodeCompiler(nodeCompiling: ASTNodeCompiling<T>) {
         nodesCompilers.add(nodeCompiling)
+    }
+
+    fun setSourceLocation(sourceLocation: SourceLocation) {
+        val debugScope = scopesStack.current.debugScope
+        if (debugScope == null) {
+            logger.warning("Cannot create source location: ${sourceLocation}, because of no debug scope in current scope stack")
+            return
+        }
+
+        val debugLocation = debugBuilder.createDebugLocation(
+            line = sourceLocation.startIndex.line,
+            column = sourceLocation.startIndex.column,
+            scope = debugScope
+        )
+        instructionsBuilder.setCurrentDebugLocation(debugLocation)
     }
 }
