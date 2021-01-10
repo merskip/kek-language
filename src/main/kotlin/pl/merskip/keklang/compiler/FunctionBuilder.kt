@@ -1,13 +1,17 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.llvm.LLVMIntegerType
 import pl.merskip.keklang.llvm.enum.Encoding
+import pl.merskip.keklang.logger.Logger
 
 typealias ImplementationBuilder = (List<Reference>) -> Unit
 
 class FunctionBuilder {
+
+    private val logger = Logger(this::class)
 
     private lateinit var canonicalIdentifier: String
     private lateinit var parameters: List<DeclaredFunction.Parameter>
@@ -75,12 +79,15 @@ class FunctionBuilder {
         val (debugFile, sourceLocation) = Pair(context.debugFile, sourceLocation)
 
         if (debugFile != null && sourceLocation != null) {
+
+            val debugParameters = parameters.map { parameter ->
+                val sizeInBits = (parameter.type.wrappedType as? LLVMIntegerType)?.getSize() ?: 0
+                context.debugBuilder.createBasicType(parameter.name, sizeInBits, Encoding.Signed, flags = 0)
+            }
+
             val subroutine = context.debugBuilder.createSubroutineType(
                 file = debugFile,
-                parametersTypes = parameters.map { parameter ->
-                    val sizeInBits = (parameter.type.wrappedType as? LLVMIntegerType)?.getSize() ?: 0
-                    context.debugBuilder.createBasicType(parameter.name, sizeInBits, Encoding.Signed, flags = 0)
-                },
+                parametersTypes = debugParameters,
                 flags = 0
             )
 
@@ -99,6 +106,10 @@ class FunctionBuilder {
             )
 
             function.setDebugSubprogram(subprogram)
+            function.debugParameters = debugParameters
+        }
+        else {
+            logger.warning("Cannot create debug information for function: ${function.getDebugDescription()}")
         }
 
         if (implementation != null) {
@@ -139,6 +150,33 @@ class FunctionBuilder {
 
                     val parameterAlloca = context.instructionsBuilder.createAlloca(parameter.type.wrappedType, "_" + parameter.name)
                     context.instructionsBuilder.createStore(parameterAlloca, parameterValue)
+
+                    val index =  function.parameters.indexOf(parameter)
+                    val debugFile = context.debugFile
+                    val debugScope = function.debugScope
+                    if (debugFile != null && debugScope != null) {
+                        val debugVariable = context.debugBuilder.createParameterVariable(
+                            scope = debugScope,
+                            name = parameter.name,
+                            argumentIndex = index,
+                            file = debugFile,
+                            lineNumber = 0,
+                            type = function.debugParameters!![index],
+                            alwaysPreserve = true,
+                            flags = 0
+                        )
+                        context.debugBuilder.insertDeclareAtEnd(
+                            storage = parameterAlloca.reference,
+                            variable = debugVariable,
+                            expression = context.debugBuilder.createEmptyExpression(),
+                            location = context.debugBuilder.createDebugLocation(
+                                line = 0,
+                                column = 0,
+                                scope = debugScope
+                            ),
+                            block = context.instructionsBuilder.getInsertBlock().blockReference
+                        )
+                    }
 
                     val reference = IdentifiableMemoryReference(parameterIdentifier, parameter.type, parameterAlloca, context.instructionsBuilder)
                     context.scopesStack.current.addReference(reference)

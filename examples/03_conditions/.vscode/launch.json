@@ -8,7 +8,7 @@
             "target": "conditions",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
-            "autorun": ["b main"]
+            "autorun": ["b _start"]
         }
     ]
 }

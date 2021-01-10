@@ -71,6 +71,7 @@ class DeclaredFunction(
 
     lateinit var entryBlock: LLVMBasicBlockValue
     var debugScope: LLVMLocalScopeMetadata? = null
+    var debugParameters: List<LLVMTypeMetadata>? = null
 
     class Parameter(
         val name: String,
