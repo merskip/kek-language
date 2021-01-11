@@ -1,6 +1,5 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.llvm.LLVMIntegerType
@@ -29,7 +28,7 @@ class FunctionBuilder {
         apply { this.parameters = parameters }
 
     fun parameters(vararg parameters: Pair<String, DeclaredType>) =
-        apply { this.parameters = parameters.map { DeclaredFunction.Parameter(it.first, it.second) } }
+        apply { this.parameters = parameters.map { DeclaredFunction.Parameter(it.first, it.second, null) } }
 
     fun returnType(returnType: DeclaredType) =
         apply { this.returnType = returnType }
@@ -106,7 +105,20 @@ class FunctionBuilder {
             )
 
             function.setDebugSubprogram(subprogram)
-            function.debugParameters = debugParameters
+
+            function.debugVariableParameters = parameters.zip(debugParameters).mapIndexed { index, (parameter, debugParameterType) ->
+                context.debugBuilder.createParameterVariable(
+                    scope = subprogram,
+                    name = parameter.name,
+                    argumentIndex = index,
+                    file = debugFile,
+                    lineNumber = sourceLocation.startIndex.line,
+                    type = debugParameterType,
+                    alwaysPreserve = true,
+                    flags = 0
+                )
+            }
+
         }
         else {
             logger.warning("Cannot create debug information for function: ${function.getDebugDescription()}")
@@ -130,6 +142,8 @@ class FunctionBuilder {
 
     companion object {
 
+        private val logger = Logger(this::class)
+
         fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): DeclaredFunction {
             val functionBuilder = FunctionBuilder()
             functionBuilder.parameters = emptyList()
@@ -152,30 +166,23 @@ class FunctionBuilder {
                     context.instructionsBuilder.createStore(parameterAlloca, parameterValue)
 
                     val index =  function.parameters.indexOf(parameter)
-                    val debugFile = context.debugFile
                     val debugScope = function.debugScope
-                    if (debugFile != null && debugScope != null) {
-                        val debugVariable = context.debugBuilder.createParameterVariable(
-                            scope = debugScope,
-                            name = parameter.name,
-                            argumentIndex = index,
-                            file = debugFile,
-                            lineNumber = 0,
-                            type = function.debugParameters!![index],
-                            alwaysPreserve = true,
-                            flags = 0
-                        )
+                    val debugParameters = function.debugVariableParameters
+                    if (debugScope != null && debugParameters != null && parameter.sourceLocation != null) {
                         context.debugBuilder.insertDeclareAtEnd(
                             storage = parameterAlloca.reference,
-                            variable = debugVariable,
+                            variable = debugParameters[index],
                             expression = context.debugBuilder.createEmptyExpression(),
                             location = context.debugBuilder.createDebugLocation(
-                                line = 0,
-                                column = 0,
+                                line = parameter.sourceLocation.startIndex.line,
+                                column = parameter.sourceLocation.startIndex.column,
                                 scope = debugScope
                             ),
                             block = context.instructionsBuilder.getInsertBlock().blockReference
                         )
+                    }
+                    else {
+                        logger.warning("Cannot emit parameter declare of ${parameter.name}")
                     }
 
                     val reference = IdentifiableMemoryReference(parameterIdentifier, parameter.type, parameterAlloca, context.instructionsBuilder)

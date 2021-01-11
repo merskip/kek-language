@@ -1,0 +1,12 @@
+
+func printNTimes(n: Integer, message: String) {
+    var i: Integer = 0
+    while (i < n) {
+        System.print(message)
+        i = i + 1
+    }
+}
+
+func main() {
+    printNTimes(5, "Hello world!\n")
+}

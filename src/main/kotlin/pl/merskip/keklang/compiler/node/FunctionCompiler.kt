@@ -19,7 +19,7 @@ class FunctionCompiler(
         val parameters = node.parameters.map {
             val type = context.typesRegister.find(Identifier.Type(it.type.identifier))
                 ?: throw Exception("Not found type: ${it.type.identifier}")
-            DeclaredFunction.Parameter(it.identifier, type)
+            DeclaredFunction.Parameter(it.identifier, type, it.sourceLocation)
         }
         val returnType = if (node.returnType != null)
             (context.typesRegister.find(Identifier.Type(node.returnType.identifier))
