@@ -7,8 +7,8 @@ import java.time.LocalDateTime
 import kotlin.reflect.KClass
 
 class Logger<T : Any>(
-    val forClass: KClass<T>,
-    val outputStream: PrintStream = System.out
+    private val forClass: KClass<T>,
+    private val outputStream: PrintStream = System.out
 ) {
 
     enum class Level {

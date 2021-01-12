@@ -1,7 +1,6 @@
 package pl.merskip.keklang.llvm
 
 import org.bytedeco.llvm.global.LLVM.*
-import pl.merskip.keklang.compiler.StructureType
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
@@ -16,7 +15,7 @@ class IRInstructionsBuilder(
     private val targetTriple: LLVMTargetTriple
 ) {
 
-    val irBuilder = LLVMCreateBuilderInContext(context.reference)
+    private val irBuilder = LLVMCreateBuilderInContext(context.reference)
 
     /**
      * Create a 'ret void' instruction

@@ -3,7 +3,6 @@ package pl.merskip.keklang.externc
 import pl.merskip.keklang.compiler.DeclaredType
 import pl.merskip.keklang.compiler.TypesRegister
 import pl.merskip.keklang.llvm.LLVMIntegerType
-import pl.merskip.keklang.llvm.enum.TypeKind
 import pl.merskip.keklang.logger.Logger
 import java.io.File
 import java.util.*
@@ -33,7 +32,7 @@ class CHeaderGenerator(
             source += " "
             source += function.identifier.mangled
             source += "("
-            source += function.parameters.map { getCType(it.type) + " " + it.name }.joinToString(", ")
+            source += function.parameters.joinToString(", ") { getCType(it.type) + " " + it.name }
             source += ");"
             source += "\n\n"
         }

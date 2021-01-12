@@ -1,6 +1,5 @@
 package pl.merskip.keklang.compiler
 
-import org.bytedeco.llvm.global.LLVM.LLVMSetSubprogram
 import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.llvm.*
 
@@ -81,7 +80,7 @@ class DeclaredFunction(
     )
 
     fun setDebugSubprogram(subprogram: LLVMSubprogramMetadata) {
-        LLVMSetSubprogram(value.reference, subprogram.reference)
+        value.setDebugSubprogram(subprogram)
         debugScope = subprogram
     }
 

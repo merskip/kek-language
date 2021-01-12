@@ -1,6 +1,5 @@
 package pl.merskip.keklang.llvm
 
-import org.bytedeco.javacpp.LongPointer
 import org.bytedeco.javacpp.PointerPointer
 import org.bytedeco.llvm.LLVM.LLVMBasicBlockRef
 import org.bytedeco.llvm.LLVM.LLVMMetadataRef

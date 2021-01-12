@@ -1,6 +1,6 @@
 package pl.merskip.keklang.llvm.enum
 
-@Suppress("unused")
+@Suppress("unused", "SpellCheckingInspection")
 enum class AtomicRMWBinOp(val rawValue: Int) {
     /** Set the new value and return the one old */
     Xchg(0),

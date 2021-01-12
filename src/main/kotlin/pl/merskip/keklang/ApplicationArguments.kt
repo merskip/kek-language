@@ -15,11 +15,6 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Enable dumps AST (Abstract Syntax Tree). Prints to standard output."
     )
 
-    val typesDump by parser.flagging(
-        "--dump-types",
-        help = "Enable dumps all known types during compilation. Prints to standard output."
-    )
-
     val llvmIRDump by parser.flagging(
         "--dump-llvm-ir",
         help = "Enable dumps LLVM IR. Prints to standard output."

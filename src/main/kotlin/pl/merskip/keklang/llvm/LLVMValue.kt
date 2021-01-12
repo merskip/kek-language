@@ -5,7 +5,6 @@ import org.bytedeco.llvm.LLVM.LLVMValueRef
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.*
 import pl.merskip.keklang.logger.Logger
-import java.lang.Exception
 
 abstract class LLVMValue(
     override val reference: LLVMValueRef

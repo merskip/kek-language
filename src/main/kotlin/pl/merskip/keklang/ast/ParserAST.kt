@@ -30,7 +30,7 @@ class ParserAST(
         Operator("/", 600)
     )
 
-    public fun parse(): FileASTNode {
+    fun parse(): FileASTNode {
         val functions = mutableListOf<FunctionDefinitionNodeAST>()
         while (true) {
             if (!isAnyNextToken()) break
@@ -64,9 +64,7 @@ class ParserAST(
         }
 
         if (isNextToken<Token.Operator>()) {
-            val parsedOperator = parseOperatorIfHasHigherPrecedence(minimumPrecedence, parsedNode)
-            if (parsedOperator != null)
-                return parsedOperator
+            return parseOperatorIfHasHigherPrecedence(minimumPrecedence, parsedNode)
         }
         return parsedNode
     }
@@ -81,7 +79,7 @@ class ParserAST(
         return nextNode
     }
 
-    private fun parseOperatorIfHasHigherPrecedence(minimumPrecedence: Int, parsedNode: ASTNode): ASTNode? {
+    private fun parseOperatorIfHasHigherPrecedence(minimumPrecedence: Int, parsedNode: ASTNode): ASTNode {
         val operatorToken = getNextToken<Token.Operator>()
         val operator = findOperator(operatorToken)
             ?: throw Exception("Unknown operator: ${operatorToken.text}")
@@ -321,14 +319,9 @@ class ParserAST(
     }
 
     private inline fun <reified T : Token> getNextToken(): T {
-        return expectNextTokenOrNull()
-            ?: throw Exception("End of file, but expected token ${T::class.simpleName}")
-    }
-
-    private inline fun <reified T : Token> expectNextTokenOrNull(): T? {
         val token = getAnyNextToken()
-        if (token is T) return token
-        else throw UnexpectedTokenException(T::class.simpleName!!, token::class.simpleName!!, token.sourceLocation)
+        return if (token is T) token
+        else throw Exception("Expected token ${T::class.simpleName}, but got ${token::class}")
     }
 
     private inline fun <reified T : Token> isNextToken(): Boolean {

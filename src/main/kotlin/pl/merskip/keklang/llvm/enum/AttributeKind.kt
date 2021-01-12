@@ -1,5 +1,6 @@
 package pl.merskip.keklang.llvm.enum
 
+@Suppress("unused", "SpellCheckingInspection")
 enum class AttributeKind(val rawValue: Int) {
     Alignment(1),
     AllocSize(2),
