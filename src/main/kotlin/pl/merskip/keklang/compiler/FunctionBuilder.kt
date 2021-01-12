@@ -1,8 +1,10 @@
 package pl.merskip.keklang.compiler
 
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.llvm.LLVMFunctionType
 import pl.merskip.keklang.llvm.LLVMIntegerType
+import pl.merskip.keklang.llvm.enum.CallConvention
 import pl.merskip.keklang.llvm.enum.Encoding
 import pl.merskip.keklang.logger.Logger
 

@@ -45,6 +45,11 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Runs Just-in-time starting from main function."
     )
 
+    val cHeaderOutput by parser.storing(
+        "--c-header-output",
+        help = "Generates header for C Language with all functions"
+    ).default<String?>(null)
+
     val output by parser.storing(
         "-o", "--output",
         help = "Specify the output binary object file."

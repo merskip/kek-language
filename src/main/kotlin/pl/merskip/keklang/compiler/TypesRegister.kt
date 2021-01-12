@@ -16,8 +16,11 @@ class TypesRegister {
     }
 
     fun find(identifier: Identifier.Function): DeclaredFunction? {
+        return getFunctions().firstOrNull { it.identifier == identifier }
+    }
+
+    fun getFunctions(): List<DeclaredFunction> {
         return types.mapNotNull { it as? DeclaredFunction }
-            .firstOrNull { it.identifier == identifier }
     }
 
     fun find(identifier: Identifier): DeclaredType? {

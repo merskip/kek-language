@@ -5,6 +5,7 @@ import com.xenomachina.argparser.mainBody
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterASTNode
 import pl.merskip.keklang.compiler.*
+import pl.merskip.keklang.externc.CHeaderGenerator
 import pl.merskip.keklang.jit.JIT
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
@@ -114,10 +115,16 @@ fun main(args: Array<String>) = mainBody {
             } else {
                 withReadSources(sources) { filename, content ->
                     processSource(filename, content, compiler)
+
+                    if (cHeaderOutput != null) {
+                        CHeaderGenerator(compiler.context.typesRegister).generate(File(filename), File(cHeaderOutput!!))
+                    }
                 }
 
                 if (compiler.context.module.isValid)
                     processModule(compiler.context)
+
+
             }
 
             if (runJIT) {
