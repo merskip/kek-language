@@ -5,10 +5,10 @@
             "name": "Debug",
             "type": "gdb",
             "request": "launch",
-            "target": "operators",
+            "target": "a.out",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
-            "autorun": ["b main"]
+            "autorun": ["b N4main"]
         }
     ]
 }

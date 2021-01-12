@@ -5,10 +5,10 @@
             "name": "Debug",
             "type": "gdb",
             "request": "launch",
-            "target": "string_concatenation",
+            "target": "a.out",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
-            "autorun": ["b _start"]
+            "autorun": ["b N4main"]
         }
     ]
 }

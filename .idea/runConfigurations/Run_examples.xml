@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run examples" type="CompoundRunConfigurationType">
+    <toRun name="05_while_loop" type="Application" />
+    <toRun name="03_conditions" type="Application" />
+    <toRun name="02_operators" type="Application" />
+    <toRun name="04_string_concatenation" type="Application" />
+    <toRun name="01_hello_world" type="Application" />
+    <method v="2" />
+  </configuration>
+</component>

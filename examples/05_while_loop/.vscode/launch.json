@@ -5,7 +5,7 @@
             "name": "Debug",
             "type": "gdb",
             "request": "launch",
-            "target": "while_loop",
+            "target": "a.out",
             "cwd": "${workspaceRoot}",
             "valuesFormatting": "prettyPrinters",
             "autorun": ["b N4main"]
