@@ -109,8 +109,8 @@ class Lexer(
      * operator ::= "/" | "=" | "-" | "+" | "!" | "*" | "%" | "<" | ">" | "&" | "|" | "^" | "~" | "?"
      */
     private fun consumeOperatorOrArrow(): Token {
-        consumeCharactersWhile { !it.isOperatorAllowed() }
-        return if (getCurrentText() == "->")
+        val text = consumeCharactersWhile { it.isOperatorAllowed() }
+        return if (text == "->")
             Token.Arrow(createSourceLocation())
         else
             Token.Operator(createSourceLocation())
@@ -191,10 +191,6 @@ class Lexer(
 
     private fun beginTokenSourceLocation() {
         sourceLocationOffset = offset
-    }
-
-    private fun getCurrentText(): String {
-        return source.substring(sourceLocationOffset ?: 0, offset)
     }
 
     private fun createSourceLocation(): SourceLocation {

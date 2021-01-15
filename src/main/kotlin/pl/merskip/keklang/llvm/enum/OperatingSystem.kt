@@ -36,5 +36,6 @@ enum class OperatingSystem {
     HermitCore,
     Hurd,
     WASI,
-    Emscripten
+    Emscripten,
+    GuwnOS
 }

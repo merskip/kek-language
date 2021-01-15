@@ -309,6 +309,42 @@ class IRInstructionsBuilder(
                 clobberConstraints = emptyList(),
                 name = name
             )
+        } else if (targetTriple.isMatch(archType = ArchType.X86, operatingSystem = OperatingSystem.GuwnOS)) {
+            val registerType = context.createIntegerType(32)
+            val inputRegisters = listOf("eax", "ebx", "ecx")
+
+            val usedInputRegister = mutableListOf<String>()
+            val inputValues = listOf(
+                registerType.constantValue(number, false),
+                *parameters.toTypedArray()
+            )
+
+            val instructions = mutableListOf<String>()
+
+            val startIndex = if (outputType.isVoid()) 0 else 1
+
+            // Set parameters in input registers
+            inputValues.forEachIndexed { index, _ ->
+                val register = inputRegisters[index]
+                instructions += "mov \$${index + startIndex}, %$register" // Starts from $1, because of the result is $0
+                usedInputRegister += "{$register}"
+            }
+            // Cal system call
+            instructions += "int $$0x69"
+
+            // Get result if needed
+            if (!outputType.isVoid())
+                instructions += "mov %eax, $0"
+
+            return createAssembler(
+                input = inputValues,
+                outputType = outputType,
+                instructions = instructions,
+                outputConstraints = if (outputType.isVoid()) emptyList() else listOf("={rax}"),
+                inputConstraints = usedInputRegister,
+                clobberConstraints = emptyList(),
+                name = name
+            )
         } else {
             throw Exception("Unsupported target triple: $targetTriple")
         }

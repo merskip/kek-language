@@ -6,6 +6,7 @@ import pl.merskip.keklang.llvm.LLVMModule
 import pl.merskip.keklang.llvm.LLVMValue
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
+import pl.merskip.keklang.llvm.enum.OperatingSystem
 import pl.merskip.keklang.logger.Logger
 import pl.merskip.keklang.toInt
 import java.io.File
@@ -107,12 +108,23 @@ class Builtin(
             identifier("exit")
             parameters("exitCode" to integerType)
             implementation { (exitCode) ->
-                context.instructionsBuilder.createSystemCall(
-                    60,
-                    listOf(exitCode.get),
-                    voidType.wrappedType,
-                    null
-                )
+                val targetTriple = context.module.getTargetTriple()
+                if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
+                    context.instructionsBuilder.createSystemCall(
+                        60,
+                        listOf(exitCode.get),
+                        voidType.wrappedType,
+                        null
+                    )
+                }
+                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GuwnOS)) {
+                    context.instructionsBuilder.createSystemCall(
+                        0x03,
+                        listOf(exitCode.get),
+                        voidType.wrappedType,
+                        null
+                    )
+                }
                 context.instructionsBuilder.createUnreachable()
             }
         }
@@ -127,12 +139,23 @@ class Builtin(
                 val guts = context.instructionsBuilder.createStructureLoad(string, "guts")
                 val length = context.instructionsBuilder.createStructureLoad(string, "length")
 
-                context.instructionsBuilder.createSystemCall(
-                    1,
-                    listOf(standardOutput, guts.get, length.get),
-                    voidType.wrappedType,
-                    null
-                )
+                val targetTriple = context.module.getTargetTriple()
+                if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
+                    context.instructionsBuilder.createSystemCall(
+                        1,
+                        listOf(standardOutput, guts.get, length.get),
+                        voidType.wrappedType,
+                        null
+                    )
+                }
+                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GuwnOS)) {
+                    context.instructionsBuilder.createSystemCall(
+                        0x04,
+                        listOf(guts.get, length.get),
+                        voidType.wrappedType,
+                        null
+                    )
+                }
                 context.instructionsBuilder.createReturnVoid()
             }
         }
@@ -146,21 +169,28 @@ class Builtin(
             parameters("size" to integerType)
             returnType(bytePointerType)
             implementation { (size) ->
-                /* void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) */
-                val address = context.instructionsBuilder.createSystemCall(
-                    0x09,
-                    listOf(
-                        /* addr= */ createInteger(0L).get,
-                        /* length= */ size.get,
-                        /* prot= */ createInteger(0x3 /* PROT_READ | PROT_WRITE */).get,
-                        /* flags = */ createInteger(0x22 /* MAP_ANONYMOUS | MAP_PRIVATE */).get,
-                        /* fd= */ createInteger(-1).get,
-                        /* offset= */ createInteger(0).get
-                    ),
-                    bytePointerType.wrappedType,
-                    "syscall_mmap"
-                )
-                context.instructionsBuilder.createReturn(address)
+                val targetTriple = context.module.getTargetTriple()
+                if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
+                    /* void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) */
+                    val address = context.instructionsBuilder.createSystemCall(
+                        0x09,
+                        listOf(
+                            /* addr= */ createInteger(0L).get,
+                            /* length= */ size.get,
+                            /* prot= */ createInteger(0x3 /* PROT_READ | PROT_WRITE */).get,
+                            /* flags = */ createInteger(0x22 /* MAP_ANONYMOUS | MAP_PRIVATE */).get,
+                            /* fd= */ createInteger(-1).get,
+                            /* offset= */ createInteger(0).get
+                        ),
+                        bytePointerType.wrappedType,
+                        "syscall_mmap"
+                    )
+                    context.instructionsBuilder.createReturn(address)
+                }
+                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GuwnOS)) {
+                    // TODO: Wait to implement syscall allocate on GuwnOS side. Now just return 0x0 address
+                    context.instructionsBuilder.createReturn(createCastToBytePointer(context, createInteger(0L).get).get)
+                }
             }
         }
 
