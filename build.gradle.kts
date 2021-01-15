@@ -7,6 +7,7 @@ group = "pl.merskip"
 version = "0.1"
 
 apply(plugin = "kotlin")
+apply(from = "grammar-generator.gradle.kts")
 
 repositories {
     mavenCentral()
@@ -31,25 +32,3 @@ tasks.compileTestKotlin {
 tasks.test {
     useJUnitPlatform()
 }
-
-class GrammarGeneratorPlugin : Plugin<Project> {
-
-    override fun apply(project: Project) {
-        project.task("generate-grammar") {
-            var source = ""
-            val files = project.sourceSets.main.get().allSource.files.toList()
-            for (file in files) {
-                for (line in file.readLines()) {
-                    if (line.contains("::=")) {
-                        val ebnf = line.trim().removePrefix("* ")
-                        source += ebnf + "\n"
-                    }
-                }
-            }
-            project.file("grammar.bnf").writeText(source)
-        }
-    }
-
-}
-
-apply<GrammarGeneratorPlugin>()
