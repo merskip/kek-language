@@ -1,3 +1,4 @@
+
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.3.61"
 }
@@ -30,3 +31,25 @@ tasks.compileTestKotlin {
 tasks.test {
     useJUnitPlatform()
 }
+
+class GrammarGeneratorPlugin : Plugin<Project> {
+
+    override fun apply(project: Project) {
+        project.task("generate-grammar") {
+            var source = ""
+            val files = project.sourceSets.main.get().allSource.files.toList()
+            for (file in files) {
+                for (line in file.readLines()) {
+                    if (line.contains("::=")) {
+                        val ebnf = line.trim().removePrefix("* ")
+                        source += ebnf + "\n"
+                    }
+                }
+            }
+            project.file("grammar.bnf").writeText(source)
+        }
+    }
+
+}
+
+apply<GrammarGeneratorPlugin>()
