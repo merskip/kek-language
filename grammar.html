@@ -1,0 +1,100 @@
+<!doctype html>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous"><div class='container'>
+<h1 class='display-1 mt-3'>KeK-Language Grammar Summary</h1>
+<div class="card mt-5 mb-5"><div class="card-body"><p class='font-monospace'>
+    <span>variable-declaration </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>'var'</span> variable-identifier <span style='color: #ff5722; font-weight: bold'>':'</span> type-identifier</span>
+</p>
+<p class='font-monospace'>
+    <span>variable-identifier </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> identifier</span>
+</p>
+<p class='font-monospace'>
+    <span>type-identifier </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> identifier</span>
+</p>
+<p class='font-monospace'>
+    <span>while-loop </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"while"</span> <span style='color: #ff5722; font-weight: bold'>"("</span> condition <span style='color: #ff5722; font-weight: bold'>")"</span> while-body</span>
+</p>
+<p class='font-monospace'>
+    <span>while-body </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"{"</span> statements <span style='color: #ff5722; font-weight: bold'>"}"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>whitespace </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>" "</span></span>
+</p>
+<p class='font-monospace'>
+    <span>whitespace </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> line-break</span>
+</p>
+<p class='font-monospace'>
+    <span>line-comment </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"#"</span> <any ~[line-break]> line-break</span>
+</p>
+<p class='font-monospace'>
+    <span>line-break </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"\n"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>line-break </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"\r\n"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>number </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"0"</span> | <span style='color: #ff5722; font-weight: bold'>"1"</span> | <span style='color: #ff5722; font-weight: bold'>"2"</span> | <span style='color: #ff5722; font-weight: bold'>"3"</span> | <span style='color: #ff5722; font-weight: bold'>"4"</span> | <span style='color: #ff5722; font-weight: bold'>"5"</span> | <span style='color: #ff5722; font-weight: bold'>"6"</span> | <span style='color: #ff5722; font-weight: bold'>"7"</span> | <span style='color: #ff5722; font-weight: bold'>"8"</span> | <span style='color: #ff5722; font-weight: bold'>"9"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>arrow </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"->"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>operator </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"/"</span> | <span style='color: #ff5722; font-weight: bold'>"="</span> | <span style='color: #ff5722; font-weight: bold'>"-"</span> | <span style='color: #ff5722; font-weight: bold'>"+"</span> | <span style='color: #ff5722; font-weight: bold'>"!"</span> | <span style='color: #ff5722; font-weight: bold'>"*"</span> | <span style='color: #ff5722; font-weight: bold'>"%"</span> | <span style='color: #ff5722; font-weight: bold'>"<"</span> | <span style='color: #ff5722; font-weight: bold'>">"</span> | <span style='color: #ff5722; font-weight: bold'>"&"</span> | <span style='color: #ff5722; font-weight: bold'>"|"</span> | <span style='color: #ff5722; font-weight: bold'>"^"</span> | <span style='color: #ff5722; font-weight: bold'>"~"</span> | <span style='color: #ff5722; font-weight: bold'>"?"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>keyword </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"func"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>keyword </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"if"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>keyword </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"else"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>keyword </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"var"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>keyword </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"while"</span></span>
+</p>
+<p class='font-monospace'>
+    <span>string-literal </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"\"</span><span style='color: #ff5722; font-weight: bold'>" <any ~["</span>]> <span style='color: #ff5722; font-weight: bold'>"\"</span>"</span>
+</p>
+</div></div>
+</div>
