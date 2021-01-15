@@ -13,6 +13,21 @@ import java.io.File
 internal class LexerTest {
 
     @Test
+    fun `parse whitespace`() {
+        "a b\nc d\r\ne" assertTokens {
+            expect<Identifier>("a")
+            expectWhitespace()
+            expect<Identifier>("b")
+            expectWhitespace()
+            expect<Identifier>("c")
+            expectWhitespace()
+            expect<Identifier>("d")
+            expectWhitespace()
+            expect<Identifier>("e")
+        }
+    }
+
+    @Test
     fun `parse tokens`() {
         """
             func abc() {
@@ -26,10 +41,10 @@ internal class LexerTest {
             expect<RightParenthesis>(")")
             expectWhitespace()
             expect<LeftBracket>("{")
-            expectNextLine(5)
+            expectWhitespace()
 
             expect<Number>("123")
-            expectNextLine()
+            expectWhitespace()
 
             expect<RightBracket>("}")
         }
@@ -116,7 +131,7 @@ internal class LexerTest {
             expectWhitespace()
             expect<LeftBracket>("{")
             expect<RightBracket>("}")
-            expectNextLine()
+            expectWhitespace()
 
             expect<Else>("else")
             expectWhitespace()
@@ -132,7 +147,7 @@ internal class LexerTest {
             expectWhitespace()
             expect<LeftBracket>("{")
             expect<RightBracket>("}")
-            expectNextLine()
+            expectWhitespace()
 
             expect<Else>("else")
             expectWhitespace()
@@ -206,23 +221,14 @@ internal class LexerTest {
             assertEquals(text.length, token.sourceLocation.length)
 
             validateSourceLocation(token)
+            prepareExpectationForNextSourceLocation(token)
         }
 
-        fun expectNextLine(length: Int = 1) {
-            val token = expectWhitespace(length)
-            expectedNextColumn = if (length > 1) {
-                assert(token.sourceLocation.startIndex.line < token.sourceLocation.endIndex.line)
-                token.sourceLocation.endIndex.column + 1
-            } else 1
-            expectedNextLine += 1
-        }
-
-        fun expectWhitespace(length: Int = 1): Token {
+        fun expectWhitespace() {
             val token = tokenIter.next()
             assertEquals(Whitespace::class, token::class)
-            assertEquals(length, token.text.length)
             validateSourceLocation(token)
-            return token
+            prepareExpectationForNextSourceLocation(token)
         }
 
         fun expectNoMoreTokens() {
@@ -230,20 +236,30 @@ internal class LexerTest {
         }
 
         private fun validateSourceLocation(token: Token) {
-            validateOffset(token)
-            validateColumnAndLine(token)
-        }
+            assert(token.sourceLocation.startIndex.line <= token.sourceLocation.endIndex.line)
+            if (token.sourceLocation.startIndex.line == token.sourceLocation.endIndex.line)
+                assert(token.sourceLocation.startIndex.column <= token.sourceLocation.endIndex.column)
 
-        private fun validateOffset(token: Token) {
+            // Validate offset
             assertEquals(expectedNextOffset, token.sourceLocation.startIndex.offset, "Expected offset $expectedNextOffset for $token")
             assertEquals(expectedNextOffset + token.text.length - 1, token.sourceLocation.endIndex.offset)
-            expectedNextOffset = token.sourceLocation.endIndex.offset + 1
-        }
 
-        private fun validateColumnAndLine(token: Token) {
+            // Validate column and line
             assertEquals(expectedNextColumn, token.sourceLocation.startIndex.column, "Expected column $expectedNextColumn for $token")
             assertEquals(expectedNextLine, token.sourceLocation.startIndex.line, "Expected line $expectedNextLine for $token")
-            expectedNextColumn = token.sourceLocation.endIndex.column + 1
+        }
+
+        private fun prepareExpectationForNextSourceLocation(token: Token) {
+            expectedNextOffset = token.sourceLocation.endIndex.offset + 1
+            if (token.text.contains('\n')) {
+                expectedNextColumn =
+                    if (token.sourceLocation.startIndex.line == token.sourceLocation.endIndex.line) 1 // Single line-break
+                    else token.sourceLocation.endIndex.column + 1
+                expectedNextLine += 1
+            }
+            else {
+                expectedNextColumn = token.sourceLocation.endIndex.column + 1
+            }
         }
     }
 }

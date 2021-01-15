@@ -24,7 +24,18 @@ data class SourceLocation(
     }
 
     override fun toString(): String {
-        return "${file}@${startIndex}..${endIndex}"
+        var result = ""
+        if (file.path.isNotEmpty())
+            result += "${file.path}@"
+        result += toStringIndexRange()
+        return result
+    }
+
+    private fun toStringIndexRange(): String {
+        return if (startIndex.line == endIndex.line)
+            "${startIndex.line}:${startIndex.column}..${endIndex.column}"
+        else
+            "${startIndex.line}:${startIndex.column}..${endIndex.line}:${endIndex.column}"
     }
 
     companion object {

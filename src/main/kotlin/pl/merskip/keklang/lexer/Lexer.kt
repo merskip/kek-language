@@ -31,7 +31,7 @@ class Lexer(
             isLineCommentHead(char) -> consumeLineComment() // Consume # Lorem ipsum\n
             isNumberHead(char) -> consumeNumber() // Consume [0-9]+
             isIdentifierHead(char) -> consumeIdentifierOrKeyword() // Consume [_a-Z][_a-Z0-9]
-            isOperatorHead(char) -> consumeOperatorOrArrow(char) // Consume +, -, *, /, =, == and ->
+            isOperatorHead(char) -> consumeOperatorOrArrow() // Consume +, -, *, /, =, == and ->
             isStringLiteralHead(char) -> consumeStringLiteral()
             char == '(' -> Token.LeftParenthesis(createSourceLocation())
             char == ')' -> Token.RightParenthesis(createSourceLocation())
@@ -49,8 +49,14 @@ class Lexer(
         return char.isWhitespace()
     }
 
+    /**
+     * whitespace ::= " "
+     * whitespace ::= line-break
+     */
     private fun consumeWhitespace(): Token.Whitespace {
-        consumeCharactersWhile { it.isWhitespace() }
+        consumeCharactersWhile {
+            it == ' ' || it.isLineBreak()
+        }
         return Token.Whitespace(createSourceLocation())
     }
 
@@ -58,46 +64,63 @@ class Lexer(
         return char == '#'
     }
 
+    /**
+     * line-comment ::= "#" <any ~[line-break]> line-break
+     */
     private fun consumeLineComment(): Token.LineComment {
-        consumeCharactersWhile { it != '\n' }
+        consumeCharactersWhile { !it.isLineBreak() }
         return Token.LineComment(createSourceLocation())
     }
+
+    /**
+     * line-break ::= "\n"
+     * line-break ::= "\r\n"
+     */
+    private fun Char.isLineBreak(): Boolean =
+        this == '\n' || (this == '\r' && isNextCharacter('\n'))
 
     private fun isNumberHead(char: Char): Boolean {
         return char.isDigit()
     }
 
+    /**
+     * number ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+     */
     private fun consumeNumber(): Token.Number {
-        consumeCharactersWhile { it.isDigit() || it == '.' }
+        consumeCharactersWhile { it.isISOLatinDigit() }
         return Token.Number(createSourceLocation())
     }
+
+    private fun Char.isISOLatinDigit(): Boolean =
+        this == '0' || this == '1' || this == '3' || this == '4'
+                || this == '5' || this == '6' || this == '7' || this == '9'
 
     private fun isIdentifierHead(char: Char): Boolean {
         return char.isLetter() || char == '_'
     }
 
+
     private fun isOperatorHead(char: Char): Boolean {
-        return char == '+' || char == '-'
-                || char == '*' || char == '/'
-                || char == '='
-                || char == '<' || char == '>'
+        return char.isOperatorAllowed()
     }
 
-    private fun consumeOperatorOrArrow(char: Char): Token {
-        if (char == '=') {
-            val nextChar = getNextCharacter()
-            if (nextChar != '=') {
-                backToPreviousCharacter()
-                return Token.Operator(createSourceLocation())
-            }
-        }
-        if (char == '-') {
-            if (getNextCharacterIf { it == '>' } != null) {
-                return Token.Arrow(createSourceLocation())
-            }
-        }
-        return Token.Operator(createSourceLocation())
+    /**
+     * arrow ::= "->"
+     * operator ::= "/" | "=" | "-" | "+" | "!" | "*" | "%" | "<" | ">" | "&" | "|" | "^" | "~" | "?"
+     */
+    private fun consumeOperatorOrArrow(): Token {
+        consumeCharactersWhile { !it.isOperatorAllowed() }
+        return if (getCurrentText() == "->")
+            Token.Arrow(createSourceLocation())
+        else
+            Token.Operator(createSourceLocation())
     }
+
+    private fun Char.isOperatorAllowed(): Boolean =
+        this == '/' || this == '=' || this == '-' || this == '+'
+                || this == '!' || this == '*' || this == '%' || this == '<'
+                || this == '>' || this == '&' || this == '|' || this == '^'
+                || this == '~' || this == '?'
 
     private fun consumeIdentifierOrKeyword(): Token {
         val text = consumeCharactersWhile { it.isLetterOrDigit() || it == '_' }
@@ -105,6 +128,13 @@ class Lexer(
             ?: Token.Identifier(createSourceLocation())
     }
 
+    /**
+     * keyword ::= "func"
+     * keyword ::= "if"
+     * keyword ::= "else"
+     * keyword ::= "var"
+     * keyword ::= "while"
+     */
     private fun consumeKeyword(text: String): Token? {
         return when (text) {
             "func" -> Token.Func(createSourceLocation())
@@ -118,6 +148,9 @@ class Lexer(
 
     private fun isStringLiteralHead(char: Char) = char == '"'
 
+    /**
+     * string-literal ::= "\"" <any ~["]> "\""
+     */
     private fun consumeStringLiteral(): Token.StringLiteral {
         consumeCharactersWhile { it != '"' }
         getNextCharacter()
@@ -131,6 +164,10 @@ class Lexer(
             text += char
         }
         return text
+    }
+
+    private fun isNextCharacter(character: Char): Boolean {
+        return getNextCharacterIf { it == character } != null
     }
 
     private fun getNextCharacterIf(condition: (Char) -> Boolean): Char? {
@@ -154,6 +191,10 @@ class Lexer(
 
     private fun beginTokenSourceLocation() {
         sourceLocationOffset = offset
+    }
+
+    private fun getCurrentText(): String {
+        return source.substring(sourceLocationOffset ?: 0, offset)
     }
 
     private fun createSourceLocation(): SourceLocation {

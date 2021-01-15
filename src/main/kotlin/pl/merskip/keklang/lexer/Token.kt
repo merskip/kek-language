@@ -31,9 +31,9 @@ sealed class Token(
     override fun toString(): String {
         val fields = listOfNotNull(
             text.trimIndent().ifEmpty { null }?.let { "\"$it\"" },
-            "[${sourceLocation.startIndex.offset}..${sourceLocation.endIndex.offset}]",
-            "${sourceLocation.startIndex}..${sourceLocation.endIndex}"
+            sourceLocation.toString()
         )
         return "${this::class.simpleName}(${fields.joinToString(", ")})"
     }
+
 }
