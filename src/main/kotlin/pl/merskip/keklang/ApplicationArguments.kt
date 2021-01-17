@@ -50,8 +50,8 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Specify the output binary object file."
     ).default<String?>(null)
 
-    val sources by parser.positionalList(
-        "SOURCES",
-        help = "Input sources file names. If provided nothing, the interpreter run."
-    ).default(emptyList())
+    val input by parser.positional(
+        "INPUT",
+        help = "Input source file name. If provided nothing, the interpreter run."
+    )
 }

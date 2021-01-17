@@ -270,84 +270,130 @@ class IRInstructionsBuilder(
     fun createSystemCall(
         number: Long,
         parameters: List<LLVMValue>,
-        outputType: LLVMType,
+        resultType: LLVMType,
         name: String?
     ): LLVMInstructionValue {
-        if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
-            val registerType = context.createIntegerType(64)
-            val inputRegisters = listOf("rax", "rdi", "rsi", "rdx", "r10", "r8", "r9")
-
-            val usedInputRegister = mutableListOf<String>()
-            val inputValues = listOf(
-                registerType.constantValue(number, false),
-                *parameters.toTypedArray()
-            )
-
-            val instructions = mutableListOf<String>()
-
-            val startIndex = if (outputType.isVoid()) 0 else 1
-
-            // Set parameters in input registers
-            inputValues.forEachIndexed { index, _ ->
-                val register = inputRegisters[index]
-                instructions += "mov \$${index + startIndex}, %$register" // Starts from $1, because of the result is $0
-                usedInputRegister += "{$register}"
+        return when {
+            /* Linux x86_64 */
+            targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux) -> {
+                createSystemCallInstructions(
+                    number = "rax" to context.createConstant(number, 64),
+                    parameters = parameters,
+                    parametersRegisters = listOf("rax", "rdi", "rsi", "rdx", "r10", "r8", "r9"),
+                    buildSetInput = { index, register -> "mov $$index, %$register" },
+                    buildCall = { "syscall" },
+                    output = "rax" to resultType,
+                    buildGetOutput = { index, register -> "mov %$register, $$index"},
+                    name = name
+                )
             }
-            // Cal system call
-            instructions += "syscall"
-
-            // Get result if needed
-            if (!outputType.isVoid())
-                instructions += "mov %rax, $0"
-
-            return createAssembler(
-                input = inputValues,
-                outputType = outputType,
-                instructions = instructions,
-                outputConstraints = if (outputType.isVoid()) emptyList() else listOf("={rax}"),
-                inputConstraints = usedInputRegister,
-                clobberConstraints = emptyList(),
-                name = name
-            )
-        } else if (targetTriple.isMatch(archType = ArchType.X86, operatingSystem = OperatingSystem.GuwnOS)) {
-            val registerType = context.createIntegerType(32)
-            val inputRegisters = listOf("eax", "ebx", "ecx")
-
-            val usedInputRegister = mutableListOf<String>()
-            val inputValues = listOf(
-                registerType.constantValue(number, false),
-                *parameters.toTypedArray()
-            )
-
-            val instructions = mutableListOf<String>()
-
-            val startIndex = if (outputType.isVoid()) 0 else 1
-
-            // Set parameters in input registers
-            inputValues.forEachIndexed { index, _ ->
-                val register = inputRegisters[index]
-                instructions += "mov \$${index + startIndex}, %$register" // Starts from $1, because of the result is $0
-                usedInputRegister += "{$register}"
+            /* Linux x86 */
+            targetTriple.isMatch(archType = ArchType.X86, operatingSystem = OperatingSystem.Linux) -> {
+                createSystemCallInstructions(
+                    number = "eax" to context.createConstant(number),
+                    parameters = parameters,
+                    parametersRegisters = listOf("eax", "rbx", "ecx", "edx", "esi", "edi", "ebp"),
+                    buildSetInput = { index, register -> "mov $$index, %$register" },
+                    buildCall = { "int $$0x80" },
+                    output = "eax" to resultType,
+                    buildGetOutput = { index, register -> "mov %$register, $$index"},
+                    name = name
+                )
             }
-            // Cal system call
-            instructions += "int $$0x69"
-
-            // Get result if needed
-            if (!outputType.isVoid())
-                instructions += "mov %eax, $0"
-
-            return createAssembler(
-                input = inputValues,
-                outputType = outputType,
-                instructions = instructions,
-                outputConstraints = if (outputType.isVoid()) emptyList() else listOf("={rax}"),
-                inputConstraints = usedInputRegister,
-                clobberConstraints = emptyList(),
-                name = name
-            )
-        } else {
-            throw Exception("Unsupported target triple: $targetTriple")
+            /* Linux ARM */
+            targetTriple.isMatch(archType = ArchType.ARM, operatingSystem = OperatingSystem.Linux) -> {
+                createSystemCallInstructions(
+                    number = "r7" to context.createConstant(number),
+                    parameters = parameters,
+                    parametersRegisters = listOf("r0", "r1", "r2", "r3", "r4", "r5"),
+                    buildSetInput = { index, register -> "mov $$index, %$register" },
+                    buildCall = { "swi $$0x0" },
+                    output = "r0" to resultType,
+                    buildGetOutput = { index, register -> "mov %$register, $$index"},
+                    name = name
+                )
+            }
+            /* Linux AArch64 (ARM-64) */
+            targetTriple.isMatch(archType = ArchType.AARCH64, operatingSystem = OperatingSystem.Linux) -> {
+                createSystemCallInstructions(
+                    number = "x8" to context.createConstant(number, 64),
+                    parameters = parameters,
+                    parametersRegisters = listOf("x0", "x1", "x2", "x3", "x4", "x5"),
+                    buildSetInput = { index, register -> "mov $$index, %$register" },
+                    buildCall = { "svc $$0x0" },
+                    output = "x0" to resultType,
+                    buildGetOutput = { index, register -> "mov %$register, $$index"},
+                    name = name
+                )
+            }
+            /* GuwnOS x86 */
+            targetTriple.isMatch(archType = ArchType.X86, operatingSystem = OperatingSystem.GuwnOS) -> {
+                createSystemCallInstructions(
+                    number = "eax" to context.createConstant(number),
+                    parameters = parameters,
+                    parametersRegisters = listOf("eax", "ebx", "ecx"),
+                    buildSetInput = { index, register -> "mov $$index, %$register" },
+                    buildCall = { "int $$0x69" },
+                    output = "rax" to resultType,
+                    buildGetOutput = { index, register -> "mov %$register, $$index"},
+                    name = name
+                )
+            }
+            else -> {
+                throw Exception("Unsupported target triple: $targetTriple")
+            }
         }
+    }
+
+    private fun createSystemCallInstructions(
+        number: Pair<String, LLVMValue>,
+        parameters: List<LLVMValue>,
+        parametersRegisters: List<String>,
+        buildSetInput: (templateIndex: Int, register: String) -> String,
+        buildCall: () -> String,
+        output: Pair<String, LLVMType>,
+        buildGetOutput: (templateIndex: Int, register: String) -> String,
+        name: String?
+    ): LLVMInstructionValue {
+        val (numberRegister, numberValue) = number
+        val (outputRegister, outputType) = output
+        val instructions = mutableListOf<String>()
+
+        val registers = (listOf(numberRegister) + parametersRegisters).distinct()
+        val templateStartIndex = if (outputType.isVoid()) 0 else 1 // The result if exist must be at 0 index
+
+        /* Move number and parameters into registers */
+        val inputRegisters = mutableListOf<String>()
+        val input = mutableListOf<LLVMValue>()
+        input.add(numberValue)
+        input.addAll(parameters)
+
+        input.forEachIndexed { index, _ ->
+            val register = registers[index]
+            val templateIndex = templateStartIndex + index
+            instructions += buildSetInput(templateIndex, register)
+            inputRegisters += "{$register}"
+        }
+
+        // Call system call
+        instructions += buildCall()
+
+        // Get result if needed
+        val outputRegisters = mutableListOf<String>()
+        if (!outputType.isVoid()) {
+            instructions += buildGetOutput(0, outputRegister)
+            outputRegisters += "={$outputRegister}"
+        }
+
+        return createAssembler(
+            input = input,
+            outputType = outputType,
+            instructions = instructions,
+            outputConstraints = outputRegisters,
+            inputConstraints = inputRegisters,
+            clobberConstraints = emptyList(),
+            name = name
+        )
     }
 
     /**

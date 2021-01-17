@@ -4,6 +4,7 @@ package pl.merskip.keklang.llvm.enum
 enum class ArchType {
     ARM,
     ARMEB,
+    /** AArch64 or ARM64 */
     AARCH64,
     AARCH64_BE,
     AARCH64_32,

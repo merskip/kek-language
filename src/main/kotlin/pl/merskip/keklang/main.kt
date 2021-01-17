@@ -28,12 +28,10 @@ fun withInterpreter(callback: (inputText: String) -> Unit) {
     console.end()
 }
 
-fun withReadSources(sources: List<String>, callback: (filename: String, content: String) -> Unit) {
-    sources.forEach { filename ->
-        val file = File(filename)
-        val content = file.readText()
-        callback(filename, content)
-    }
+fun withReadSource(filename: String, callback: (filename: String, content: String) -> Unit) {
+    val file = File(filename)
+    val content = file.readText()
+    callback(filename, content)
 }
 
 fun ApplicationArguments.processSource(filename: String?, content: String, compiler: CompilerV2) {
@@ -78,12 +76,10 @@ fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler
 }
 
 fun ApplicationArguments.processModule(context: CompilerContext) {
-    output?.let { outputFilename ->
-        val outputFile = outputFilename.withExtensionIfNoExists(".o")
-        println("Output file: $outputFile")
-        val backendCompiler = BackendCompiler(context)
-        backendCompiler.compile(outputFile, asmDump, bitcode)
-    }
+    val outputFile = File(output ?: "a.out").absoluteFile
+
+    val backendCompiler = BackendCompiler(context)
+    backendCompiler.compile(outputFile, asmDump, bitcode)
 }
 
 fun main(args: Array<String>) = mainBody {
@@ -113,7 +109,7 @@ fun main(args: Array<String>) = mainBody {
                         processModule(compiler.context)
                 }
             } else {
-                withReadSources(sources) { filename, content ->
+                withReadSource(input) { filename, content ->
                     processSource(filename, content, compiler)
 
                     if (cHeaderOutput != null) {
@@ -123,8 +119,6 @@ fun main(args: Array<String>) = mainBody {
 
                 if (compiler.context.module.isValid)
                     processModule(compiler.context)
-
-
             }
 
             if (runJIT) {
@@ -143,7 +137,7 @@ fun main(args: Array<String>) = mainBody {
 }
 
 private fun ApplicationArguments.isInterpreterMode(): Boolean =
-    sources.isEmpty()
+    input.isEmpty()
 
 private fun String.withExtensionIfNoExists(extension: String): String {
     if (this.isEmpty()) return this
