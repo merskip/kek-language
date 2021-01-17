@@ -37,5 +37,5 @@ enum class OperatingSystem {
     Hurd,
     WASI,
     Emscripten,
-    GuwnOS
+    GunwOS
 }

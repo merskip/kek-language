@@ -117,7 +117,7 @@ class Builtin(
                         null
                     )
                 }
-                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GuwnOS)) {
+                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
                     context.instructionsBuilder.createSystemCall(
                         0x03,
                         listOf(exitCode.get),
@@ -148,7 +148,7 @@ class Builtin(
                         null
                     )
                 }
-                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GuwnOS)) {
+                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
                     context.instructionsBuilder.createSystemCall(
                         0x04,
                         listOf(guts.get, length.get),
@@ -187,7 +187,7 @@ class Builtin(
                     )
                     context.instructionsBuilder.createReturn(address)
                 }
-                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GuwnOS)) {
+                else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
                     // TODO: Wait to implement syscall allocate on GuwnOS side. Now just return 0x0 address
                     context.instructionsBuilder.createReturn(createCastToBytePointer(context, createInteger(0L).get).get)
                 }

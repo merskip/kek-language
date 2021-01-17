@@ -326,8 +326,8 @@ class IRInstructionsBuilder(
                     name = name
                 )
             }
-            /* GuwnOS x86 */
-            targetTriple.isMatch(archType = ArchType.X86, operatingSystem = OperatingSystem.GuwnOS) -> {
+            /* GunwOS x86 */
+            targetTriple.isMatch(archType = ArchType.X86, operatingSystem = OperatingSystem.GunwOS) -> {
                 createSystemCallInstructions(
                     number = "eax" to context.createConstant(number),
                     parameters = parameters,
