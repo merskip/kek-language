@@ -111,7 +111,11 @@ class CompilerV2(
                 }
 
                 context.instructionsBuilder.createCall(
-                    function = context.builtin.systemExitFunction,
+                    function = context.typesRegister.find(Identifier.Function(
+                        declaringType = context.builtin.systemType,
+                        canonical = "exit",
+                        parameters = listOf(context.builtin.integerType.identifier)
+                    ))!!,
                     arguments = listOf(exitCode.get)
                 )
                 context.instructionsBuilder.createUnreachable()

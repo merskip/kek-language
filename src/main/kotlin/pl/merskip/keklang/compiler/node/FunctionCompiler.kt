@@ -37,12 +37,21 @@ class FunctionCompiler(
     fun compileFunction(node: FunctionDefinitionNodeAST, function: DeclaredFunction) {
         logger.verbose("Compiling function: ${function.getDebugDescription()}")
 
-        FunctionBuilder.buildImplementation(context, function) {
-            val lastValueReference = if (node.body != null) context.compile(node.body) else null
-            when {
-                function.isReturnVoid -> context.instructionsBuilder.createReturnVoid()
-                lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.get)
-                else -> throw Exception("Expected return value of type ${function.returnType.getDebugDescription()} but got nothing")
+        FunctionBuilder.buildImplementation(context, function) { parameters ->
+            if (node.isBuiltin) {
+                assert(node.body == null) { "builtin function cannot have body" }
+                context.builtin.compileBuiltinFunction(context, function.identifier, parameters)
+            }
+            else {
+                if (node.body == null)
+                    throw Exception("Only builtin functions can have no body")
+
+                val lastValueReference = context.compile(node.body)
+                when {
+                    function.isReturnVoid -> context.instructionsBuilder.createReturnVoid()
+                    lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.get)
+                    else -> throw Exception("Expected return value of type ${function.returnType.getDebugDescription()} but got nothing")
+                }
             }
         }
     }
