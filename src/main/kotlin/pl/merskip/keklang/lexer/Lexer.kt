@@ -92,7 +92,7 @@ class Lexer(
     }
 
     private fun Char.isISOLatinDigit(): Boolean =
-        this == '0' || this == '1' || this == '3' || this == '4'
+        this == '0' || this == '1' || this =='2' || this == '3' || this == '4'
                 || this == '5' || this == '6' || this == '7' || this == '9'
 
     private fun isIdentifierHead(char: Char): Boolean {
@@ -134,6 +134,7 @@ class Lexer(
      * keyword ::= "else"
      * keyword ::= "var"
      * keyword ::= "while"
+     * keyword ::= "builtin"
      */
     private fun consumeKeyword(text: String): Token? {
         return when (text) {
@@ -142,6 +143,7 @@ class Lexer(
             "else" -> Token.Else(createSourceLocation())
             "var" -> Token.Var(createSourceLocation())
             "while" -> Token.While(createSourceLocation())
+            "builtin" -> Token.Builtin(createSourceLocation())
             else -> null
         }
     }

@@ -52,10 +52,10 @@ internal class LexerTest {
 
     @Test
     fun `parse unknown token`() {
-        "a %" assertTokens {
+        "a $" assertTokens {
             expect<Identifier>("a")
             expectWhitespace()
-            expect<Unknown>("%")
+            expect<Unknown>("$")
         }
     }
 
@@ -195,6 +195,20 @@ internal class LexerTest {
             expect<LeftBracket>("{")
             expectWhitespace()
             expect<RightBracket>("}")
+        }
+    }
+
+    @Test
+    fun `parse builtin`() {
+        "builtin func foo();" assertTokens {
+            expect<Builtin>("builtin")
+            expectWhitespace()
+            expect<Func>("func")
+            expectWhitespace()
+            expect<Identifier>("foo")
+            expect<LeftParenthesis>("(")
+            expect<RightParenthesis>(")")
+            expect<Semicolon>(";")
         }
     }
 

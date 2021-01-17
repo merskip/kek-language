@@ -22,8 +22,9 @@ sealed class Token(
     class Semicolon(sourceLocation: SourceLocation) : Token(sourceLocation) // ;
     class Colon(sourceLocation: SourceLocation) : Token(sourceLocation) // :
     class Arrow(sourceLocation: SourceLocation) : Token(sourceLocation) // ->
-    class Var(sourceLocation: SourceLocation) : Token(sourceLocation) // var
-    class While(sourceLocation: SourceLocation) : Token(sourceLocation) // while
+    class Var(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class While(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class Builtin(sourceLocation: SourceLocation) : Token(sourceLocation)
 
     val text: String
         get() = sourceLocation.text

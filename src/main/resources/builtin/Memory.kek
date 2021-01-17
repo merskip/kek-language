@@ -1,4 +1,8 @@
 
+builtin func Memory.allocate(size: Integer) -> BytePointer;
+
+builtin func Memory.setValue(source: BytePointer, destination: BytePointer);
+
 func Memory.copy(source: BytePointer, destination: BytePointer, length: Integer) {
    var i: Integer = 0
    while (i < length) {
