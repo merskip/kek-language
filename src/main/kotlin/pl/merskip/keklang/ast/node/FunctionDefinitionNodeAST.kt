@@ -7,7 +7,8 @@ data class FunctionDefinitionNodeAST(
     val identifier: String,
     val parameters: List<ReferenceDeclarationNodeAST>,
     val returnType: TypeReferenceASTNode?,
-    val body: CodeBlockASTNode
+    val body: CodeBlockASTNode?,
+    val isBuiltin: Boolean
 ): ASTNode() {
 
     override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitFunctionDefinitionNode(this)

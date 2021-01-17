@@ -51,7 +51,7 @@ class ParserAST(
         popStatement: () -> StatementASTNode = ::throwNoLhsStatement
     ): ASTNode {
         val parsedNode = when (val token = getAnyNextToken()) {
-            is Token.Func -> parseFunctionDefinition(token)
+            is Token.Func, is Token.Builtin -> parseFunctionDefinition(token)
             is Token.If -> parseIfElseCondition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
@@ -93,7 +93,23 @@ class ParserAST(
         return parsedNode
     }
 
-    private fun parseFunctionDefinition(funcToken: Token.Func): FunctionDefinitionNodeAST {
+    private fun parseFunctionDefinition(token: Token): FunctionDefinitionNodeAST {
+        val isBuiltin: Boolean
+        when (token) {
+            is Token.Func -> {
+                isBuiltin = false
+                // Nothing, just continue
+            }
+            is Token.Builtin -> {
+                isBuiltin = true
+                getNextToken<Token.Func>()
+            }
+            else -> {
+                throw Exception("Illegal token. Must be Token.Func or Func.Builtin.")
+            }
+        }
+
+
         var identifierToken = getNextToken<Token.Identifier>()
         val declaringType = if (isNextToken<Token.Dot>()) {
             val declaringType = identifierToken
@@ -107,10 +123,25 @@ class ParserAST(
             getNextToken<Token.Arrow>()
             parseTypeReference()
         } else null
-        val codeBlock = parseCodeBlock()
 
-        return FunctionDefinitionNodeAST(declaringType?.text, identifierToken.text, parameters, returnType, codeBlock)
-            .sourceLocation(funcToken.sourceLocation, codeBlock.sourceLocation)
+        val trailingSourceLocation: SourceLocation
+        val body: CodeBlockASTNode? = when {
+            isNextToken<Token.Semicolon>() -> {
+                trailingSourceLocation = getAnyNextToken().sourceLocation
+                null
+            }
+            isNextToken<Token.LeftBracket>() -> {
+                if (isBuiltin)
+                    throw Exception("If function is builtin, than cannot be have a body")
+                val body = parseCodeBlock()
+                trailingSourceLocation = body.sourceLocation
+                body
+            }
+            else -> throw Exception("Expect next token: Token.Semicolon or Token.LeftParenthesis")
+        }
+
+        return FunctionDefinitionNodeAST(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin)
+            .sourceLocation(token.sourceLocation, trailingSourceLocation)
     }
 
     private fun parseFunctionParameters(): List<ReferenceDeclarationNodeAST> {

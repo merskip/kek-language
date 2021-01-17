@@ -38,7 +38,8 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
             node = node,
             parameters = mapOf(
                 "declaringType" to node.declaringType,
-                "identifier" to node.identifier
+                "identifier" to node.identifier,
+                "isBuiltin" to if (node.isBuiltin) "true" else "false"
             ),
             children = mapOf(
                 "parameters" to node.parameters,
@@ -193,7 +194,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
     private fun print(
         node: ASTNode,
         parameters: Map<String, String?> = emptyMap(),
-        children: Map<String, List<ASTNode>> = emptyMap()
+        children: Map<String, List<ASTNode?>> = emptyMap()
     ) {
         output += "$indent[${node::class.simpleName?.colored(Color.Blue)}"
 
@@ -219,7 +220,10 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
                     output += "$indent - " + childEntry.key.colored(Color.Green) + ":\n"
                     indentLevel++
                     childEntry.value.forEach { childNode ->
-                        printNode(childNode)
+                        if (childNode != null)
+                            printNode(childNode)
+                        else
+                            output + "${indent}null"
                     }
                     indentLevel--
                 }

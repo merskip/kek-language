@@ -38,7 +38,7 @@ class FunctionCompiler(
         logger.verbose("Compiling function: ${function.getDebugDescription()}")
 
         FunctionBuilder.buildImplementation(context, function) {
-            val lastValueReference = context.compile(node.body)
+            val lastValueReference = if (node.body != null) context.compile(node.body) else null
             when {
                 function.isReturnVoid -> context.instructionsBuilder.createReturnVoid()
                 lastValueReference != null -> context.instructionsBuilder.createReturn(lastValueReference.get)
