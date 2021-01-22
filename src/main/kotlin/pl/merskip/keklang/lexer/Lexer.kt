@@ -65,7 +65,7 @@ class Lexer(
     }
 
     /**
-     * line-comment ::= "#" <any ~[line-break]> line-break
+     * line-comment ::= "#" <any> line-break
      */
     private fun consumeLineComment(): Token.LineComment {
         consumeCharactersWhile { !it.isLineBreak() }
@@ -84,7 +84,7 @@ class Lexer(
     }
 
     /**
-     * number ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+     * number ::= { "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" }
      */
     private fun consumeNumber(): Token.Number {
         consumeCharactersWhile { it.isISOLatinDigit() }
@@ -106,7 +106,8 @@ class Lexer(
 
     /**
      * arrow ::= "->"
-     * operator ::= "/" | "=" | "-" | "+" | "!" | "*" | "%" | "<" | ">" | "&" | "|" | "^" | "~" | "?" | ":"
+     * colon ::= ":"
+     * operator ::= { "/" | "=" | "-" | "+" | "!" | "*" | "%" | "<" | ">" | "&" | "|" | "^" | "~" | "?" | ":" }
      */
     private fun consumeOperatorOrOtherToken(): Token {
         @Suppress("MoveVariableDeclarationIntoWhen")
@@ -132,6 +133,7 @@ class Lexer(
 
     /**
      * keyword ::= "func"
+     * keyword ::= "operator"
      * keyword ::= "if"
      * keyword ::= "else"
      * keyword ::= "var"
@@ -154,7 +156,7 @@ class Lexer(
     private fun isStringLiteralHead(char: Char) = char == '"'
 
     /**
-     * string-literal ::= "\"" <any ~["]> "\""
+     * string-literal ::= "\"" <any> "\""
      */
     private fun consumeStringLiteral(): Token.StringLiteral {
         consumeCharactersWhile { it != '"' }

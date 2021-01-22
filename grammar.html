@@ -4,7 +4,7 @@
 <div class="card mt-5 mb-5"><div class="card-body"><p class='font-monospace mb-1'>
     <span>variable-declaration </span> 
     <span style='color: #777'>:≡</span> 
-    <span> <span style='color: #ff5722; font-weight: bold'>'var'</span> variable-identifier <span style='color: #ff5722; font-weight: bold'>':'</span> type-identifier</span>
+    <span> <span style='color: #ff5722; font-weight: bold'>"var"</span> variable-identifier <span style='color: #ff5722; font-weight: bold'>":"</span> type-identifier</span>
 </p>
 <p class='font-monospace mb-1'>
     <span>variable-identifier </span> 
@@ -39,7 +39,7 @@
 <p class='font-monospace mb-1'>
     <span>line-comment </span> 
     <span style='color: #777'>:≡</span> 
-    <span> <span style='color: #ff5722; font-weight: bold'>"#"</span> <any ~[line-break]> line-break</span>
+    <span> <span style='color: #ff5722; font-weight: bold'>"#"</span> &lt;any&gt; line-break</span>
 </p>
 <p class='font-monospace mb-1'>
     <span>line-break </span> 
@@ -54,22 +54,32 @@
 <p class='font-monospace mb-1'>
     <span>number </span> 
     <span style='color: #777'>:≡</span> 
-    <span> <span style='color: #ff5722; font-weight: bold'>"0"</span> | <span style='color: #ff5722; font-weight: bold'>"1"</span> | <span style='color: #ff5722; font-weight: bold'>"2"</span> | <span style='color: #ff5722; font-weight: bold'>"3"</span> | <span style='color: #ff5722; font-weight: bold'>"4"</span> | <span style='color: #ff5722; font-weight: bold'>"5"</span> | <span style='color: #ff5722; font-weight: bold'>"6"</span> | <span style='color: #ff5722; font-weight: bold'>"7"</span> | <span style='color: #ff5722; font-weight: bold'>"8"</span> | <span style='color: #ff5722; font-weight: bold'>"9"</span></span>
+    <span> { <span style='color: #ff5722; font-weight: bold'>"0"</span> | <span style='color: #ff5722; font-weight: bold'>"1"</span> | <span style='color: #ff5722; font-weight: bold'>"2"</span> | <span style='color: #ff5722; font-weight: bold'>"3"</span> | <span style='color: #ff5722; font-weight: bold'>"4"</span> | <span style='color: #ff5722; font-weight: bold'>"5"</span> | <span style='color: #ff5722; font-weight: bold'>"6"</span> | <span style='color: #ff5722; font-weight: bold'>"7"</span> | <span style='color: #ff5722; font-weight: bold'>"8"</span> | <span style='color: #ff5722; font-weight: bold'>"9"</span> }</span>
 </p>
 <p class='font-monospace mb-1'>
     <span>arrow </span> 
     <span style='color: #777'>:≡</span> 
-    <span> <span style='color: #ff5722; font-weight: bold'>"->"</span></span>
+    <span> <span style='color: #ff5722; font-weight: bold'>"-&gt;"</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>colon </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>":"</span></span>
 </p>
 <p class='font-monospace mb-1'>
     <span>operator </span> 
     <span style='color: #777'>:≡</span> 
-    <span> <span style='color: #ff5722; font-weight: bold'>"/"</span> | <span style='color: #ff5722; font-weight: bold'>"="</span> | <span style='color: #ff5722; font-weight: bold'>"-"</span> | <span style='color: #ff5722; font-weight: bold'>"+"</span> | <span style='color: #ff5722; font-weight: bold'>"!"</span> | <span style='color: #ff5722; font-weight: bold'>"*"</span> | <span style='color: #ff5722; font-weight: bold'>"%"</span> | <span style='color: #ff5722; font-weight: bold'>"<"</span> | <span style='color: #ff5722; font-weight: bold'>">"</span> | <span style='color: #ff5722; font-weight: bold'>"&"</span> | <span style='color: #ff5722; font-weight: bold'>"|"</span> | <span style='color: #ff5722; font-weight: bold'>"^"</span> | <span style='color: #ff5722; font-weight: bold'>"~"</span> | <span style='color: #ff5722; font-weight: bold'>"?"</span> | <span style='color: #ff5722; font-weight: bold'>":"</span></span>
+    <span> { <span style='color: #ff5722; font-weight: bold'>"/"</span> | <span style='color: #ff5722; font-weight: bold'>"="</span> | <span style='color: #ff5722; font-weight: bold'>"-"</span> | <span style='color: #ff5722; font-weight: bold'>"+"</span> | <span style='color: #ff5722; font-weight: bold'>"!"</span> | <span style='color: #ff5722; font-weight: bold'>"*"</span> | <span style='color: #ff5722; font-weight: bold'>"%"</span> | <span style='color: #ff5722; font-weight: bold'>"&lt;"</span> | <span style='color: #ff5722; font-weight: bold'>"&gt;"</span> | <span style='color: #ff5722; font-weight: bold'>"&"</span> | <span style='color: #ff5722; font-weight: bold'>"|"</span> | <span style='color: #ff5722; font-weight: bold'>"^"</span> | <span style='color: #ff5722; font-weight: bold'>"~"</span> | <span style='color: #ff5722; font-weight: bold'>"?"</span> | <span style='color: #ff5722; font-weight: bold'>":"</span> }</span>
 </p>
 <p class='font-monospace mb-1'>
     <span>keyword </span> 
     <span style='color: #777'>:≡</span> 
     <span> <span style='color: #ff5722; font-weight: bold'>"func"</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>keyword </span> 
+    <span style='color: #777'>:≡</span> 
+    <span> <span style='color: #ff5722; font-weight: bold'>"operator"</span></span>
 </p>
 <p class='font-monospace mb-1'>
     <span>keyword </span> 
@@ -99,7 +109,7 @@
 <p class='font-monospace mb-1'>
     <span>string-literal </span> 
     <span style='color: #777'>:≡</span> 
-    <span> <span style='color: #ff5722; font-weight: bold'>"\"</span><span style='color: #ff5722; font-weight: bold'>" <any ~["</span>]> <span style='color: #ff5722; font-weight: bold'>"\"</span>"</span>
+    <span> <span style='color: #ff5722; font-weight: bold'>"\""</span> &lt;any&gt; <span style='color: #ff5722; font-weight: bold'>"\""</span></span>
 </p>
 </div></div>
 </div>

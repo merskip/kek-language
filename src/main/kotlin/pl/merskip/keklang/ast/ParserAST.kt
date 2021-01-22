@@ -343,7 +343,7 @@ class ParserAST(
 
     /**
      * Parses `var foo: Integer` expression
-     * variable-declaration ::= 'var' variable-identifier ':' type-identifier
+     * variable-declaration ::= "var" variable-identifier ":" type-identifier
      * variable-identifier ::= identifier
      * type-identifier ::= identifier
      */

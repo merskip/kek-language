@@ -47,10 +47,14 @@ class HtmlBNFWriter {
     }
 
     private fun coloredString(expression: String): String {
-        return expression.replace(Regex("[\"'].*?[\"']")) {
-            "<span style='color: #ff5722; font-weight: bold'>${it.value}</span>"
+        return expression.encoded().replace(Regex("\\\"(\\\\.|[^\"\\\\])*\\\"")) {
+            "<span style='color: #ff5722; font-weight: bold'>${it.value.encoded()}</span>"
         }
     }
+
+    private fun String.encoded(): String =
+        replace("<", "&lt;")
+            .replace(">", "&gt;")
 }
 
 class KotlinCommentBNFSearcher {
