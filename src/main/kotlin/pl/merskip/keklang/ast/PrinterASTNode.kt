@@ -33,7 +33,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
-    override fun visitFunctionDefinitionNode(node: FunctionDefinitionNodeAST) {
+    override fun visitFunctionDefinitionNode(node: FunctionDefinitionASTNode) {
         print(
             node = node,
             parameters = mapOf(
@@ -115,7 +115,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         }
     }
 
-    override fun visitReferenceDeclarationNode(node: ReferenceDeclarationNodeAST) {
+    override fun visitReferenceDeclarationNode(node: ReferenceDeclarationASTNode) {
         print(
             node = node,
             parameters = mapOf(

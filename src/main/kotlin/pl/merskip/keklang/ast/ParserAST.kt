@@ -31,12 +31,12 @@ class ParserAST(
     )
 
     fun parse(): FileASTNode {
-        val functions = mutableListOf<FunctionDefinitionNodeAST>()
+        val functions = mutableListOf<FunctionDefinitionASTNode>()
         while (true) {
             if (!isAnyNextToken()) break
 
             val node = parseNextToken()
-            if (node !is FunctionDefinitionNodeAST)
+            if (node !is FunctionDefinitionASTNode)
                 throw Exception("Expected function definition at global scope")
 
             functions.add(node)
@@ -111,7 +111,7 @@ class ParserAST(
         return modifiers.toList()
     }
 
-    private fun parseFunctionDefinition(token: Token.Func, modifiers: List<Token.Modifier>): FunctionDefinitionNodeAST {
+    private fun parseFunctionDefinition(token: Token.Func, modifiers: List<Token.Modifier>): FunctionDefinitionASTNode {
         var isBuiltin = false
         for (modifier in modifiers) when (modifier) {
             is Token.Builtin -> isBuiltin = true
@@ -148,13 +148,13 @@ class ParserAST(
             else -> throw Exception("Expect next token: Token.Semicolon or Token.LeftParenthesis")
         }
 
-        return FunctionDefinitionNodeAST(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin)
+        return FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin)
             .sourceLocation(token.sourceLocation, trailingSourceLocation)
     }
 
-    private fun parseFunctionParameters(): List<ReferenceDeclarationNodeAST> {
+    private fun parseFunctionParameters(): List<ReferenceDeclarationASTNode> {
         getNextToken<Token.LeftParenthesis>()
-        val parameters = mutableListOf<ReferenceDeclarationNodeAST>()
+        val parameters = mutableListOf<ReferenceDeclarationASTNode>()
         while (true) {
             if (isNextToken<Token.RightParenthesis>()) break
 
@@ -169,11 +169,11 @@ class ParserAST(
         return parameters.toList()
     }
 
-    private fun parseReferenceDeclaration(): ReferenceDeclarationNodeAST {
+    private fun parseReferenceDeclaration(): ReferenceDeclarationASTNode {
         val identifier = getNextToken<Token.Identifier>()
         getNextToken<Token.Colon>()
         val type = parseTypeReference()
-        return ReferenceDeclarationNodeAST(identifier.text, type)
+        return ReferenceDeclarationASTNode(identifier.text, type)
             .sourceLocation(identifier.sourceLocation, type.sourceLocation)
     }
 

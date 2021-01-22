@@ -1,16 +1,16 @@
 package pl.merskip.keklang.compiler.node
 
-import pl.merskip.keklang.ast.node.FunctionDefinitionNodeAST
+import pl.merskip.keklang.ast.node.FunctionDefinitionASTNode
 import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.logger.Logger
 
 class FunctionCompiler(
     val context: CompilerContext
-) : ASTNodeCompiling<FunctionDefinitionNodeAST> {
+) : ASTNodeCompiling<FunctionDefinitionASTNode> {
 
     private val logger = Logger(this::class)
 
-    fun registerFunction(node: FunctionDefinitionNodeAST): DeclaredFunction {
+    fun registerFunction(node: FunctionDefinitionASTNode): DeclaredFunction {
         val declaringType = if (node.declaringType != null)
             context.typesRegister.find(Identifier.Type(node.declaringType))
                 ?: throw Exception("Not found type: ${node.declaringType}")
@@ -34,7 +34,7 @@ class FunctionCompiler(
         }
     }
 
-    fun compileFunction(node: FunctionDefinitionNodeAST, function: DeclaredFunction) {
+    fun compileFunction(node: FunctionDefinitionASTNode, function: DeclaredFunction) {
         logger.verbose("Compiling function: ${function.getDebugDescription()}")
 
         FunctionBuilder.buildImplementation(context, function) { parameters ->
@@ -56,7 +56,7 @@ class FunctionCompiler(
         }
     }
 
-    override fun compile(node: FunctionDefinitionNodeAST): Reference? {
+    override fun compile(node: FunctionDefinitionASTNode): Reference? {
         throw UnsupportedOperationException("Use `compileFunction` function instead of that")
     }
 }
