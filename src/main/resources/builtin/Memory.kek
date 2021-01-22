@@ -6,7 +6,7 @@ builtin func Memory.setValue(source: BytePointer, destination: BytePointer);
 func Memory.copy(source: BytePointer, destination: BytePointer, length: Integer) {
     var i: Integer = 0
     while (i < length) {
-        Memory.setValue(source + i, destination + i)
+        source + i := destination + i
         i = i + 1
     }
 }

@@ -1,0 +1,6 @@
+
+builtin operator + (lhs: BytePointer, rhs: Integer) -> BytePointer;
+
+operator := (lhs: BytePointer, rhs: BytePointer) {
+    Memory.setValue(lhs, rhs)
+}
