@@ -36,7 +36,7 @@ abstract class FunctionCallCompilerBase(
         val function = findFunction(typeIdentifier, functionIdentifier, parameters.map { it.type.identifier })
 
         val value = context.instructionsBuilder.createCall(
-            function = function,
+            subroutine = function,
             arguments = parameters.map { it.get }
         )
         return DirectlyReference(function.returnType, value)
@@ -49,13 +49,11 @@ abstract class FunctionCallCompilerBase(
         }
     }
 
-    private fun findFunction(declaringTypeIdentifier: Identifier?, functionIdentifier: String, parameters: List<Identifier>): DeclaredFunction {
+    private fun findFunction(declaringTypeIdentifier: Identifier?, functionIdentifier: String, parameters: List<Identifier>): DeclaredSubroutine {
         val typeIdentifier = if (declaringTypeIdentifier !== null) {
-            val declaringType = context.typesRegister.find(declaringTypeIdentifier)
-                ?: throw Exception("Not found type: $declaringTypeIdentifier")
-            Identifier.Function(declaringType, functionIdentifier, parameters)
+            Identifier.Function(declaringTypeIdentifier, functionIdentifier, parameters)
         } else {
-            Identifier.Function(functionIdentifier, parameters)
+            Identifier.Function(null, functionIdentifier, parameters)
         }
         return context.typesRegister.find(typeIdentifier)
             ?: throw Exception("Not found function: $typeIdentifier, ${typeIdentifier.mangled}")

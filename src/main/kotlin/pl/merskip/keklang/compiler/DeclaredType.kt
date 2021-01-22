@@ -57,7 +57,7 @@ class StructureType(
     private fun getFieldsDescription() = fields.joinToString(", ") { "${it.name}: ${it.type.identifier.canonical}" }
 }
 
-class DeclaredFunction(
+class DeclaredSubroutine(
     identifier: Identifier,
     val declaringType: DeclaredType?,
     val parameters: List<Parameter>,
@@ -101,18 +101,18 @@ class DeclaredFunction(
 fun DeclaredType.asPointer(identifier: Identifier) =
     PointerType(identifier, this, wrappedType.asPointer())
 
-val List<DeclaredFunction.Parameter>.types: List<DeclaredType> get() = map { it.type }
+val List<DeclaredSubroutine.Parameter>.types: List<DeclaredType> get() = map { it.type }
 
 /**
  * Create a 'call <result> @<function>(<parameters>)' instruction
  */
 fun IRInstructionsBuilder.createCall(
-    function: DeclaredFunction,
+    subroutine: DeclaredSubroutine,
     arguments: List<LLVMValue>,
     name: String? = null
 ): LLVMInstructionValue {
-    val effectiveName = name ?: if (function.isReturnVoid) null else function.identifier.canonical + "Call"
-    return createCall(function.value, function.wrappedType, arguments, effectiveName)
+    val effectiveName = name ?: if (subroutine.isReturnVoid) null else subroutine.identifier.canonical + "Call"
+    return createCall(subroutine.value, subroutine.wrappedType, arguments, effectiveName)
 }
 
 fun IRInstructionsBuilder.createStructureInitialize(

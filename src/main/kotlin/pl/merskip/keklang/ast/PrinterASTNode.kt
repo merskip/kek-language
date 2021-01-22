@@ -49,6 +49,21 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
+    override fun visitOperatorDefinitionNode(node: OperatorDefinitionASTNode) {
+        print(
+            node = node,
+            parameters = mapOf(
+                "operator" to node.operator,
+                "isBuiltin" to if (node.isBuiltin) "true" else "false"
+            ),
+            children = mapOf(
+                "parameters" to node.parameters,
+                "returnType" to listOfNotNull(node.returnType),
+                "body" to listOf(node.body)
+            )
+        )
+    }
+
     override fun visitIfElseConditionNode(node: IfElseConditionNodeAST) {
         print(
             node = node,

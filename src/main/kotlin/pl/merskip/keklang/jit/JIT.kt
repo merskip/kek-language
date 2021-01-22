@@ -6,7 +6,7 @@ import org.bytedeco.llvm.LLVM.LLVMExecutionEngineRef
 import org.bytedeco.llvm.LLVM.LLVMGenericValueRef
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
 import org.bytedeco.llvm.global.LLVM.*
-import pl.merskip.keklang.compiler.DeclaredFunction
+import pl.merskip.keklang.compiler.DeclaredSubroutine
 import kotlin.system.exitProcess
 
 
@@ -14,7 +14,7 @@ class JIT(
     val module: LLVMModuleRef
 ) {
 
-    fun run(mainFunction: DeclaredFunction) {
+    fun run(mainSubroutine: DeclaredSubroutine) {
         val engine = LLVMExecutionEngineRef()
 
         val error = BytePointer()
@@ -25,7 +25,7 @@ class JIT(
         }
 
         println("Executing JIT...")
-        val result = LLVMRunFunction(engine, mainFunction.value.reference, 0, PointerPointer<LLVMGenericValueRef>())
+        val result = LLVMRunFunction(engine, mainSubroutine.value.reference, 0, PointerPointer<LLVMGenericValueRef>())
         println("Result: " + LLVMGenericValueToInt(result, 0))
     }
 }

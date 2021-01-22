@@ -19,7 +19,7 @@ class CompilerContext(
 
     private val logger = Logger(this::class)
 
-    lateinit var entryPointFunction: DeclaredFunction
+    lateinit var entryPointSubroutine: DeclaredSubroutine
     var debugFile: LLVMFileMetadata? = null
 
     var nodesCompilers = mutableListOf<ASTNodeCompiling<*>>()

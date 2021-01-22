@@ -8,12 +8,12 @@ import pl.merskip.keklang.logger.Logger
 
 typealias ImplementationBuilder = (List<Reference>) -> Unit
 
-class FunctionBuilder {
+class FunctionBuilder() {
 
     private val logger = Logger(this::class)
 
-    private lateinit var canonicalIdentifier: String
-    private lateinit var parameters: List<DeclaredFunction.Parameter>
+    private lateinit var identifier: Identifier
+    private lateinit var parameters: List<DeclaredSubroutine.Parameter>
     private lateinit var returnType: DeclaredType
     private var declaringType: DeclaredType? = null
     private var isExtern: Boolean = false
@@ -21,14 +21,14 @@ class FunctionBuilder {
     private var sourceLocation: SourceLocation? = null
     private var implementation: ImplementationBuilder? = null
 
-    fun identifier(identifier: String) =
-        apply { this.canonicalIdentifier = identifier }
+    fun identifier(identifier: Identifier) =
+        apply { this.identifier = identifier }
 
-    fun parameters(parameters: List<DeclaredFunction.Parameter>) =
+    fun parameters(parameters: List<DeclaredSubroutine.Parameter>) =
         apply { this.parameters = parameters }
 
     fun parameters(vararg parameters: Pair<String, DeclaredType>) =
-        apply { this.parameters = parameters.map { DeclaredFunction.Parameter(it.first, it.second, null) } }
+        apply { this.parameters = parameters.map { DeclaredSubroutine.Parameter(it.first, it.second, null) } }
 
     fun returnType(returnType: DeclaredType) =
         apply { this.returnType = returnType }
@@ -48,10 +48,9 @@ class FunctionBuilder {
     fun implementation(implementation: ImplementationBuilder) =
         apply { this.implementation = implementation }
 
-    private fun build(context: CompilerContext): DeclaredFunction {
-        assert(this::canonicalIdentifier.isInitialized) { "You must call identifier() method" }
+    private fun build(context: CompilerContext): DeclaredSubroutine {
 
-        val identifier = getFunctionIdentifier()
+        val identifier = identifier
         val functionType = LLVMFunctionType(
             result = returnType.wrappedType,
             parameters = parameters.types.map { it.wrappedType },
@@ -62,7 +61,7 @@ class FunctionBuilder {
             functionValue.setAsAlwaysInline()
         }
 
-        val function = DeclaredFunction(
+        val function = DeclaredSubroutine(
             declaringType = declaringType,
             identifier = identifier,
             parameters = parameters,
@@ -131,20 +130,11 @@ class FunctionBuilder {
         return function
     }
 
-    private fun getFunctionIdentifier(): Identifier {
-        val parametersIdentifiers = parameters.types.map { it.identifier }
-        return when {
-            isExtern -> Identifier.ExternType(canonicalIdentifier)
-            declaringType != null -> Identifier.Function(declaringType!!, canonicalIdentifier, parametersIdentifiers)
-            else -> Identifier.Function(canonicalIdentifier, parametersIdentifiers)
-        }
-    }
-
     companion object {
 
         private val logger = Logger(this::class)
 
-        fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): DeclaredFunction {
+        fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): DeclaredSubroutine {
             val functionBuilder = FunctionBuilder()
             functionBuilder.parameters = emptyList()
             functionBuilder.returnType = context.builtin.voidType
@@ -155,19 +145,19 @@ class FunctionBuilder {
             return function
         }
 
-        fun buildImplementation(context: CompilerContext, function: DeclaredFunction, implementation: ImplementationBuilder) {
-            function.entryBlock = context.instructionsBuilder.appendBasicBlockAtEnd(function.value, "entry")
-            context.scopesStack.createScope(function.debugScope) {
-                val parameterReferences = function.value.getParametersValues().zip(function.parameters).map { (parameterValue, parameter) ->
+        fun buildImplementation(context: CompilerContext, subroutine: DeclaredSubroutine, implementation: ImplementationBuilder) {
+            subroutine.entryBlock = context.instructionsBuilder.appendBasicBlockAtEnd(subroutine.value, "entry")
+            context.scopesStack.createScope(subroutine.debugScope) {
+                val parameterReferences = subroutine.value.getParametersValues().zip(subroutine.parameters).map { (parameterValue, parameter) ->
 
                     val parameterIdentifier = Identifier.Reference(parameter.name)
 
                     val parameterAlloca = context.instructionsBuilder.createAlloca(parameter.type.wrappedType, "_" + parameter.name)
                     context.instructionsBuilder.createStore(parameterAlloca, parameterValue)
 
-                    val index =  function.parameters.indexOf(parameter)
-                    val debugScope = function.debugScope
-                    val debugParameters = function.debugVariableParameters
+                    val index =  subroutine.parameters.indexOf(parameter)
+                    val debugScope = subroutine.debugScope
+                    val debugParameters = subroutine.debugVariableParameters
                     if (debugScope != null && debugParameters != null && parameter.sourceLocation != null) {
                         context.debugBuilder.insertDeclareAtEnd(
                             storage = parameterAlloca.reference,

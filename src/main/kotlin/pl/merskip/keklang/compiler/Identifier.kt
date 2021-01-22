@@ -9,28 +9,37 @@ sealed class Identifier(
 
     class Type(canonical: String) : Identifier(canonical, canonical.mangled())
 
-    class ExternType(canonical: String) : Identifier(canonical, canonical)
+    class Extern(canonical: String) : Identifier(canonical, canonical)
 
     class Function private constructor(canonical: String, mangled: String) : Identifier(canonical, mangled) {
 
         constructor(
+            declaringType: DeclaredType?,
             canonical: String,
-            parameters: List<Identifier>
-        ) : this(canonical, listOfNotNull(
-            canonical.mangled(isType = false),
-            parameters.mangled()
-        ).joinToString("_"))
+            parameters: List<DeclaredType>
+        ) : this(declaringType?.identifier, canonical, parameters.map { it.identifier })
 
         constructor(
-            declaringType: DeclaredType,
+            declaringType: Identifier?,
             canonical: String,
             parameters: List<Identifier>
         ) : this(canonical,
             listOfNotNull(
-                declaringType.identifier.mangled,
+                declaringType?.mangled,
                 canonical.mangled(isType = false),
                 parameters.mangled()
             ).joinToString("_"))
+    }
+
+    class Operator private constructor(canonical: String, mangled: String) : Identifier(canonical, mangled) {
+
+        constructor(
+            operator: String,
+            parameters: List<DeclaredType>
+        ) : this(operator, listOfNotNull(
+            operator.mangledOperator(),
+            parameters.map { it.identifier }.mangled()
+        ).joinToString("_"))
     }
 
     companion object {
@@ -48,6 +57,10 @@ sealed class Identifier(
                 "String" -> "s"
                 else -> if (isType) "T$length$this" else "N$length$this"
             }
+
+        fun String.mangledOperator(): String {
+            return "O" + map { "u" + it.toInt().toString(16) }
+        }
     }
 
     override fun equals(other: Any?): Boolean {

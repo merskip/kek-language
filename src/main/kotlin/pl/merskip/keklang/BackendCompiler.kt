@@ -72,7 +72,7 @@ class BackendCompiler(
         }
 
         logger.info("Write executable file into $executableFile")
-        val processBuilder = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", context.entryPointFunction.identifier.mangled, "-o", executableFile.wslPath, objectFile.wslPath)
+        val processBuilder = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", context.entryPointSubroutine.identifier.mangled, "-o", executableFile.wslPath, objectFile.wslPath)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
 

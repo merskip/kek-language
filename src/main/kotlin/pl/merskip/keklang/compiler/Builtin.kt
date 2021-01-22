@@ -192,8 +192,8 @@ class Builtin(
 
     private fun register(declaringType: DeclaredType?, identifier: String, parameters: List<DeclaredType>, implementation: BuiltinImplementation) {
         val functionIdentifier =
-            if (declaringType != null) Identifier.Function(declaringType, identifier, parameters.map { it.identifier })
-            else Identifier.Function(identifier, parameters.map { it.identifier })
+            if (declaringType != null) Identifier.Function(declaringType, identifier, parameters)
+            else Identifier.Function(null, identifier, parameters)
         builtinFunctions[functionIdentifier] = implementation
     }
 
@@ -275,7 +275,7 @@ class Builtin(
         getResult: (lhs: Reference, rhs: Reference) -> LLVMValue?
     ) = FunctionBuilder.register(this) {
         declaringType(lhs)
-        identifier(simpleIdentifier)
+        identifier(Identifier.Function(null, simpleIdentifier, listOf(lhs, rhs)))
         parameters("lhs" to lhs, "rhs" to rhs)
         returnType(returnType)
         isInline(isInline)

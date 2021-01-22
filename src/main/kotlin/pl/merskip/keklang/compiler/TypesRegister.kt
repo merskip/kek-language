@@ -15,12 +15,12 @@ class TypesRegister {
         logger.verbose("Registered type: ${type.getDebugDescription()}, ${type.identifier.mangled}")
     }
 
-    fun find(identifier: Identifier.Function): DeclaredFunction? {
+    fun find(identifier: Identifier.Function): DeclaredSubroutine? {
         return getFunctions().firstOrNull { it.identifier == identifier }
     }
 
-    fun getFunctions(): List<DeclaredFunction> {
-        return types.mapNotNull { it as? DeclaredFunction }
+    fun getFunctions(): List<DeclaredSubroutine> {
+        return types.mapNotNull { it as? DeclaredSubroutine }
     }
 
     fun find(identifier: Identifier): DeclaredType? {

@@ -18,7 +18,7 @@ class BinaryOperatorCompiler(
         } else {
             val function = getFunctionForOperator(node.identifier, lhs.type, rhs.type)
             val result = context.instructionsBuilder.createCall(
-                function = function,
+                subroutine = function,
                 arguments = listOf(lhs.get, rhs.get)
             )
             DirectlyReference(function.returnType, result)
@@ -30,7 +30,7 @@ class BinaryOperatorCompiler(
         return rhs
     }
 
-    private fun getFunctionForOperator(operator: String, lhsType: DeclaredType, rhsType: DeclaredType): DeclaredFunction {
+    private fun getFunctionForOperator(operator: String, lhsType: DeclaredType, rhsType: DeclaredType): DeclaredSubroutine {
         val functionIdentifier = Identifier.Function(
             declaringType = lhsType,
             canonical = when (operator) {
@@ -42,7 +42,7 @@ class BinaryOperatorCompiler(
                 "==" -> "isEqual"
                 else -> throw Exception("Unknown operator: $operator")
             },
-            parameters = listOf(lhsType.identifier, rhsType.identifier)
+            parameters = listOf(lhsType, rhsType)
         )
         return context.typesRegister.find(functionIdentifier)
             ?: throw Exception("Not found function for operator: \"$operator\"" +

@@ -6,6 +6,7 @@ interface ASTNodeVisitor<T> {
 
     fun visitFileNode(node: FileASTNode): T
     fun visitFunctionDefinitionNode(node: FunctionDefinitionASTNode): T
+    fun visitOperatorDefinitionNode(node: OperatorDefinitionASTNode): T
     fun visitIfElseConditionNode(node: IfElseConditionNodeAST): T
     fun visitIfConditionNode(node: IfConditionNodeAST): T
     fun visitCodeBlockNode(node: CodeBlockASTNode): T

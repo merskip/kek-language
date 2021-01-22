@@ -7,7 +7,7 @@ import pl.merskip.keklang.logger.Logger
 
 class FileCompiler(
     val context: CompilerContext,
-    private val functionCompiler: FunctionCompiler
+    private val functionCompiler: SubroutineDefinitionCompiler
 ) : ASTNodeCompiling<FileASTNode> {
 
     private val logger = Logger(this::class)
@@ -15,7 +15,7 @@ class FileCompiler(
     override fun compile(node: FileASTNode): Reference? {
         logger.info("Compiling file: ${node.sourceLocation.file}")
         node.nodes.map { functionNode ->
-            functionNode to functionCompiler.registerFunction(functionNode)
+            functionNode to functionCompiler.registerSubroutine(functionNode)
         }.forEach { (functionNode, function) ->
             functionCompiler.compileFunction(functionNode, function)
         }

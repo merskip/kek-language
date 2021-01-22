@@ -19,7 +19,7 @@ class CompilerV2(
     init {
         logger.info("Preparing compiler")
 
-        context.addNodeCompiler(FileCompiler(context, FunctionCompiler(context)))
+        context.addNodeCompiler(FileCompiler(context, SubroutineDefinitionCompiler(context)))
         context.addNodeCompiler(CodeBlockCompiler(context))
         context.addNodeCompiler(StatementCompiler(context))
         context.addNodeCompiler(ReferenceCompiler(context))
@@ -82,13 +82,13 @@ class CompilerV2(
 
     private fun createEntryPoint() {
         logger.info("Adding entry point")
-        context.entryPointFunction = FunctionBuilder.register(context) {
+        context.entryPointSubroutine = FunctionBuilder.register(context) {
             isExtern(true)
-            identifier("_start")
+            identifier(Identifier.Extern("_start"))
             parameters(emptyList())
             returnType(context.builtin.voidType)
             implementation {
-                val mainFunction = context.typesRegister.find<DeclaredFunction> { it.identifier.canonical == "main" }
+                val mainFunction = context.typesRegister.find<DeclaredSubroutine> { it.identifier.canonical == "main" }
 
                 val exitCode = when {
                     mainFunction == null -> {
@@ -101,7 +101,7 @@ class CompilerV2(
                     }
                     mainFunction.returnType == context.builtin.integerType -> {
                         val value = context.instructionsBuilder.createCall(
-                            function = mainFunction,
+                            subroutine = mainFunction,
                             arguments = emptyList(),
                             name = "exit_code"
                         )
@@ -111,10 +111,10 @@ class CompilerV2(
                 }
 
                 context.instructionsBuilder.createCall(
-                    function = context.typesRegister.find(Identifier.Function(
+                    subroutine = context.typesRegister.find(Identifier.Function(
                         declaringType = context.builtin.systemType,
                         canonical = "exit",
-                        parameters = listOf(context.builtin.integerType.identifier)
+                        parameters = listOf(context.builtin.integerType)
                     ))!!,
                     arguments = listOf(exitCode.get)
                 )
