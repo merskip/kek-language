@@ -8,6 +8,7 @@ class GrammarGeneratorPlugin : Plugin<Project> {
             val definitions = KotlinCommentBNFSearcher().findInFiles(files)
 
             PlainBNFWriter().write(definitions, project.file("grammar.bnf"))
+            MarkdownBNFWriter().write(definitions, project.file("grammar.md"))
             HtmlBNFWriter().write(definitions, project.file("grammar.html"))
         }
     }
@@ -17,6 +18,18 @@ class PlainBNFWriter {
 
     fun write(definitions: List<BNFDefinition>, toFile: File) {
         val source = definitions.joinToString("\n") { it.toString() }
+        toFile.writeText(source)
+    }
+}
+
+class MarkdownBNFWriter {
+
+    fun write(definitions: List<BNFDefinition>, toFile: File) {
+        var source = ""
+        source += "### KeK-Language Grammar Summary\n"
+        source += "```bnf\n"
+        source += definitions.joinToString("\n") { it.toString() } + "\n"
+        source += "```\n"
         toFile.writeText(source)
     }
 }
@@ -75,7 +88,7 @@ class KotlinCommentBNFSearcher {
     private fun parse(line: String): BNFDefinition? {
         return if (line.contains("::=")) {
             val (name, expression) = line.split("::=")
-            BNFDefinition(name, expression)
+            BNFDefinition(name.trim(), expression.trim())
         } else {
             null
         }

@@ -1,3 +1,5 @@
+### KeK-Language Grammar Summary
+```bnf
 variable-declaration ::= "var" variable-identifier ":" type-identifier
 variable-identifier ::= identifier
 type-identifier ::= identifier
@@ -20,3 +22,4 @@ keyword ::= "var"
 keyword ::= "while"
 keyword ::= "builtin"
 string-literal ::= "\"" <any> "\""
+```
