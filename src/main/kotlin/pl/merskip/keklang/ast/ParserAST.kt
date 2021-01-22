@@ -50,8 +50,15 @@ class ParserAST(
         minimumPrecedence: Int = 0,
         popStatement: () -> StatementASTNode = ::throwNoLhsStatement
     ): ASTNode {
-        val parsedNode = when (val token = getAnyNextToken()) {
-            is Token.Func, is Token.Builtin -> parseFunctionDefinition(token)
+        val modifiers = parseModifiers()
+        val token = getAnyNextToken()
+
+        if (modifiers.isNotEmpty() && token !is Token.Func) {
+            throw Exception("Modifiers are allowed only before 'func' token but got ${token::class.simpleName}")
+        }
+
+        val parsedNode = when (token) {
+            is Token.Func -> parseFunctionDefinition(token, modifiers)
             is Token.If -> parseIfElseCondition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
@@ -60,7 +67,7 @@ class ParserAST(
             is Token.StringLiteral -> parseConstantString(token)
             is Token.Var -> parseVariableDeclaration(token)
             is Token.While -> parseWhileLoop(token)
-            else -> throw UnexpectedTokenException(null, token::class.simpleName!!, token.sourceLocation)
+            else -> throw UnexpectedTokenException(null, token)
         }
 
         if (isNextToken<Token.Operator>()) {
@@ -93,22 +100,23 @@ class ParserAST(
         return parsedNode
     }
 
-    private fun parseFunctionDefinition(token: Token): FunctionDefinitionNodeAST {
-        val isBuiltin: Boolean
-        when (token) {
-            is Token.Func -> {
-                isBuiltin = false
-                // Nothing, just continue
-            }
-            is Token.Builtin -> {
-                isBuiltin = true
-                getNextToken<Token.Func>()
-            }
-            else -> {
-                throw Exception("Illegal token. Must be Token.Func or Func.Builtin.")
-            }
+    private fun parseModifiers(): List<Token.Modifier> {
+        val modifiers = mutableListOf<Token.Modifier>()
+        while (true) {
+            if (isNextToken<Token.Modifier>())
+                modifiers.add(getNextToken())
+            else
+                break
         }
+        return modifiers.toList()
+    }
 
+    private fun parseFunctionDefinition(token: Token.Func, modifiers: List<Token.Modifier>): FunctionDefinitionNodeAST {
+        var isBuiltin = false
+        for (modifier in modifiers) when (modifier) {
+            is Token.Builtin -> isBuiltin = true
+            else -> throw Exception("Illegal modifier for a function definition: $modifier")
+        }
 
         var identifierToken = getNextToken<Token.Identifier>()
         val declaringType = if (isNextToken<Token.Dot>()) {

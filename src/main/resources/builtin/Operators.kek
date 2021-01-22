@@ -1,0 +1,12 @@
+
+#builtin operator + (lhs: Integer, rhs: Integer) -> Integer;
+
+#builtin operator - (lhs: Integer, rhs: Integer) -> Integer;
+
+#builtin operator * (lhs: Integer, rhs: Integer) -> Integer;
+
+#builtin operator < (lhs: Integer, rhs: Integer) -> Boolean;
+
+#builtin operator > (lhs: Integer, rhs: Integer) -> Boolean;
+
+#builtin operator == (lhs: Integer, rhs: Integer) -> Boolean;

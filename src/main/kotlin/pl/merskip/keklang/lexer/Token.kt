@@ -24,7 +24,8 @@ sealed class Token(
     class Arrow(sourceLocation: SourceLocation) : Token(sourceLocation) // ->
     class Var(sourceLocation: SourceLocation) : Token(sourceLocation)
     class While(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Builtin(sourceLocation: SourceLocation) : Token(sourceLocation)
+    abstract class Modifier(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class Builtin(sourceLocation: SourceLocation) : Modifier(sourceLocation)
 
     val text: String
         get() = sourceLocation.text

@@ -2,11 +2,10 @@ package pl.merskip.keklang.lexer
 
 class UnexpectedTokenException(
     expectedToken: String?,
-    foundToken: String,
-    sourceLocation: SourceLocation
+    foundToken: Token
 ) : SourceLocationException(
-    getMessage(expectedToken, foundToken),
-    sourceLocation
+    getMessage(expectedToken, foundToken::class.simpleName ?: foundToken::class.toString()),
+    foundToken.sourceLocation
 ) {
 
     companion object {
