@@ -7,6 +7,7 @@ sealed class Token(
     class Whitespace(sourceLocation: SourceLocation) : Token(sourceLocation)
     class LineComment(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Func(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class OperatorKeyword(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Identifier(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Number(sourceLocation: SourceLocation) : Token(sourceLocation)
     class StringLiteral(sourceLocation: SourceLocation) : Token(sourceLocation)

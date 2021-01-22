@@ -10,3 +10,7 @@
 #builtin operator > (lhs: Integer, rhs: Integer) -> Boolean;
 
 #builtin operator == (lhs: Integer, rhs: Integer) -> Boolean;
+
+operator := (lhs: BytePointer, rhs: BytePointer) {
+    Memory.setValue(lhs, rhs)
+}

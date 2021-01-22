@@ -33,7 +33,7 @@ class HtmlBNFWriter {
         html += "<div class=\"card mt-5 mb-5\"><div class=\"card-body\">"
         for (definition in definitions) {
             html += """
-                <p class='font-monospace'>
+                <p class='font-monospace mb-1'>
                     <span>${definition.name}</span> 
                     <span style='color: #777'>:≡</span> 
                     <span>${coloredString(definition.expression)}</span>

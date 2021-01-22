@@ -31,7 +31,7 @@ class Lexer(
             isLineCommentHead(char) -> consumeLineComment() // Consume # Lorem ipsum\n
             isNumberHead(char) -> consumeNumber() // Consume [0-9]+
             isIdentifierHead(char) -> consumeIdentifierOrKeyword() // Consume [_a-Z][_a-Z0-9]
-            isOperatorHead(char) -> consumeOperatorOrArrow() // Consume +, -, *, /, =, == and ->
+            isOperatorHead(char) -> consumeOperatorOrOtherToken() // Consume +, -, *, /, =, == and ->
             isStringLiteralHead(char) -> consumeStringLiteral()
             char == '(' -> Token.LeftParenthesis(createSourceLocation())
             char == ')' -> Token.RightParenthesis(createSourceLocation())
@@ -106,21 +106,23 @@ class Lexer(
 
     /**
      * arrow ::= "->"
-     * operator ::= "/" | "=" | "-" | "+" | "!" | "*" | "%" | "<" | ">" | "&" | "|" | "^" | "~" | "?"
+     * operator ::= "/" | "=" | "-" | "+" | "!" | "*" | "%" | "<" | ">" | "&" | "|" | "^" | "~" | "?" | ":"
      */
-    private fun consumeOperatorOrArrow(): Token {
+    private fun consumeOperatorOrOtherToken(): Token {
+        @Suppress("MoveVariableDeclarationIntoWhen")
         val text = consumeCharactersWhile { it.isOperatorAllowed() }
-        return if (text == "->")
-            Token.Arrow(createSourceLocation())
-        else
-            Token.Operator(createSourceLocation())
+        return when (text) {
+            "->" -> Token.Arrow(createSourceLocation())
+            ":" -> Token.Colon(createSourceLocation())
+            else -> Token.Operator(createSourceLocation())
+        }
     }
 
     private fun Char.isOperatorAllowed(): Boolean =
         this == '/' || this == '=' || this == '-' || this == '+'
                 || this == '!' || this == '*' || this == '%' || this == '<'
                 || this == '>' || this == '&' || this == '|' || this == '^'
-                || this == '~' || this == '?'
+                || this == '~' || this == '?' || this == ':'
 
     private fun consumeIdentifierOrKeyword(): Token {
         val text = consumeCharactersWhile { it.isLetterOrDigit() || it == '_' }
@@ -139,6 +141,7 @@ class Lexer(
     private fun consumeKeyword(text: String): Token? {
         return when (text) {
             "func" -> Token.Func(createSourceLocation())
+            "operator" -> Token.OperatorKeyword(createSourceLocation())
             "if" -> Token.If(createSourceLocation())
             "else" -> Token.Else(createSourceLocation())
             "var" -> Token.Var(createSourceLocation())

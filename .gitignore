@@ -141,3 +141,5 @@ gradle-app.setting
 examples/*/*
 !examples/*/*.kek
 !examples/*/.vscode
+a.o
+a.out
