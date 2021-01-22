@@ -26,10 +26,10 @@ func main() -> Integer {
 
 # Supported operating systems
 
-| OS  | CPU Architecture |
-| --- | ---------------- |
-| [GunwOS](https://github.com/bronexproduction/GunwOS) | [x86](https://en.wikipedia.org/wiki/X86)       |
-| [Linux](https://github.com/torvalds/linux)           | [x86-64](https://en.wikipedia.org/wiki/X86-64) |
+| OS  | CPU Architecture | Flag |
+| --- | ---------------- | ---- |
+| [GunwOS](https://github.com/bronexproduction/GunwOS) | [x86](https://en.wikipedia.org/wiki/X86) | `--target-triple x86-pc-gunwos` |
+| [Linux](https://github.com/torvalds/linux) | [x86-64](https://en.wikipedia.org/wiki/X86-64) | `--target-triple x86-pc-linux` |
 
 # References
 
