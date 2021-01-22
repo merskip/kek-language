@@ -227,6 +227,21 @@ internal class LexerTest {
         }
     }
 
+    @Test
+    fun `parse operator declaration`() {
+        "infix operator %% precedence 100" assertTokens {
+            expect<InfixKeyword>("infix")
+            expectWhitespace()
+            expect<OperatorKeyword>("operator")
+            expectWhitespace()
+            expect<Operator>("%%")
+            expectWhitespace()
+            expect<PrecedenceKeyword>("precedence")
+            expectWhitespace()
+            expect<Number>("100")
+        }
+    }
+
     private infix fun String.assertTokens(callback: TokenTester.() -> Unit) {
         val tokens = Lexer(File(""), this.trimIndent()).parse()
         val tester = TokenTester(tokens)

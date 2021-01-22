@@ -139,6 +139,10 @@ class Lexer(
      * keyword ::= "var"
      * keyword ::= "while"
      * keyword ::= "builtin"
+     * keyword ::= "prefix"
+     * keyword ::= "postfix"
+     * keyword ::= "infix"
+     * keyword ::= "precedence"
      */
     private fun consumeKeyword(text: String): Token? {
         return when (text) {
@@ -149,6 +153,10 @@ class Lexer(
             "var" -> Token.Var(createSourceLocation())
             "while" -> Token.While(createSourceLocation())
             "builtin" -> Token.Builtin(createSourceLocation())
+            "prefix" -> Token.PrefixKeyword(createSourceLocation())
+            "postfix" -> Token.PostfixKeyword(createSourceLocation())
+            "infix" -> Token.InfixKeyword(createSourceLocation())
+            "precedence" -> Token.PrecedenceKeyword(createSourceLocation())
             else -> null
         }
     }

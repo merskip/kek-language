@@ -21,4 +21,5 @@ interface ASTNodeVisitor<T> {
     fun visitVariableDeclaration(node: VariableDeclarationASTNode): T
     fun visitFieldReferenceNode(node: FieldReferenceASTNode): T
     fun visitWhileLoopNode(node: WhileLoopASTNode): T
+    fun visitOperatorDeclaration(node: OperatorDeclarationASTNode): T
 }

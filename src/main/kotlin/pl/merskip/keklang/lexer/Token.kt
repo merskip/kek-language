@@ -25,8 +25,15 @@ sealed class Token(
     class Arrow(sourceLocation: SourceLocation) : Token(sourceLocation) // ->
     class Var(sourceLocation: SourceLocation) : Token(sourceLocation)
     class While(sourceLocation: SourceLocation) : Token(sourceLocation)
+
     abstract class Modifier(sourceLocation: SourceLocation) : Token(sourceLocation)
     class Builtin(sourceLocation: SourceLocation) : Modifier(sourceLocation)
+
+    abstract class OperatorTypeKeyword(sourceLocation: SourceLocation) : Token(sourceLocation)
+    class PrefixKeyword(sourceLocation: SourceLocation) : OperatorTypeKeyword(sourceLocation)
+    class PostfixKeyword(sourceLocation: SourceLocation) : OperatorTypeKeyword(sourceLocation)
+    class InfixKeyword(sourceLocation: SourceLocation) : OperatorTypeKeyword(sourceLocation)
+    class PrecedenceKeyword(sourceLocation: SourceLocation) : Token(sourceLocation)
 
     val text: String
         get() = sourceLocation.text

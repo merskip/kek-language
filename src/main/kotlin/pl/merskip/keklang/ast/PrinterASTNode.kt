@@ -206,6 +206,17 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
+    override fun visitOperatorDeclaration(node: OperatorDeclarationASTNode) {
+        print(
+            node = node,
+            parameters = mapOf(
+                "operator" to node.operator.text,
+                "type" to node.type.text,
+                "precedence" to node.precedence.text
+            )
+        )
+    }
+
     private fun print(
         node: ASTNode,
         parameters: Map<String, String?> = emptyMap(),
