@@ -1,5 +1,7 @@
 package pl.merskip.keklang.ast
 
+import arrow.core.Either
+import com.sun.org.apache.xpath.internal.operations.Or
 import pl.merskip.keklang.Operator
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.lexer.SourceLocation
@@ -31,13 +33,13 @@ class ParserAST(
     )
 
     fun parse(): FileASTNode {
-        val functions = mutableListOf<FunctionDefinitionASTNode>()
+        val functions = mutableListOf<SubroutineDefinitionASTNode>()
         while (true) {
             if (!isAnyNextToken()) break
 
             val node = parseNextToken()
-            if (node !is FunctionDefinitionASTNode)
-                throw Exception("Expected function definition at global scope")
+            if (node !is SubroutineDefinitionASTNode)
+                throw Exception("Expected function or operator definition at global scope")
 
             functions.add(node)
         }
@@ -59,6 +61,7 @@ class ParserAST(
 
         val parsedNode = when (token) {
             is Token.Func -> parseFunctionDefinition(token, modifiers)
+            is Token.OperatorKeyword -> parseOperatorDefinition(token, modifiers)
             is Token.If -> parseIfElseCondition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
@@ -149,6 +152,41 @@ class ParserAST(
         }
 
         return FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin)
+            .sourceLocation(token.sourceLocation, trailingSourceLocation)
+    }
+
+    private fun parseOperatorDefinition(token: Token.OperatorKeyword, modifiers: List<Token.Modifier>): OperatorDefinitionASTNode {
+        var isBuiltin = false
+        for (modifier in modifiers) when (modifier) {
+            is Token.Builtin -> isBuiltin = true
+            else -> throw Exception("Illegal modifier for a function definition: $modifier")
+        }
+
+        var operatorToken = getNextToken<Token.Operator>()
+
+        val parameters = parseFunctionParameters()
+        val returnType = if (isNextToken<Token.Arrow>()) {
+            getNextToken<Token.Arrow>()
+            parseTypeReference()
+        } else null
+
+        val trailingSourceLocation: SourceLocation
+        val body: CodeBlockASTNode? = when {
+            isNextToken<Token.Semicolon>() -> {
+                trailingSourceLocation = getAnyNextToken().sourceLocation
+                null
+            }
+            isNextToken<Token.LeftBracket>() -> {
+                if (isBuiltin)
+                    throw Exception("If function is builtin, than cannot be have a body")
+                val body = parseCodeBlock()
+                trailingSourceLocation = body.sourceLocation
+                body
+            }
+            else -> throw Exception("Expect next token: Token.Semicolon or Token.LeftParenthesis")
+        }
+
+        return OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, isBuiltin)
             .sourceLocation(token.sourceLocation, trailingSourceLocation)
     }
 

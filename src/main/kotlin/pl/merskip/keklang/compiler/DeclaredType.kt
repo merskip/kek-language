@@ -87,7 +87,9 @@ class DeclaredSubroutine(
     override fun getDebugDescription(): String {
         var description = ""
         if (declaringType != null) description += declaringType.identifier.canonical + "."
-        description += identifier.canonical
+        description +=
+            if (identifier is Identifier.Operator) "operator ${identifier.canonical} "
+            else identifier.canonical
         description += "(" + getParametersDescription() + ")"
         description += " -> " + returnType.identifier.canonical
         return description

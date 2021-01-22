@@ -59,7 +59,7 @@ sealed class Identifier(
             }
 
         fun String.mangledOperator(): String {
-            return "O" + map { "u" + it.toInt().toString(16) }
+            return "O" + map { "U" + it.toInt().toString(16) }.joinToString("")
         }
     }
 

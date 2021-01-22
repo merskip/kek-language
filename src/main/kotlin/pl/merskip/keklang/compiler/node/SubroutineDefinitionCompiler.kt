@@ -21,23 +21,14 @@ class SubroutineDefinitionCompiler(
     }
 
     private fun registerFunction(node: FunctionDefinitionASTNode): DeclaredSubroutine {
-        val declaringType = if (node.declaringType != null)
-            context.typesRegister.find(Identifier.Type(node.declaringType))
-                ?: throw Exception("Not found type: ${node.declaringType}")
-        else null
-
-        val parameters = node.parameters.map {
-            val type = context.typesRegister.find(Identifier.Type(it.type.identifier))
-                ?: throw Exception("Not found type: ${it.type.identifier}")
-            DeclaredSubroutine.Parameter(it.identifier, type, it.sourceLocation)
-        }
-        val returnType = if (node.returnType != null)
-            (context.typesRegister.find(Identifier.Type(node.returnType.identifier))
-                ?: throw Exception("Not found type: ${node.returnType.identifier}")) else context.builtin.voidType
+        val declaringType = getDeclaringType(node)
+        val parameters = getParameters(node)
+        val identifier = Identifier.Function(declaringType, node.identifier, parameters.map { it.type })
+        val returnType = getReturnType(node)
 
         return FunctionBuilder.register(context) {
             declaringType(declaringType)
-            identifier(Identifier.Function(declaringType, node.identifier, parameters.map { it.type }))
+            identifier(identifier)
             parameters(parameters)
             returnType(returnType)
             sourceLocation(node.sourceLocation)
@@ -45,8 +36,35 @@ class SubroutineDefinitionCompiler(
     }
 
     private fun registerOperator(node: OperatorDefinitionASTNode): DeclaredSubroutine {
-        TODO()
+        val parameters = getParameters(node)
+        val identifier = Identifier.Operator(node.operator, parameters.map { it.type })
+        val returnType = getReturnType(node)
+
+        return FunctionBuilder.register(context) {
+            identifier(identifier)
+            parameters(parameters)
+            returnType(returnType)
+            sourceLocation(node.sourceLocation)
+        }
     }
+
+    private fun getDeclaringType(node: FunctionDefinitionASTNode): DeclaredType? =
+        if (node.declaringType != null)
+            context.typesRegister.find(Identifier.Type(node.declaringType))
+                ?: throw Exception("Not found type: ${node.declaringType}")
+        else null
+
+    private fun getParameters(node: SubroutineDefinitionASTNode): List<DeclaredSubroutine.Parameter> =
+        node.parameters.map {
+            val type = context.typesRegister.find(Identifier.Type(it.type.identifier))
+                ?: throw Exception("Not found type: ${it.type.identifier}")
+            DeclaredSubroutine.Parameter(it.identifier, type, it.sourceLocation)
+        }
+
+    private fun getReturnType(node: SubroutineDefinitionASTNode): DeclaredType =
+        if (node.returnType != null)
+            (context.typesRegister.find(Identifier.Type(node.returnType.identifier))
+                ?: throw Exception("Not found type: ${node.returnType.identifier}")) else context.builtin.voidType
 
     fun compileFunction(node: SubroutineDefinitionASTNode, subroutine: DeclaredSubroutine) {
         logger.verbose("Compiling function: ${subroutine.getDebugDescription()}")
