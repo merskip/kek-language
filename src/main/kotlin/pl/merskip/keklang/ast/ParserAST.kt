@@ -55,7 +55,7 @@ class ParserAST(
         val modifiers = parseModifiers()
         val token = getAnyNextToken()
 
-        if (modifiers.isNotEmpty() && token !is Token.Func) {
+        if (modifiers.isNotEmpty() && token !is Token.Func && token !is Token.OperatorKeyword) {
             throw Exception("Modifiers are allowed only before 'func' token but got ${token::class.simpleName}")
         }
 

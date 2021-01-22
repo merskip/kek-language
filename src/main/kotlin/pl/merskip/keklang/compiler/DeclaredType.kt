@@ -113,8 +113,7 @@ fun IRInstructionsBuilder.createCall(
     arguments: List<LLVMValue>,
     name: String? = null
 ): LLVMInstructionValue {
-    val effectiveName = name ?: if (subroutine.isReturnVoid) null else subroutine.identifier.canonical + "Call"
-    return createCall(subroutine.value, subroutine.wrappedType, arguments, effectiveName)
+    return createCall(subroutine.value, subroutine.wrappedType, arguments, name)
 }
 
 fun IRInstructionsBuilder.createStructureInitialize(

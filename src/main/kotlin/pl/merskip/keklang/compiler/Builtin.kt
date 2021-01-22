@@ -1,9 +1,6 @@
 package pl.merskip.keklang.compiler
 
-import pl.merskip.keklang.llvm.LLVMContext
-import pl.merskip.keklang.llvm.LLVMIntegerType
-import pl.merskip.keklang.llvm.LLVMModule
-import pl.merskip.keklang.llvm.LLVMValue
+import pl.merskip.keklang.llvm.*
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
@@ -33,7 +30,7 @@ class Builtin(
     val memoryType: DeclaredType
     val stringType: StructureType
 
-    private val builtinFunctions: MutableMap<Identifier.Function, BuiltinImplementation> = mutableMapOf()
+    private val builtinFunctions: MutableMap<Identifier, BuiltinImplementation> = mutableMapOf()
 
     init {
         val target = module.getTargetTriple()
@@ -169,11 +166,41 @@ class Builtin(
             )
             context.instructionsBuilder.createReturn(structure.get)
         }
-    }
 
-    fun registerFunctions(context: CompilerContext) {
-        logger.debug("Registering builtin functions")
-        registerOperatorsFunctions(context)
+        register("+", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createAddition(lhs.get, rhs.get, "add")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("-", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createSubtraction(lhs.get, rhs.get, "sub")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("*", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createMultiplication(lhs.get, rhs.get, "mul")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("==", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.get, rhs.get, "isEqual")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("<", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.SLT, lhs.get, rhs.get, "isLessThan")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register(">", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.SGT, lhs.get, rhs.get, "isGreaterThan")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("+", bytePointerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, lhs.get, listOf(rhs.get), "add")
+            context.instructionsBuilder.createReturn(result)
+        }
     }
 
     private fun <T : DeclaredType> registerType(
@@ -186,7 +213,7 @@ class Builtin(
 
     fun compileBuiltinFunction(context: CompilerContext, identifier: Identifier, parameters: List<Reference>) {
         val implementation = builtinFunctions[identifier]
-            ?: throw Exception("Not found builtin function: $identifier")
+            ?: throw Exception("Not found builtin function: $identifier with parameters " + parameters.map { it.type.getDebugDescription() })
         implementation(context, parameters)
     }
 
@@ -197,95 +224,9 @@ class Builtin(
         builtinFunctions[functionIdentifier] = implementation
     }
 
-    private fun registerOperatorsFunctions(context: CompilerContext) {
-        context.registerOperatorFunction(
-            lhs = integerType,
-            rhs = integerType,
-            simpleIdentifier = "adding",
-            returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createAddition(lhs.get, rhs.get, "add")
-        }
-
-        context.registerOperatorFunction(
-            lhs = integerType,
-            rhs = integerType,
-            simpleIdentifier = "subtract",
-            returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createSubtraction(lhs.get, rhs.get, "sub")
-        }
-
-        context.registerOperatorFunction(
-            lhs = integerType,
-            rhs = integerType,
-            simpleIdentifier = "multiple",
-            returnType = integerType) { lhs, rhs ->
-            context.instructionsBuilder.createMultiplication(lhs.get, rhs.get, "mul")
-        }
-
-        context.registerOperatorFunction(
-            lhs = integerType,
-            rhs = integerType,
-            simpleIdentifier = "isLessThan",
-            returnType = booleanType
-        ) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.SLT, lhs.get, rhs.get, "isLessThan")
-        }
-
-        context.registerOperatorFunction(
-            lhs = integerType,
-            rhs = integerType,
-            simpleIdentifier = "isGreaterThan",
-            returnType = booleanType
-        ) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.SGT, lhs.get, rhs.get, "isGreaterThan")
-        }
-
-        context.registerOperatorFunction(
-            lhs = integerType,
-            rhs = integerType,
-            simpleIdentifier = "isEqual",
-            returnType = booleanType) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.get, rhs.get, "isEqual")
-        }
-
-        context.registerOperatorFunction(
-            lhs = booleanType,
-            rhs = booleanType,
-            simpleIdentifier = "isEqual",
-            returnType = booleanType) { lhs, rhs ->
-            context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.get, rhs.get, "isEqual")
-        }
-
-        context.registerOperatorFunction(
-            lhs = bytePointerType,
-            rhs = integerType,
-            simpleIdentifier = "adding",
-            returnType = bytePointerType
-        ) { lhs, rhs ->
-            context.instructionsBuilder.createGetElementPointer(byteType.wrappedType, lhs.get, listOf(rhs.get), null)
-        }
-    }
-
-    private fun CompilerContext.registerOperatorFunction(
-        lhs: DeclaredType,
-        rhs: DeclaredType,
-        simpleIdentifier: String,
-        returnType: DeclaredType,
-        isInline: Boolean = true,
-        getResult: (lhs: Reference, rhs: Reference) -> LLVMValue?
-    ) = FunctionBuilder.register(this) {
-        declaringType(lhs)
-        identifier(Identifier.Function(null, simpleIdentifier, listOf(lhs, rhs)))
-        parameters("lhs" to lhs, "rhs" to rhs)
-        returnType(returnType)
-        isInline(isInline)
-        implementation { (lhs, rhs) ->
-            val result = getResult(lhs, rhs)
-            if (result != null)
-                instructionsBuilder.createReturn(result)
-            else
-                instructionsBuilder.createReturnVoid()
-        }
+    private fun register(operator: String, lhs: DeclaredType, rhs: DeclaredType, implementation: BuiltinImplementation) {
+        val operatorIdentifier = Identifier.Operator(operator, lhs, rhs)
+        builtinFunctions[operatorIdentifier] = implementation
     }
 
     fun getBuiltinFiles(): List<File> {

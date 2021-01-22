@@ -16,7 +16,7 @@ class BinaryOperatorCompiler(
         return if (node.identifier == "=") {
             compileAssignOperator(lhs as WriteableReference, rhs)
         } else {
-            val function = getFunctionForOperator(node.identifier, lhs.type, rhs.type)
+            val function = getOperatorSubroutine(node.identifier, lhs.type, rhs.type)
             val result = context.instructionsBuilder.createCall(
                 subroutine = function,
                 arguments = listOf(lhs.get, rhs.get)
@@ -30,24 +30,12 @@ class BinaryOperatorCompiler(
         return rhs
     }
 
-    private fun getFunctionForOperator(operator: String, lhsType: DeclaredType, rhsType: DeclaredType): DeclaredSubroutine {
-        val functionIdentifier = Identifier.Function(
-            declaringType = lhsType,
-            canonical = when (operator) {
-                "+" -> "adding"
-                "-" -> "subtract"
-                "*" -> "multiple"
-                "<" -> "isLessThan"
-                ">" -> "isGreaterThan"
-                "==" -> "isEqual"
-                else -> throw Exception("Unknown operator: $operator")
-            },
-            parameters = listOf(lhsType, rhsType)
-        )
-        return context.typesRegister.find(functionIdentifier)
+    private fun getOperatorSubroutine(operator: String, lhsType: DeclaredType, rhsType: DeclaredType): DeclaredSubroutine {
+        val identifier = Identifier.Operator(operator, lhsType, rhsType)
+        return context.typesRegister.find(identifier)
             ?: throw Exception("Not found function for operator: \"$operator\"" +
                     " for lhs=${lhsType.getDebugDescription()}" +
                     " and rhs=${rhsType.getDebugDescription()}" +
-                    " (${functionIdentifier.mangled}")
+                    " (${identifier.mangled}")
     }
 }

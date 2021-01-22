@@ -16,10 +16,12 @@ class CompilerV2(
 
     private val logger = Logger(this::class)
 
+    private val subroutineCompiler = SubroutineDefinitionCompiler(context)
+    private val fileCompiler = FileCompiler(context, subroutineCompiler)
+
     init {
         logger.info("Preparing compiler")
 
-        context.addNodeCompiler(FileCompiler(context, SubroutineDefinitionCompiler(context)))
         context.addNodeCompiler(CodeBlockCompiler(context))
         context.addNodeCompiler(StatementCompiler(context))
         context.addNodeCompiler(ReferenceCompiler(context))
@@ -32,27 +34,33 @@ class CompilerV2(
         context.addNodeCompiler(VariableDeclarationCompiler(context))
         context.addNodeCompiler(FieldReferenceCompiler(context))
         context.addNodeCompiler(WhileLoopCompiler(context))
-
-        context.builtin.registerFunctions(context)
         compileBuiltinFiles()
     }
 
     private fun compileBuiltinFiles() {
         logger.debug("Compiling builtin files")
-        context.builtin.getBuiltinFiles().forEach { file ->
+
+        context.builtin.getBuiltinFiles().flatMap { file ->
             val content = file.readText()
             val tokens = Lexer(file, content).parse()
 
             val parserNodeAST = ParserAST(file, content, tokens)
-            val fileNode = parserNodeAST.parse()
-            context.compile(fileNode)
+            parserNodeAST.parse().nodes
+        }.map { node ->
+            node to subroutineCompiler.registerSubroutine(node)
+        }.map { (node, subroutine) ->
+            subroutineCompiler.compileFunction(node, subroutine)
         }
     }
 
     fun compile(fileNode: FileASTNode) {
         logger.info("Start compile")
         createDebugFile(fileNode)
-        context.compile(fileNode)
+        fileNode.nodes.map { node ->
+            node to subroutineCompiler.registerSubroutine(node)
+        }.map { (node, subroutine) ->
+            subroutineCompiler.compileFunction(node, subroutine)
+        }
         createEntryPoint()
         context.debugBuilder.finalize()
         verifyModule()

@@ -35,10 +35,11 @@ sealed class Identifier(
 
         constructor(
             operator: String,
-            parameters: List<DeclaredType>
+            lhsType: DeclaredType,
+            rhsType: DeclaredType
         ) : this(operator, listOfNotNull(
             operator.mangledOperator(),
-            parameters.map { it.identifier }.mangled()
+            listOf(lhsType, rhsType).map { it.identifier }.mangled()
         ).joinToString("_"))
     }
 
@@ -58,9 +59,20 @@ sealed class Identifier(
                 else -> if (isType) "T$length$this" else "N$length$this"
             }
 
-        fun String.mangledOperator(): String {
-            return "O" + map { "U" + it.toInt().toString(16) }.joinToString("")
-        }
+        private fun String.mangledOperator(): String =
+            "O" + count() + map { it.mangledOperator() }.joinToString("")
+
+        private fun Char.mangledOperator(): String =
+            when (this) {
+                '+' -> "_plus"
+                '-' -> "_minus"
+                '*' -> "_asterisk"
+                '=' -> "_equals"
+                ':' -> "_colon"
+                '<' -> "_lt"
+                '>' -> "_gt"
+                else -> "_U" + toInt().toString(16)
+            }
     }
 
     override fun equals(other: Any?): Boolean {

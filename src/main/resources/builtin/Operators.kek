@@ -1,15 +1,17 @@
 
-#builtin operator + (lhs: Integer, rhs: Integer) -> Integer;
+builtin operator + (lhs: Integer, rhs: Integer) -> Integer;
 
-#builtin operator - (lhs: Integer, rhs: Integer) -> Integer;
+builtin operator - (lhs: Integer, rhs: Integer) -> Integer;
 
-#builtin operator * (lhs: Integer, rhs: Integer) -> Integer;
+builtin operator * (lhs: Integer, rhs: Integer) -> Integer;
 
-#builtin operator < (lhs: Integer, rhs: Integer) -> Boolean;
+builtin operator < (lhs: Integer, rhs: Integer) -> Boolean;
 
-#builtin operator > (lhs: Integer, rhs: Integer) -> Boolean;
+builtin operator > (lhs: Integer, rhs: Integer) -> Boolean;
 
-#builtin operator == (lhs: Integer, rhs: Integer) -> Boolean;
+builtin operator == (lhs: Integer, rhs: Integer) -> Boolean;
+
+builtin operator + (lhs: BytePointer, rhs: Integer) -> BytePointer;
 
 operator := (lhs: BytePointer, rhs: BytePointer) {
     Memory.setValue(lhs, rhs)

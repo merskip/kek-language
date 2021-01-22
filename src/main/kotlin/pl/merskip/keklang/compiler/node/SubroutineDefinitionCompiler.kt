@@ -8,7 +8,7 @@ import pl.merskip.keklang.logger.Logger
 
 class SubroutineDefinitionCompiler(
     val context: CompilerContext
-) : ASTNodeCompiling<FunctionDefinitionASTNode> {
+) {
 
     private val logger = Logger(this::class)
 
@@ -36,13 +36,13 @@ class SubroutineDefinitionCompiler(
     }
 
     private fun registerOperator(node: OperatorDefinitionASTNode): DeclaredSubroutine {
-        val parameters = getParameters(node)
-        val identifier = Identifier.Operator(node.operator, parameters.map { it.type })
+        val (lhsParameter, rhsParameter) = getParameters(node)
+        val identifier = Identifier.Operator(node.operator, lhsParameter.type, rhsParameter.type)
         val returnType = getReturnType(node)
 
         return FunctionBuilder.register(context) {
             identifier(identifier)
-            parameters(parameters)
+            parameters(listOf(lhsParameter, rhsParameter))
             returnType(returnType)
             sourceLocation(node.sourceLocation)
         }
@@ -85,9 +85,5 @@ class SubroutineDefinitionCompiler(
                 }
             }
         }
-    }
-
-    override fun compile(node: FunctionDefinitionASTNode): Reference? {
-        throw UnsupportedOperationException("Use `compileFunction` function instead of that")
     }
 }
