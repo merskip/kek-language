@@ -24,6 +24,13 @@ func main() -> Integer {
 }
 ```
 
+# Supported operating systems
+
+| OS  | CPU Architecture |
+| --- | ---------------- |
+| [GunwOS](https://github.com/bronexproduction/GunwOS) | [x86](https://en.wikipedia.org/wiki/X86)       |
+| [Linux](https://github.com/torvalds/linux)           | [x86-64](https://en.wikipedia.org/wiki/X86-64) |
+
 # References
 
 * [Grammar Summary](grammar.md)
