@@ -6,7 +6,8 @@ class TypesRegister {
 
     private val logger = Logger(this::class)
 
-    val types = mutableListOf<DeclaredType>()
+    private val types = mutableListOf<DeclaredType>()
+    private val operators = mutableListOf<DeclaredOperator>()
 
     fun register(type: DeclaredType) {
         if (types.any { it.identifier == type.identifier })
@@ -31,8 +32,23 @@ class TypesRegister {
 
     inline fun <reified T: DeclaredType> find(predicate: (type: T) -> Boolean): T? {
         @Suppress("UNCHECKED_CAST")
-        return types.mapNotNull { it as? T }.find { predicate(it) }
+        return getAllTypes().mapNotNull { it as? T }.find { predicate(it) }
+    }
+
+    fun getAllTypes() = types.toList()
+
+    fun register(operator: DeclaredOperator) {
+        if (operators.any { it.operator == operator.operator })
+            throw DeclaredOperatorAlreadyExistsException(operator)
+        operators.add(operator)
+        logger.verbose("Registered operator type=${operator.type}, operator=\"${operator.operator}\", precedence=${operator.precedence}")
+    }
+
+    fun getOperator(operator: String): DeclaredOperator? {
+        return operators.firstOrNull { it.operator == operator }
     }
 
     class RegisteringTypeAlreadyExistsException(type: DeclaredType) : Exception("Registering type already exists: ${type.getDebugDescription()}")
+
+    class DeclaredOperatorAlreadyExistsException(operator: DeclaredOperator) : Exception("Declared operator already exists: ${operator.operator}")
 }

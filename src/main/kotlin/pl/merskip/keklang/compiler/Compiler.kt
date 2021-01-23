@@ -7,6 +7,8 @@ import pl.merskip.keklang.ast.node.OperatorDeclarationASTNode
 import pl.merskip.keklang.ast.node.SubroutineDefinitionASTNode
 import pl.merskip.keklang.compiler.node.*
 import pl.merskip.keklang.lexer.Lexer
+import pl.merskip.keklang.lexer.SourceLocationException
+import pl.merskip.keklang.lexer.Token
 import pl.merskip.keklang.llvm.LLVMFileMetadata
 import pl.merskip.keklang.llvm.enum.EmissionKind
 import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
@@ -87,7 +89,7 @@ class Compiler(
                                 val subroutine = subroutineCompiler.registerSubroutine(node)
                                 subroutines.add(FileSubroutines.Subroutine(node, subroutine))
                             }
-                            is OperatorDeclarationASTNode -> TODO()
+                            is OperatorDeclarationASTNode -> registerDeclarationOperator(node)
                             else -> throw Exception("Illegal node at top level: $node")
                         }
                     }
@@ -95,6 +97,19 @@ class Compiler(
 
                 FileSubroutines(fileNode, subroutines)
             }
+    }
+
+    private fun registerDeclarationOperator(node: OperatorDeclarationASTNode) {
+        context.typesRegister.register(DeclaredOperator(
+            type = when (node.type) {
+                is Token.PrefixKeyword -> DeclaredOperator.Type.Prefix
+                is Token.PostfixKeyword -> DeclaredOperator.Type.Postfix
+                is Token.InfixKeyword -> DeclaredOperator.Type.Infix
+                else -> throw SourceLocationException("Unknown operator type", node)
+            },
+            operator = node.operator.text,
+            precedence = node.precedence.text.toInt()
+        ))
     }
 
     private fun compileFilesSubroutines(filesSubroutines: List<FileSubroutines>) {
