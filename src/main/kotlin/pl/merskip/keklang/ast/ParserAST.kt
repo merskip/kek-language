@@ -62,6 +62,7 @@ class ParserAST(
             is Token.StringLiteral -> parseConstantString(token)
             is Token.Var -> parseVariableDeclaration(token)
             is Token.While -> parseWhileLoop(token)
+            is Token.OperatorTypeKeyword -> parseOperatorDeclaration(token)
             else -> return null
         }
 
@@ -378,6 +379,16 @@ class ParserAST(
         }
         return ExpressionASTNode(expression?.items ?: emptyList(), true)
             .sourceLocation(leftParenthesis, rightParenthesis)
+    }
+
+    private fun parseOperatorDeclaration(type: Token.OperatorTypeKeyword): OperatorDeclarationASTNode {
+        getNextToken<Token.OperatorKeyword>()
+        val operator = getNextToken<Token.Operator>()
+        getNextToken<Token.PrecedenceKeyword>()
+        val precedence = getNextToken<Token.Number>()
+
+        return OperatorDeclarationASTNode(type, operator, precedence)
+            .sourceLocation(type, precedence)
     }
 
     private inline fun <reified T : Token> getNextToken(): T {

@@ -1,0 +1,17 @@
+
+infix operator = precedence 100
+infix operator := precedence 100
+
+infix operator == precedence 20
+infix operator != precedence 20
+
+infix operator > precedence 30
+infix operator < precedence 30
+infix operator => precedence 30
+infix operator => precedence 30
+
+infix operator + precedence 40
+infix operator - precedence 40
+
+infix operator * precedence 50
+infix operator / precedence 50

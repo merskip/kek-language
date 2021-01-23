@@ -16,7 +16,6 @@ interface ASTNodeVisitor<T> {
     fun visitReferenceDeclarationNode(node: ReferenceDeclarationASTNode): T
     fun visitTypeReferenceNode(node: TypeReferenceASTNode): T
     fun visitReferenceNode(node: ReferenceASTNode): T
-    fun visitBinaryOperatorNode(node: BinaryOperatorNodeAST): T
     fun visitStringNode(node: ConstantStringASTNode): T
     fun visitVariableDeclaration(node: VariableDeclarationASTNode): T
     fun visitFieldReferenceNode(node: FieldReferenceASTNode): T

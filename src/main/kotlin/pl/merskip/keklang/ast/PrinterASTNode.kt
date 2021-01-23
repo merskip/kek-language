@@ -158,17 +158,6 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
-    override fun visitBinaryOperatorNode(node: BinaryOperatorNodeAST) {
-        print(
-            node = node,
-            parameters = mapOf("identifier" to node.identifier),
-            children = mapOf(
-                "lhs" to listOf(node.lhs),
-                "rhs" to listOf(node.rhs)
-            )
-        )
-    }
-
     override fun visitStringNode(node: ConstantStringASTNode) {
         print(
             node = node,

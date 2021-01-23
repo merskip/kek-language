@@ -16,7 +16,6 @@ class StatementCompiler(
             is ConstantStringASTNode -> context.compile(node)
             is FunctionCallASTNode -> context.compile(node)
             is StaticFunctionCallASTNode -> context.compile(node)
-            is BinaryOperatorNodeAST -> context.compile(node)
             is IfElseConditionNodeAST -> context.compile(node)
             is VariableDeclarationASTNode -> context.compile(node)
             is FieldReferenceASTNode -> context.compile(node)

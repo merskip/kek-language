@@ -32,7 +32,6 @@ class Compiler(
         context.addNodeCompiler(ConstantStringCompiler(context))
         context.addNodeCompiler(FunctionCallCompiler(context))
         context.addNodeCompiler(StaticFunctionCallCompiler(context))
-        context.addNodeCompiler(BinaryOperatorCompiler(context))
         context.addNodeCompiler(IfElseConditionCompiler(context))
         context.addNodeCompiler(VariableDeclarationCompiler(context))
         context.addNodeCompiler(FieldReferenceCompiler(context))
