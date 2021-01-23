@@ -12,11 +12,16 @@ class Logger<T : Any>(
 ) {
 
     enum class Level {
+        SUCCESS,
         ERROR,
         WARNING,
         INFO,
         DEBUG,
         VERBOSE
+    }
+
+    fun success(message: String) {
+        print(Level.SUCCESS, message)
     }
 
     fun error(message: String, error: Throwable? = null) {
@@ -73,6 +78,7 @@ class Logger<T : Any>(
 
     private fun getColorByLevel(level: Level): Color {
         return when (level) {
+            Level.SUCCESS -> Color.Green
             Level.ERROR -> Color.Red
             Level.WARNING -> Color.Yellow
             Level.INFO -> Color.Default

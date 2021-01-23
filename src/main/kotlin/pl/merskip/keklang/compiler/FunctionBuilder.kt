@@ -74,8 +74,8 @@ class FunctionBuilder() {
             parameterValue.setName(parameter.name)
         }
 
-        val (debugFile, sourceLocation) = Pair(context.debugFile, sourceLocation)
-
+        val sourceLocation = sourceLocation
+        val debugFile = context.getDebugFile(sourceLocation)
         if (debugFile != null && sourceLocation != null) {
 
             val debugParameters = parameters.map { parameter ->

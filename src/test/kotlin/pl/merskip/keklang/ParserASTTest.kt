@@ -88,7 +88,7 @@ internal class ParserASTTest {
         """.trimIndent()
 
         val fileNodeAST = parse(source)
-        val secondFuncDef = fileNodeAST.nodes[1]  as FunctionDefinitionASTNode
+        val secondFuncDef = fileNodeAST.nodes[1] as FunctionDefinitionASTNode
 
         assertEquals("b", secondFuncDef.identifier)
 
@@ -109,7 +109,7 @@ internal class ParserASTTest {
         """.trimIndent()
 
         val fileNodeAST = parse(source)
-        val secondFuncDef = fileNodeAST.nodes[1]  as FunctionDefinitionASTNode
+        val secondFuncDef = fileNodeAST.nodes[1] as FunctionDefinitionASTNode
 
         assertEquals("c", secondFuncDef.identifier)
 
@@ -131,8 +131,7 @@ internal class ParserASTTest {
             }
         """.trimIndent()
 
-        val fileNodeAST = parse(source)
-        val funcDef = fileNodeAST.nodes.single()
+        val funcDef = parseForFunction(source)
 
         assertNotNull(funcDef.body)
         val operator = funcDef.body!!.single<BinaryOperatorNodeAST>()
@@ -150,8 +149,7 @@ internal class ParserASTTest {
             }
         """.trimIndent()
 
-        val fileNodeAST = parse(source)
-        val funcDef = fileNodeAST.nodes.single()
+        val funcDef = parseForFunction(source)
 
         val secondAddingOperator = funcDef.body!!.single<BinaryOperatorNodeAST>()
 
@@ -170,8 +168,7 @@ internal class ParserASTTest {
             }
         """.trimIndent()
 
-        val fileNodeAST = parse(source)
-        val funcDef = fileNodeAST.nodes.single()
+        val funcDef = parseForFunction(source)
 
         assertNotNull(funcDef.body)
         val addingOperator = funcDef.body!!.single<BinaryOperatorNodeAST>()
@@ -192,8 +189,7 @@ internal class ParserASTTest {
             }
         """.trimIndent()
 
-        val fileNodeAST = parse(source)
-        val funcDef = fileNodeAST.nodes.single()
+        val funcDef = parseForFunction(source)
 
         val addingOperator = funcDef.body!!.single<BinaryOperatorNodeAST>()
         assertConstValue(3, addingOperator.rhs)
@@ -211,8 +207,7 @@ internal class ParserASTTest {
             }
         """.trimIndent()
 
-        val fileNodeAST = parse(source)
-        val funcDef = fileNodeAST.nodes.single()
+        val funcDef = parseForFunction(source)
 
         val variableDeclaration = funcDef.body!!.single<VariableDeclarationASTNode>()
         assertEquals("bar", variableDeclaration.identifier)
@@ -227,8 +222,7 @@ internal class ParserASTTest {
             }
         """.trimIndent()
 
-        val fileNodeAST = parse(source)
-        val funcDef = fileNodeAST.nodes.single()
+        val funcDef = parseForFunction(source)
 
         val fieldReference = funcDef.body!!.single<FieldReferenceASTNode>()
         assertEquals("bar", fieldReference.reference.identifier)
@@ -243,8 +237,7 @@ internal class ParserASTTest {
             }
         """.trimIndent()
 
-        val fileNodeAST = parse(source)
-        val funcDef = fileNodeAST.nodes.single()
+        val funcDef = parseForFunction(source)
 
         val whileLoop = funcDef.body!!.single<WhileLoopASTNode>()
         assert(whileLoop.condition is BinaryOperatorNodeAST)
@@ -267,13 +260,17 @@ internal class ParserASTTest {
         assertNull(funcDef.body)
     }
 
+    private fun parseForFunction(source: String): FunctionDefinitionASTNode {
+        return parse(source).nodes.single() as FunctionDefinitionASTNode
+    }
+
     private fun parse(source: String): FileASTNode {
         val file = File("")
         val tokens = Lexer(file, source).parse()
         return ParserAST(file, source, tokens).parse()
     }
 
-    private inline fun <reified T: StatementASTNode> CodeBlockASTNode.single(): T {
+    private inline fun <reified T : StatementASTNode> CodeBlockASTNode.single(): T {
         return statements.single() as T
     }
 

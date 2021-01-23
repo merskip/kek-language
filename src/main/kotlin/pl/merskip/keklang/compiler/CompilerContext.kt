@@ -5,6 +5,7 @@ import pl.merskip.keklang.compiler.node.ASTNodeCompiling
 import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.llvm.*
 import pl.merskip.keklang.logger.Logger
+import java.io.File
 import java.lang.reflect.ParameterizedType
 
 class CompilerContext(
@@ -20,7 +21,7 @@ class CompilerContext(
     private val logger = Logger(this::class)
 
     lateinit var entryPointSubroutine: DeclaredSubroutine
-    var debugFile: LLVMFileMetadata? = null
+    private val debugFiles = mutableMapOf<File, LLVMFileMetadata>()
 
     var nodesCompilers = mutableListOf<ASTNodeCompiling<*>>()
 
@@ -43,6 +44,14 @@ class CompilerContext(
     fun <T: ASTNode> addNodeCompiler(nodeCompiling: ASTNodeCompiling<T>) {
         nodesCompilers.add(nodeCompiling)
     }
+
+    fun addDebugFile(file: File, debugFile: LLVMFileMetadata) {
+        debugFiles[file] = debugFile
+    }
+
+    fun getDebugFile(sourceLocation: SourceLocation?) = debugFiles[sourceLocation?.file]
+
+    fun getDebugFile(file: File) = debugFiles[file]
 
     fun setSourceLocation(sourceLocation: SourceLocation) {
         val debugScope = scopesStack.current.debugScope

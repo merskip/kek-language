@@ -65,14 +65,14 @@ fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler
         println(tokens.joinToString("\n") { token -> token.toString() })
     }
 
-    val parserNodeAST = ParserAST(file, content, tokens)
-    val fileNode = parserNodeAST.parse()
-
     if (astDump) {
+        val parserNodeAST = ParserAST(file, content, tokens)
+        val fileNode = parserNodeAST.parse()
         println(PrinterASTNode().print(fileNode))
     }
 
-    compiler.compile(fileNode)
+    compiler.addFile(file)
+    compiler.compile()
 }
 
 fun ApplicationArguments.processModule(context: CompilerContext) {
