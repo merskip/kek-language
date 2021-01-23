@@ -44,6 +44,16 @@ class Logger<T : Any>(
         print(Level.VERBOSE, message)
     }
 
+    fun <T> measure(level: Level, message: String, block: () -> T): T {
+        val startNanoseconds = System.nanoTime()
+        return block().apply {
+            val durationNanoseconds = System.nanoTime() - startNanoseconds
+            val durationMillis = durationNanoseconds / 1e6
+
+            print(level, "$message (in $durationMillis ms)")
+        }
+    }
+
     private fun print(level: Level, message: String, error: Throwable? = null) {
         print(
             level,

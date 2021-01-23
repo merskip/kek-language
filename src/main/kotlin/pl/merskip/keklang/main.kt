@@ -34,7 +34,7 @@ fun withReadSource(filename: String, callback: (filename: String, content: Strin
     callback(filename, content)
 }
 
-fun ApplicationArguments.processSource(filename: String?, content: String, compiler: CompilerV2) {
+fun ApplicationArguments.processSource(filename: String?, content: String, compiler: Compiler) {
     try {
         val file = when {
             filename != null -> File(filename)
@@ -58,7 +58,7 @@ fun ApplicationArguments.processSource(filename: String?, content: String, compi
     }
 }
 
-fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler: CompilerV2) {
+fun ApplicationArguments.tryProcessSources(file: File, content: String, compiler: Compiler) {
     val tokens = Lexer(file, content).parse()
 
     if (tokensDump) {
@@ -90,7 +90,7 @@ fun main(args: Array<String>) = mainBody {
         val typesRegister = TypesRegister()
         val builtin = Builtin(context, module, typesRegister)
         try {
-            val compiler = CompilerV2(
+            val compiler = Compiler(
                 CompilerContext(
                     context,
                     module,

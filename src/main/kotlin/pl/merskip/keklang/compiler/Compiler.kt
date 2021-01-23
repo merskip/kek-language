@@ -1,8 +1,5 @@
 package pl.merskip.keklang.compiler
 
-import arrow.core.extensions.list.monad.flatMap
-import arrow.core.extensions.list.monad.flatten
-import arrow.core.extensions.list.monad.map
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.node.FileASTNode
@@ -15,10 +12,9 @@ import pl.merskip.keklang.llvm.enum.EmissionKind
 import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
 import pl.merskip.keklang.llvm.enum.SourceLanguage
 import pl.merskip.keklang.logger.Logger
-import sun.security.ec.point.ProjectivePoint
 import java.io.File
 
-class CompilerV2(
+class Compiler(
     val context: CompilerContext
 ) {
 
@@ -51,17 +47,26 @@ class CompilerV2(
     }
 
     fun compile() {
-        logger.info("Compiling...")
-        val filesNodes = files.mapIndexed { index, file ->
+        logger.measure(Logger.Level.SUCCESS, "Compilation has been successfully completed") {
+            val filesNodes = parseFiles()
+            val filesSubroutines = registerSubroutines(filesNodes)
+            compileFilesSubroutines(filesSubroutines)
+
+            createEntryPoint()
+            context.debugBuilder.finalize()
+            verifyModule()
+        }
+    }
+
+    private fun parseFiles(): List<FileASTNode> {
+        return files.mapIndexed { index, file ->
             val content = file.readText()
             val tokens = Lexer(file, content).parse()
 
             val parserNodeAST = ParserAST(file, content, tokens)
-            logger.debug("Parsing $file")
-            val start = System.nanoTime()
-            val fileNode = parserNodeAST.parse()
-            val duration = System.nanoTime() - start
-            logger.debug("Parsed file $file in ${duration.toDouble() / 1e6} ms")
+            val fileNode = logger.measure(Logger.Level.DEBUG, "Parsed $file") {
+                parserNodeAST.parse()
+            }
 
             if (index == files.lastIndex) {
                 val debugFile = createDebugFile(fileNode)
@@ -70,33 +75,37 @@ class CompilerV2(
 
             fileNode
         }
+    }
 
-        filesNodes
+    private fun registerSubroutines(filesNodes: List<FileASTNode>): List<FileSubroutines> {
+        return filesNodes
             .map { fileNode ->
-                val subroutines = mutableListOf<Pair<SubroutineDefinitionASTNode, DeclaredSubroutine>>()
-                fileNode.nodes.forEach { node ->
-                    when (node) {
-                        is SubroutineDefinitionASTNode -> {
-                            val subroutine = subroutineCompiler.registerSubroutine(node)
-                            subroutines.add(node to subroutine)
+                val subroutines = mutableListOf<FileSubroutines.Subroutine>()
+                logger.measure(Logger.Level.DEBUG, "Registered functions from ${fileNode.sourceLocation.file}") {
+                    fileNode.nodes.forEach { node ->
+                        when (node) {
+                            is SubroutineDefinitionASTNode -> {
+                                val subroutine = subroutineCompiler.registerSubroutine(node)
+                                subroutines.add(FileSubroutines.Subroutine(node, subroutine))
+                            }
+                            is OperatorDeclarationASTNode -> TODO()
+                            else -> throw Exception("Illegal node at top level: $node")
                         }
-                        is OperatorDeclarationASTNode -> TODO()
-                        else -> throw Exception("Illegal node at top level: $node")
                     }
                 }
-                logger.debug("Registered functions from ${fileNode.sourceLocation.file}")
-                fileNode to subroutines
+
+                FileSubroutines(fileNode, subroutines)
             }
-            .forEach { (fileNode, subroutines) ->
-                subroutines.forEach { (node, subroutine) ->
+    }
+
+    private fun compileFilesSubroutines(filesSubroutines: List<FileSubroutines>) {
+        filesSubroutines.forEach { fileSubroutines ->
+            logger.measure(Logger.Level.SUCCESS, "Successfully compiled ${fileSubroutines.file}") {
+                fileSubroutines.subroutines.forEach { (node, subroutine) ->
                     subroutineCompiler.compileFunction(node, subroutine)
                 }
-                logger.success("Successfully compiled ${fileNode.sourceLocation.file}")
             }
-
-        createEntryPoint()
-        context.debugBuilder.finalize()
-        verifyModule()
+        }
     }
 
     private fun createDebugFile(fileNode: FileASTNode): LLVMFileMetadata {
@@ -125,7 +134,7 @@ class CompilerV2(
     }
 
     private fun createEntryPoint() {
-        logger.info("Adding entry point")
+        logger.debug("Adding entry point")
         context.entryPointSubroutine = FunctionBuilder.register(context) {
             isExtern(true)
             identifier(Identifier.Extern("_start"))
@@ -168,7 +177,20 @@ class CompilerV2(
     }
 
     private fun verifyModule() {
-        logger.info("Verifying module")
+        logger.debug("Verifying module")
         context.module.verify()
+    }
+
+    data class FileSubroutines(
+        val fileNode: FileASTNode,
+        val subroutines: List<Subroutine>
+    ) {
+
+        val file = fileNode.sourceLocation.file
+
+        data class Subroutine(
+            val node: SubroutineDefinitionASTNode,
+            val subroutine: DeclaredSubroutine
+        )
     }
 }
