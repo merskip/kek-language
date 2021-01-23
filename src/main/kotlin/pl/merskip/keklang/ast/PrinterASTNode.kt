@@ -217,6 +217,27 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
+    override fun visitExpressionNode(node: ExpressionASTNode) {
+        print(
+            node = node,
+            parameters = mapOf(
+                "isParenthesized" to  if (node.isParenthesized) "true" else "false"
+            ),
+            children = mapOf(
+                "items" to node.items
+            )
+        )
+    }
+
+    override fun visitOperatorNode(node: OperatorASTNode) {
+        print(
+            node = node,
+            parameters = mapOf(
+                "operator" to node.operator.text
+            )
+        )
+    }
+
     private fun print(
         node: ASTNode,
         parameters: Map<String, String?> = emptyMap(),

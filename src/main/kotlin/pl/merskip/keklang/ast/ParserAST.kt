@@ -1,10 +1,9 @@
 package pl.merskip.keklang.ast
 
 import arrow.core.Either
-import com.sun.org.apache.xpath.internal.operations.Or
-import pl.merskip.keklang.Operator
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.lexer.SourceLocation
+import pl.merskip.keklang.lexer.SourceLocationException
 import pl.merskip.keklang.lexer.Token
 import pl.merskip.keklang.lexer.UnexpectedTokenException
 import java.io.File
@@ -17,32 +16,21 @@ class ParserAST(
     tokens: List<Token>
 ) {
 
-    private val tokensIter = tokens.filterNot {
+    private val tokens = tokens.filterNot {
         it is Token.Whitespace || it is Token.LineComment
-    }.listIterator()
+    }
 
-    private val operators = listOf(
-        Operator("=", 100),
-        Operator(":=", 100),
-        Operator(">", 200),
-        Operator("<", 200),
-        Operator("==", 200),
-        Operator("+", 300),
-        Operator("-", 400),
-        Operator("*", 500),
-        Operator("/", 600)
-    )
+    private var tokensIter = this.tokens.listIterator()
 
     fun parse(): FileASTNode {
-        val functions = mutableListOf<SubroutineDefinitionASTNode>()
+        val functions = mutableListOf<ASTNode>()
         while (true) {
             if (!isAnyNextToken()) break
 
-            val node = parseNextToken()
-            if (node !is SubroutineDefinitionASTNode)
-                throw Exception("Expected function or operator definition at global scope")
-
-            functions.add(node)
+            val node = parseNextTokenOrNull()
+            if (node != null) {
+                functions.add(node)
+            }
         }
         return FileASTNode(functions.toList()).apply {
             sourceLocation = SourceLocation.from(file, source, 0, source.length)
@@ -50,9 +38,12 @@ class ParserAST(
     }
 
     private fun parseNextToken(
-        minimumPrecedence: Int = 0,
-        popStatement: () -> StatementASTNode = ::throwNoLhsStatement
-    ): ASTNode {
+        popStatement: () -> StatementASTNode? =  { null }
+    ): ASTNode = parseNextTokenOrNull(popStatement) ?: throw UnexpectedTokenException(null, getAnyNextToken())
+
+    private fun parseNextTokenOrNull(
+        popStatement: () -> StatementASTNode? = { null }
+    ): ASTNode? {
         val modifiers = parseModifiers()
         val token = getAnyNextToken()
 
@@ -66,41 +57,17 @@ class ParserAST(
             is Token.If -> parseIfElseCondition(token)
             is Token.Identifier -> parseReferenceOrFunctionCall(token)
             is Token.Number -> parseConstantValue(token)
-            is Token.LeftParenthesis -> parseParenthesis()
-            is Token.Operator -> parseOperator(token, findOperator(token)!!, popStatement())
+            is Token.LeftParenthesis -> parseParenthesis(token)
+            is Token.Operator -> parseExpression(token, popStatement())
             is Token.StringLiteral -> parseConstantString(token)
             is Token.Var -> parseVariableDeclaration(token)
             is Token.While -> parseWhileLoop(token)
-            else -> throw UnexpectedTokenException(null, token)
+            else -> return null
         }
 
-        if (isNextToken<Token.Operator>()) {
-            return parseOperatorIfHasHigherPrecedence(minimumPrecedence, parsedNode)
+        if (isNextToken<Token.Operator>() && parsedNode is StatementASTNode) {
+            return parseExpression(getNextToken(), parsedNode)
         }
-        return parsedNode
-    }
-
-    private fun throwNoLhsStatement(): Nothing {
-        throw Exception("No lhs statement in this context")
-    }
-
-    private fun parseParenthesis(): ASTNode {
-        val nextNode = parseNextToken()
-        getNextToken<Token.RightParenthesis>()
-        return nextNode
-    }
-
-    private fun parseOperatorIfHasHigherPrecedence(minimumPrecedence: Int, parsedNode: ASTNode): ASTNode {
-        val operatorToken = getNextToken<Token.Operator>()
-        val operator = findOperator(operatorToken)
-            ?: throw Exception("Unknown operator: ${operatorToken.text}")
-
-        if (operator.precedence > minimumPrecedence) {
-            val lhs = parsedNode as? StatementASTNode
-                ?: throw Exception("Expected statement node as lhs for operator: ${operatorToken.text}")
-            return parseOperator(operatorToken, operator, lhs)
-        }
-        previousToken()
         return parsedNode
     }
 
@@ -251,20 +218,20 @@ class ParserAST(
         while (true) {
             if (isNextToken<Token.RightBracket>()) break
 
-            val node = parseNextToken(
+            val nextNode = parseNextToken(
                 popStatement = {
-                    val last = statements.last()
+                    val last = statements.lastOrNull()
                     statements.remove(last)
                     last
                 }
             )
-            if (node !is StatementASTNode)
-                throw Exception("Expected statement node AST, but got ${node::class}")
+            if (nextNode !is StatementASTNode)
+                throw SourceLocationException("Expected statement node AST, but got ${nextNode::class.simpleName}", nextNode)
 
             if (isNextToken<Token.Semicolon>())
                 getNextToken<Token.Semicolon>()
 
-            statements.add(node)
+            statements.add(nextNode)
         }
         val rightBracket = getNextToken<Token.RightBracket>()
         return CodeBlockASTNode(statements.toList())
@@ -280,7 +247,6 @@ class ParserAST(
             }
             isNextToken<Token.Dot>() -> {
                 getNextToken<Token.Dot>()
-
 
                 val beforeDotIdentifier = TypeReferenceASTNode(identifierToken.text)
                     .sourceLocation(identifierToken)
@@ -365,7 +331,7 @@ class ParserAST(
         getNextToken<Token.LeftParenthesis>()
         val conditionNode = parseNextToken()
         if (conditionNode !is StatementASTNode)
-            throw Exception("Expected statement node AST, but got ${conditionNode::class}")
+            throw SourceLocationException("Expected statement node AST, but got ${conditionNode::class}", conditionNode)
 
         getNextToken<Token.RightParenthesis>()
 
@@ -374,33 +340,59 @@ class ParserAST(
             .sourceLocation(whileKeyword.sourceLocation, bodyNode.sourceLocation)
     }
 
-    private fun parseOperator(token: Token.Operator, operator: Operator, lhs: StatementASTNode): BinaryOperatorNodeAST {
-        val rhs = parseNextToken(operator.precedence) as? StatementASTNode
-            ?: throw Exception("Expected statement node as rhs for operator: ${token.text}")
-        return BinaryOperatorNodeAST(token.text, lhs, rhs)
-            .sourceLocation(lhs.sourceLocation, rhs.sourceLocation)
+    private fun parseExpression(operatorToken: Token.Operator, previousStatement: StatementASTNode?): ExpressionASTNode {
+        val items = mutableListOf<ASTNode>()
+
+        if (previousStatement is ExpressionASTNode && !previousStatement.isParenthesized) {
+            items.addAll(previousStatement.items)
+        } else if (previousStatement != null)
+            items.add(previousStatement)
+        items.add(OperatorASTNode(operatorToken).sourceLocation(operatorToken))
+
+        val previousState = pushTokensIterator()
+        val nextNode = parseNextTokenOrNull()
+        if (nextNode is ExpressionASTNode && !nextNode.isParenthesized) {
+            items.addAll(nextNode.items)
+        } else if (nextNode != null)
+            items.add(nextNode)
+        else {
+            previousState.restore() // Next token isn't part of expression, eg. }
+        }
+
+        return ExpressionASTNode(items, false)
+            .sourceLocation(items.first().sourceLocation, items.last().sourceLocation)
     }
 
-    private fun findOperator(token: Token.Operator): Operator? {
-        return operators.firstOrNull { it.identifier == token.text }
+    private fun parseParenthesis(leftParenthesis: Token.LeftParenthesis): ExpressionASTNode {
+        val expression: ExpressionASTNode?
+        val rightParenthesis: Token.RightParenthesis
+
+        if (isNextToken<Token.RightParenthesis>()) { // Empty parenthesis - ()
+            expression = null
+            rightParenthesis = getNextToken()
+        } else {
+            val nextNode = parseNextToken()
+            expression = nextNode as? ExpressionASTNode
+                ?: throw SourceLocationException("Expected expression in parenthesis but got ${nextNode::class.simpleName}", nextNode)
+            rightParenthesis = getNextToken()
+        }
+        return ExpressionASTNode(expression?.items ?: emptyList(), true)
+            .sourceLocation(leftParenthesis, rightParenthesis)
     }
 
     private inline fun <reified T : Token> getNextToken(): T {
         val token = getAnyNextToken()
         return if (token is T) token
-        else throw Exception("Expected token ${T::class.simpleName}, but got ${token::class}")
+        else throw SourceLocationException("Expected token ${T::class.simpleName}, but got ${token::class.simpleName}", token)
     }
 
     private inline fun <reified T : Token> isNextToken(): Boolean {
         if (!isAnyNextToken()) return false
+        val state = pushTokensIterator()
         val nextToken = getAnyNextToken()
         val isMatched = nextToken is T
-        previousToken()
+        state.restore()
         return isMatched
-    }
-
-    private fun previousToken() {
-        tokensIter.previous()
     }
 
     private fun getAnyNextToken(): Token {
@@ -410,6 +402,16 @@ class ParserAST(
 
     private fun isAnyNextToken(): Boolean =
         tokensIter.hasNext()
+
+    private fun pushTokensIterator(): TokensIteratorState {
+        val savedIterator = tokens.listIterator(tokensIter.nextIndex())
+        return object : TokensIteratorState {
+
+            override fun restore() {
+                tokensIter = savedIterator
+            }
+        }
+    }
 
     fun <T : ASTNode> T.sourceLocation(token: Token): T {
         this.sourceLocation = token.sourceLocation
@@ -426,5 +428,9 @@ class ParserAST(
             from.startIndex.distanceTo(to.endIndex)
         )
         return this
+    }
+
+    interface TokensIteratorState {
+        fun restore()
     }
 }

@@ -18,7 +18,7 @@ data class SourceLocation(
     ) {
 
         fun distanceTo(other: Index): Int =
-            abs(other.offset - this.offset)
+            abs(other.offset - this.offset + 1)
 
         override fun toString() = "$line:$column"
     }

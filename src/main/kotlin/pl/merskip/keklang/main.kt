@@ -44,15 +44,16 @@ fun ApplicationArguments.processSource(filename: String?, content: String, compi
     } catch (exception: SourceLocationException) {
         assert(exception.sourceLocation.startIndex.line == exception.sourceLocation.endIndex.line)
 
-        content.lineSequence()
+        exception.sourceLocation.file.readLines()
             .take(exception.sourceLocation.startIndex.line)
             .toList()
             .takeLast(2)
             .forEach { println(it) }
 
         print(" ".repeat(exception.sourceLocation.startIndex.column - 1))
-        print("^".repeat(exception.sourceLocation.length) + " Error: ")
-        println(exception.localizedMessage.colored(Color.Red))
+        val marker = "^".repeat(exception.sourceLocation.length)
+        print("$marker Error: ".colored(Color.Red))
+        println(exception.localizedMessage.colored(Color.BrightRed))
 
         exception.printStackTrace(System.err)
     }
@@ -138,10 +139,3 @@ fun main(args: Array<String>) = mainBody {
 
 private fun ApplicationArguments.isInterpreterMode(): Boolean =
     input.isEmpty()
-
-private fun String.withExtensionIfNoExists(extension: String): String {
-    if (this.isEmpty()) return this
-    val filename = substringAfterLast("/", this)
-    return if (filename.contains('.')) this
-    else this + "." + extension.removePrefix(".")
-}

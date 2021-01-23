@@ -124,43 +124,6 @@ internal class ParserASTTest {
     }
 
     @Test
-    fun `parse adding operator`() {
-        val source = """
-            func a() {
-                1 + 2
-            }
-        """.trimIndent()
-
-        val funcDef = parseForFunction(source)
-
-        assertNotNull(funcDef.body)
-        val operator = funcDef.body!!.single<BinaryOperatorNodeAST>()
-        assertEquals("+", operator.identifier)
-
-        assertConstValue(1, operator.lhs)
-        assertConstValue(2, operator.rhs)
-    }
-
-    @Test
-    fun `parse precedence adding operator`() {
-        val source = """
-            func a() {
-                1 + 2 + 3
-            }
-        """.trimIndent()
-
-        val funcDef = parseForFunction(source)
-
-        val secondAddingOperator = funcDef.body!!.single<BinaryOperatorNodeAST>()
-
-        assertConstValue(3, secondAddingOperator.rhs)
-
-        val firstAddingOperator = secondAddingOperator.lhs as BinaryOperatorNodeAST
-        assertConstValue(1, firstAddingOperator.lhs)
-        assertConstValue(2, firstAddingOperator.rhs)
-    }
-
-    @Test
     fun `parse precedence adding and multiple operator`() {
         val source = """
             func a() {
@@ -171,32 +134,13 @@ internal class ParserASTTest {
         val funcDef = parseForFunction(source)
 
         assertNotNull(funcDef.body)
-        val addingOperator = funcDef.body!!.single<BinaryOperatorNodeAST>()
-        assertEquals("+", addingOperator.identifier)
-        assertConstValue(1, addingOperator.lhs)
+        val expression = funcDef.body!!.single<ExpressionASTNode>()
+        assertEquals("1", expression.items[0].sourceLocation.text)
+        assertEquals("+", expression.items[1].sourceLocation.text)
+        assertEquals("2", expression.items[2].sourceLocation.text)
+        assertEquals("*", expression.items[3].sourceLocation.text)
+        assertEquals("3", expression.items[4].sourceLocation.text)
 
-        val multipleOperator = addingOperator.rhs as BinaryOperatorNodeAST
-        assertEquals("*", multipleOperator.identifier)
-        assertConstValue(2, multipleOperator.lhs)
-        assertConstValue(3, multipleOperator.rhs)
-    }
-
-    @Test
-    fun `parse precedence multiple and adding operator`() {
-        val source = """
-            func a() {
-                1 * 2 + 3
-            }
-        """.trimIndent()
-
-        val funcDef = parseForFunction(source)
-
-        val addingOperator = funcDef.body!!.single<BinaryOperatorNodeAST>()
-        assertConstValue(3, addingOperator.rhs)
-
-        val multipleOperator = addingOperator.lhs as BinaryOperatorNodeAST
-        assertConstValue(1, multipleOperator.lhs)
-        assertConstValue(2, multipleOperator.rhs)
     }
 
     @Test
@@ -240,8 +184,14 @@ internal class ParserASTTest {
         val funcDef = parseForFunction(source)
 
         val whileLoop = funcDef.body!!.single<WhileLoopASTNode>()
-        assert(whileLoop.condition is BinaryOperatorNodeAST)
+        assert(whileLoop.condition is ExpressionASTNode)
+        val expression = whileLoop.condition as ExpressionASTNode
+        assertEquals("1", expression.items[0].sourceLocation.text)
+        assertEquals("==", expression.items[1].sourceLocation.text)
+        assertEquals("2", expression.items[2].sourceLocation.text)
+
         assert(whileLoop.body.statements[0] is IntegerConstantASTNode)
+        assertEquals("3", whileLoop.body.statements[0].sourceLocation.text)
     }
 
     @Test
