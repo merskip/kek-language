@@ -22,7 +22,7 @@ class Lexer(
      * whitespace-item ::= line-break
      */
     private val whitespaceMatcher = TokenMatcher(
-        tokenClass = Token.Whitespace::class,
+        token = { Token.Whitespace() },
         isHead = { char, index ->
             char == '\u0020' || char == '\u0009' || lineBreakMatcher.isMatchHead(char, index)
         },
@@ -36,7 +36,7 @@ class Lexer(
      * comment-end-line ::= "//" <any> line-break
      */
     private val commentEndLineMatcher = TokenMatcher(
-        tokenClass = Token.Whitespace::class,
+        token = { Token.Whitespace() },
         isHead = { char, index ->
             char == '#' || (char == '/' && index.next == '/')
         },
@@ -50,7 +50,7 @@ class Lexer(
      * line-break ::= U+000D U+000A -- Carriage Return and End of Line
      */
     private val lineBreakMatcher = TokenMatcher(
-        tokenClass = Token.Whitespace::class,
+        token = { Token.Whitespace() },
         isHead = { char, index ->
             char == '\u000A' || (char == '\u000D' && index.next == '\u000A')
         },
@@ -64,7 +64,7 @@ class Lexer(
      * literal-integer-digit ::= '0'..'9'
      */
     private val integerLiteralMatcher = TokenRangesMatcher(
-        tokenClass = Token.IntegerLiteral::class,
+        token = { Token.IntegerLiteral() },
         head = listOf('0'..'9'),
         body = listOf('0'..'9')
     )
@@ -73,7 +73,7 @@ class Lexer(
      * literal-string ::= '"' <any> '"'
      */
     private val stringLiteralMatcher = TokenMatcher(
-        tokenClass = Token.StringLiteral::class,
+        token = { Token.StringLiteral() },
         isHead = { char, _ ->
             char == '"'
         },
@@ -95,7 +95,7 @@ class Lexer(
      * identifier-body-item ::= '0'..'9'
      */
     private val identifierMatcher = TokenRangesMatcher(
-        tokenClass = Token.Identifier::class,
+        token = { Token.Identifier() },
         head = listOf('_'.asRange(), 'a'..'z', 'A'..'Z'),
         body = listOf('_'.asRange(), 'a'..'z', 'A'..'Z', '0'..'9')
     )
@@ -104,7 +104,7 @@ class Lexer(
      * parenthesis-left ::= '('
      */
     private val leftParenthesisMatcher = ExplicitTokenMatcher(
-        tokenClass = Token.LeftParenthesis::class,
+        token = { Token.LeftParenthesis() },
         characters = "("
     )
 
@@ -112,7 +112,7 @@ class Lexer(
      * parenthesis-right ::= ')'
      */
     private val rightParenthesisMatcher = ExplicitTokenMatcher(
-        tokenClass = Token.RightParenthesis::class,
+        token = { Token.RightParenthesis() },
         characters = ")"
     )
 
@@ -120,7 +120,7 @@ class Lexer(
      * bracket-left ::= '{'
      */
     private val leftBracketMatcher = ExplicitTokenMatcher(
-        tokenClass = Token.LeftBracket::class,
+        token = { Token.LeftBracket() },
         characters = "{"
     )
 
@@ -128,7 +128,7 @@ class Lexer(
      * bracket-right ::= '}'
      */
     private val rightBracketMatcher = ExplicitTokenMatcher(
-        tokenClass = Token.RightBracket::class,
+        token = { Token.RightBracket() },
         characters = "}"
     )
 
@@ -136,7 +136,7 @@ class Lexer(
      * dot ::= '.'
      */
     private val dotMatcher = ExplicitTokenMatcher(
-        tokenClass = Token.Dot::class,
+        token = { Token.Dot() },
         characters = "."
     )
 
@@ -144,7 +144,7 @@ class Lexer(
      * comma ::= ','
      */
     private val commaMatcher = ExplicitTokenMatcher(
-        tokenClass = Token.Comma::class,
+        token = { Token.Comma() },
         characters = ","
     )
 
@@ -152,7 +152,7 @@ class Lexer(
      * semicolon ::= ';'
      */
     private val semicolonMatcher = ExplicitTokenMatcher(
-        tokenClass = Token.Semicolon::class,
+        token = { Token.Semicolon() },
         characters = ";"
     )
 

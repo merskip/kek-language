@@ -1,7 +1,5 @@
 package pl.merskip.keklang.lexer
 
-import kotlin.reflect.KClass
-import kotlin.reflect.full.primaryConstructor
 
 abstract class TokenMatching {
 
@@ -19,10 +17,10 @@ abstract class TokenMatching {
     }
 }
 
-class TokenMatcher<T: Token>(
-    private val tokenClass: KClass<T>,
+class TokenMatcher(
     private val isHead: (char: Char, index: Index) -> Boolean,
     private val isBody: (char: Char, index: Index) -> Boolean = { _, _ -> false },
+    private val token: () -> Token,
     override val isIncludingLastChar: Boolean = false
 ) : TokenMatching() {
 
@@ -30,17 +28,13 @@ class TokenMatcher<T: Token>(
 
     override fun isMatchBody(char: Char, index: Index) = isBody(char, index)
 
-    override fun createToken(text: String): Token {
-        return tokenClass.primaryConstructor!!.call()
-    }
-
-    override fun toString() = "TokenMatcher<${tokenClass.simpleName ?: tokenClass}>"
+    override fun createToken(text: String) = token()
 }
 
-class TokenRangesMatcher<T: Token>(
-    private val tokenClass: KClass<T>,
+class TokenRangesMatcher(
     private val head: List<CharRange>,
-    private val body: List<CharRange>
+    private val body: List<CharRange>,
+    private val token: () -> Token,
 ): TokenMatching() {
 
     override fun isMatchHead(char: Char, index: Index): Boolean {
@@ -51,16 +45,12 @@ class TokenRangesMatcher<T: Token>(
         return body.any { it.contains(char) }
     }
 
-    override fun createToken(text: String): Token {
-        return tokenClass.primaryConstructor!!.call()
-    }
-
-    override fun toString() = "TokenMatcher<${tokenClass.simpleName ?: tokenClass}>"
+    override fun createToken(text: String) = token()
 }
 
-class ExplicitTokenMatcher<T: Token>(
-    private val tokenClass: KClass<T>,
-    private val characters: String
+class ExplicitTokenMatcher(
+    private val characters: String,
+    private val token: () -> Token,
 ): TokenMatching() {
 
     init {
@@ -77,11 +67,7 @@ class ExplicitTokenMatcher<T: Token>(
         return characters.getOrNull(index.index) == char
     }
 
-    override fun createToken(text: String): Token {
-        return tokenClass.primaryConstructor!!.call()
-    }
-
-    override fun toString() = "TokenMatcher<${tokenClass.simpleName ?: tokenClass}>"
+    override fun createToken(text: String) = token()
 }
 
 fun Char.asRange() = this..this

@@ -16,9 +16,7 @@ repositories {
 dependencies {
     implementation(group = "org.bytedeco", name = "llvm-platform", version = "10.0.1-1.5.4")
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.6.0")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.61")
     implementation("com.xenomachina:kotlin-argparser:2.0.7")
-    implementation(group = "io.arrow-kt", name = "arrow-core", version = "0.11.0")
 }
 
 tasks.compileKotlin {
@@ -31,4 +29,43 @@ tasks.compileTestKotlin {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.jar {
+
+    manifest {
+        attributes["Main-Class"] = "pl.merskip.keklang.MainKt"
+    }
+
+    // To add all of the dependencies
+    from(sourceSets.main.get().output)
+
+    dependsOn(configurations.runtimeClasspath)
+    from({
+        configurations.runtimeClasspath.get().filter {
+            // Skip other than linux-x86_64
+            if (it.name.endsWith("linux-x86.jar")
+                || it.name.endsWith("linux-x86.jar")
+                || it.name.endsWith("linux-armhf.jar")
+                || it.name.endsWith("linux-arm64.jar")
+                || it.name.endsWith("linux-ppc64le.jar")
+                || it.name.endsWith("macosx-x86_64.jar")
+                || it.name.endsWith("windows-x86.jar")
+                || it.name.endsWith("windows-x86_64.jar")
+                || it.name.endsWith("android-arm.jar")
+                || it.name.endsWith("android-arm64.jar")
+                || it.name.endsWith("android-x86.jar")
+                || it.name.endsWith("android-x86_64.jar")
+                || it.name.endsWith("ios-arm64.jar")
+                || it.name.endsWith("ios-x86_64.jar")
+                || it.name.endsWith("linux-armhf.jar")
+                || it.name.endsWith("linux-arm64.jar")
+                || it.name.endsWith("linux-ppc64le.jar")
+                || it.name.endsWith("linux-x86.jar")
+            ) false
+            else it.name.endsWith("jar")
+        }.map { zipTree(it) }
+    })
+
+    archiveFileName.set("kek-linux-x86_64.jar")
 }

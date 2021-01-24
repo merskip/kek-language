@@ -1,6 +1,5 @@
 package pl.merskip.keklang
 
-import arrow.core.Ior
 import org.junit.jupiter.api.Test
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.Token.*
