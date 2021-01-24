@@ -3,6 +3,7 @@ package pl.merskip.keklang.compiler.node
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.compiler.Reference
+import pl.merskip.keklang.lexer.SourceLocationException
 
 class StatementCompiler(
     val context: CompilerContext
@@ -20,7 +21,8 @@ class StatementCompiler(
             is VariableDeclarationASTNode -> context.compile(node)
             is FieldReferenceASTNode -> context.compile(node)
             is WhileLoopASTNode -> context.compile(node)
-            else -> throw IllegalArgumentException("Unknown or unsupported node: ${node::class}")
+            is ExpressionASTNode -> context.compile(node)
+            else -> throw SourceLocationException("Unknown statement node: ${node::class.simpleName}", node)
         }
     }
 }

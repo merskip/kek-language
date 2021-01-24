@@ -2,7 +2,7 @@ package pl.merskip.keklang.ast.node
 
 import pl.merskip.keklang.ast.ASTNodeVisitor
 
-class ExpressionASTNode (
+data class ExpressionASTNode (
     val items: List<ASTNode>,
     val isParenthesized: Boolean
 ) : StatementASTNode() {

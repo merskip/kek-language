@@ -38,6 +38,7 @@ class Compiler(
         context.addNodeCompiler(VariableDeclarationCompiler(context))
         context.addNodeCompiler(FieldReferenceCompiler(context))
         context.addNodeCompiler(WhileLoopCompiler(context))
+        context.addNodeCompiler(ExpressionCompiler(context))
 
         context.builtin.getBuiltinFiles()
             .forEach { addFile(it) }
@@ -108,7 +109,8 @@ class Compiler(
                 else -> throw SourceLocationException("Unknown operator type", node)
             },
             operator = node.operator.text,
-            precedence = node.precedence.text.toInt()
+            precedence = node.precedence.text.toInt(),
+            associative = if (node.operator.text == "=" || node.operator.text == ":=") DeclaredOperator.Associative.Right else DeclaredOperator.Associative.Left
         ))
     }
 
