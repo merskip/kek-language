@@ -1,20 +1,17 @@
 package pl.merskip.keklang
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import pl.merskip.keklang.lexer.Lexer
-import pl.merskip.keklang.lexer.Token
 import pl.merskip.keklang.lexer.Token.*
 import pl.merskip.keklang.lexer.Token.Number
 import pl.merskip.keklang.lexer.Token.Operator
 import java.io.File
 
-internal class LexerTest {
+class LexerTest {
 
     @Test
     fun `parse whitespace`() {
-        "a b\nc d\r\ne" assertTokens {
+        "a b\nc d\r\ne" assertTokens  {
             expect<Identifier>("a")
             expectWhitespace()
             expect<Identifier>("b")
@@ -249,61 +246,5 @@ internal class LexerTest {
         tester.expectNoMoreTokens()
     }
 
-    private class TokenTester(
-        tokens: List<Token>
-    ) {
 
-        private val tokenIter = tokens.iterator()
-        private var expectedNextOffset = 0
-        private var expectedNextColumn = 1
-        private var expectedNextLine = 1
-
-        inline fun <reified T: Token> expect(text: String) {
-            val token = tokenIter.next()
-            assertEquals(T::class, token::class)
-            assertEquals(text, token.text)
-            assertEquals(text.length, token.sourceLocation.length)
-
-            validateSourceLocation(token)
-            prepareExpectationForNextSourceLocation(token)
-        }
-
-        fun expectWhitespace() {
-            val token = tokenIter.next()
-            assertEquals(Whitespace::class, token::class)
-            validateSourceLocation(token)
-            prepareExpectationForNextSourceLocation(token)
-        }
-
-        fun expectNoMoreTokens() {
-            assertFalse(tokenIter.hasNext())
-        }
-
-        private fun validateSourceLocation(token: Token) {
-            assert(token.sourceLocation.startIndex.line <= token.sourceLocation.endIndex.line)
-            if (token.sourceLocation.startIndex.line == token.sourceLocation.endIndex.line)
-                assert(token.sourceLocation.startIndex.column <= token.sourceLocation.endIndex.column)
-
-            // Validate offset
-            assertEquals(expectedNextOffset, token.sourceLocation.startIndex.offset, "Expected offset $expectedNextOffset for $token")
-            assertEquals(expectedNextOffset + token.text.length - 1, token.sourceLocation.endIndex.offset)
-
-            // Validate column and line
-            assertEquals(expectedNextColumn, token.sourceLocation.startIndex.column, "Expected column $expectedNextColumn for $token")
-            assertEquals(expectedNextLine, token.sourceLocation.startIndex.line, "Expected line $expectedNextLine for $token")
-        }
-
-        private fun prepareExpectationForNextSourceLocation(token: Token) {
-            expectedNextOffset = token.sourceLocation.endIndex.offset + 1
-            if (token.text.contains('\n')) {
-                expectedNextColumn =
-                    if (token.sourceLocation.startIndex.line == token.sourceLocation.endIndex.line) 1 // Single line-break
-                    else token.sourceLocation.endIndex.column + 1
-                expectedNextLine += 1
-            }
-            else {
-                expectedNextColumn = token.sourceLocation.endIndex.column + 1
-            }
-        }
-    }
 }
