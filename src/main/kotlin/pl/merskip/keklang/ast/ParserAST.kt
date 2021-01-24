@@ -1,6 +1,5 @@
 package pl.merskip.keklang.ast
 
-import arrow.core.Either
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.lexer.SourceLocation
 import pl.merskip.keklang.lexer.SourceLocationException
@@ -16,9 +15,7 @@ class ParserAST(
     tokens: List<Token>
 ) {
 
-    private val tokens = tokens.filterNot {
-        it is Token.Whitespace || it is Token.LineComment
-    }
+    private val tokens = tokens.filterNot { it is Token.Whitespace }
 
     private var tokensIter = this.tokens.listIterator()
 
@@ -47,22 +44,29 @@ class ParserAST(
         val modifiers = parseModifiers()
         val token = getAnyNextToken()
 
-        if (modifiers.isNotEmpty() && token !is Token.Func && token !is Token.OperatorKeyword) {
+        if (modifiers.isNotEmpty()
+            && !token.isKeyword("func")
+            && !token.isKeyword("operator")
+        ) {
             throw Exception("Modifiers are allowed only before 'func' token but got ${token::class.simpleName}")
         }
 
         val parsedNode = when (token) {
-            is Token.Func -> parseSubroutineDefinition(Either.left(token), modifiers)
-            is Token.OperatorKeyword -> parseSubroutineDefinition(Either.right(token), modifiers)
-            is Token.If -> parseIfElseCondition(token)
-            is Token.Identifier -> parseReferenceOrFunctionCall(token)
-            is Token.Number -> parseConstantValue(token)
+            is Token.IntegerLiteral -> parseConstantValue(token)
             is Token.LeftParenthesis -> parseParenthesis(token)
             is Token.Operator -> parseExpression(token, popStatement())
             is Token.StringLiteral -> parseConstantString(token)
-            is Token.Var -> parseVariableDeclaration(token)
-            is Token.While -> parseWhileLoop(token)
-            is Token.OperatorTypeKeyword -> parseOperatorDeclaration(token)
+            is Token.Identifier -> when {
+                token.isKeyword("func") -> parseSubroutineDefinition(token, modifiers)
+                token.isKeyword("operator") -> parseSubroutineDefinition(token, modifiers)
+                token.isKeyword("if") -> parseIfElseCondition(token)
+                token.isKeyword("var") -> parseVariableDeclaration(token)
+                token.isKeyword("while") -> parseWhileLoop(token)
+                token.isKeyword("prefix") -> parseOperatorDeclaration(token)
+                token.isKeyword("postfix") -> parseOperatorDeclaration(token)
+                token.isKeyword("infix") -> parseOperatorDeclaration(token)
+                else -> parseReferenceOrFunctionCall(token)
+            }
             else -> return null
         }
 
@@ -72,10 +76,10 @@ class ParserAST(
         return parsedNode
     }
 
-    private fun parseModifiers(): List<Token.Modifier> {
-        val modifiers = mutableListOf<Token.Modifier>()
+    private fun parseModifiers(): List<Token.Identifier> {
+        val modifiers = mutableListOf<Token.Identifier>()
         while (true) {
-            if (isNextToken<Token.Modifier>())
+            if (isNextKeyword("builtin"))
                 modifiers.add(getNextToken())
             else
                 break
@@ -84,17 +88,17 @@ class ParserAST(
     }
 
     private fun parseSubroutineDefinition(
-        token: Either<Token.Func, Token.OperatorKeyword>,
-        modifiers: List<Token.Modifier>
+        token: Token,
+        modifiers: List<Token>,
     ): SubroutineDefinitionASTNode {
         var isBuiltin = false
-        for (modifier in modifiers) when (modifier) {
-            is Token.Builtin -> isBuiltin = true
+        for (modifier in modifiers) when {
+            modifier.isKeyword("builtin") -> isBuiltin = true
             else -> throw Exception("Illegal modifier for a subroutine definition: $modifier")
         }
 
-        return token.fold(
-            ifLeft = { funcToken ->
+        return when {
+            token.isKeyword("func") -> {
                 var identifierToken = getNextToken<Token.Identifier>()
                 val declaringType = if (isNextToken<Token.Dot>()) {
                     val declaringType = identifierToken
@@ -108,9 +112,9 @@ class ParserAST(
                 val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon(isBuiltin)
 
                 FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin)
-                    .sourceLocation(funcToken.sourceLocation, trailingSourceLocation)
-            },
-            ifRight = { operatorKeywordToken ->
+                    .sourceLocation(token.sourceLocation, trailingSourceLocation)
+            }
+            token.isKeyword("operator") -> {
                 val operatorToken = getNextToken<Token.Operator>()
 
                 val parameters = parseFunctionParameters()
@@ -118,9 +122,12 @@ class ParserAST(
                 val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon(isBuiltin)
 
                 OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, isBuiltin)
-                    .sourceLocation(operatorKeywordToken.sourceLocation, trailingSourceLocation)
+                    .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
-        )
+            else -> {
+                throw SourceLocationException("Expected 'func' or 'operator' token while subroutine definition", token)
+            }
+        }
     }
 
     private fun parseFunctionParameters(): List<ReferenceDeclarationASTNode> {
@@ -180,15 +187,15 @@ class ParserAST(
             .sourceLocation(identifier)
     }
 
-    private fun parseIfElseCondition(ifToken: Token.If): IfElseConditionNodeAST {
+    private fun parseIfElseCondition(ifToken: Token): IfElseConditionNodeAST {
         val ifCondition = parseIfCondition(ifToken)
         val ifConditions = mutableListOf(ifCondition)
         var elseBlock: CodeBlockASTNode? = null
 
-        while (isNextToken<Token.Else>()) {
-            getNextToken<Token.Else>()
+        while (isNextKeyword("else")) {
+            getNextToken<Token>()
 
-            if (isNextToken<Token.If>()) {
+            if (isNextKeyword("if")) {
                 ifConditions.add(parseIfCondition(getNextToken()))
             } else {
                 elseBlock = parseCodeBlock()
@@ -199,7 +206,7 @@ class ParserAST(
             .sourceLocation(ifCondition.sourceLocation, (elseBlock ?: ifConditions.last()).sourceLocation)
     }
 
-    private fun parseIfCondition(ifToken: Token.If): IfConditionNodeAST {
+    private fun parseIfCondition(ifToken: Token): IfConditionNodeAST {
         getNextToken<Token.LeftParenthesis>()
 
         val conditionNode = parseNextToken()
@@ -288,17 +295,17 @@ class ParserAST(
         return arguments.toList() to getNextToken()
     }
 
-    private fun parseConstantValue(numberToken: Token.Number): ConstantValueNodeAST {
-        return if (numberToken.text.contains('.')) {
-            val (integerPart, decimalPart) = numberToken.text.split('.', limit = 2)
+    private fun parseConstantValue(integerLiteralToken: Token.IntegerLiteral): ConstantValueNodeAST {
+        return if (integerLiteralToken.text.contains('.')) {
+            val (integerPart, decimalPart) = integerLiteralToken.text.split('.', limit = 2)
             DecimalConstantValueNodeAST(
                 integerPart.toInt(),
                 decimalPart.toInt(),
-                BigDecimal(numberToken.text)
-            ).sourceLocation(numberToken)
+                BigDecimal(integerLiteralToken.text)
+            ).sourceLocation(integerLiteralToken)
         } else {
-            IntegerConstantASTNode(numberToken.text.toLong())
-                .sourceLocation(numberToken)
+            IntegerConstantASTNode(integerLiteralToken.text.toLong())
+                .sourceLocation(integerLiteralToken)
         }
     }
 
@@ -314,13 +321,13 @@ class ParserAST(
      * variable-identifier ::= identifier
      * type-identifier ::= identifier
      */
-    private fun parseVariableDeclaration(varKeyword: Token.Var): VariableDeclarationASTNode {
+    private fun parseVariableDeclaration(varKeywordToken: Token): VariableDeclarationASTNode {
         val variableIdentifier = getNextToken<Token.Identifier>()
         getNextToken<Token.Colon>()
         val typeIdentifier = parseTypeReference()
 
         return VariableDeclarationASTNode(variableIdentifier.text, typeIdentifier)
-            .sourceLocation(from = varKeyword.sourceLocation, to = typeIdentifier.sourceLocation)
+            .sourceLocation(from = varKeywordToken.sourceLocation, to = typeIdentifier.sourceLocation)
     }
 
     /**
@@ -328,7 +335,7 @@ class ParserAST(
      * while-loop ::= "while" "(" condition ")" while-body
      * while-body ::= "{" statements "}"
      */
-    private fun parseWhileLoop(whileKeyword: Token.While): WhileLoopASTNode {
+    private fun parseWhileLoop(whileKeywordToken: Token): WhileLoopASTNode {
         getNextToken<Token.LeftParenthesis>()
         val conditionNode = parseNextToken()
         if (conditionNode !is StatementASTNode)
@@ -338,7 +345,7 @@ class ParserAST(
 
         val bodyNode = parseCodeBlock()
         return WhileLoopASTNode(conditionNode, bodyNode)
-            .sourceLocation(whileKeyword.sourceLocation, bodyNode.sourceLocation)
+            .sourceLocation(whileKeywordToken.sourceLocation, bodyNode.sourceLocation)
     }
 
     private fun parseExpression(operatorToken: Token.Operator, previousStatement: StatementASTNode?): ExpressionASTNode {
@@ -381,20 +388,35 @@ class ParserAST(
             .sourceLocation(leftParenthesis, rightParenthesis)
     }
 
-    private fun parseOperatorDeclaration(type: Token.OperatorTypeKeyword): OperatorDeclarationASTNode {
-        getNextToken<Token.OperatorKeyword>()
+    private fun parseOperatorDeclaration(operatorTypeKeywordToken: Token.Identifier): OperatorDeclarationASTNode {
+        getNextKeyword("operator")
         val operator = getNextToken<Token.Operator>()
-        getNextToken<Token.PrecedenceKeyword>()
-        val precedence = getNextToken<Token.Number>()
+        getNextKeyword("precedence")
+        val precedence = getNextToken<Token.IntegerLiteral>()
 
-        return OperatorDeclarationASTNode(type, operator, precedence)
-            .sourceLocation(type, precedence)
+        return OperatorDeclarationASTNode(operatorTypeKeywordToken, operator, precedence)
+            .sourceLocation(operatorTypeKeywordToken, precedence)
+    }
+
+    private fun getNextKeyword(keyword: String): Token.Identifier {
+        val token = getNextToken<Token.Identifier>()
+        return if (token.isKeyword(keyword)) token
+        else throw SourceLocationException("Expected keyword \"$keyword\", but got ${token::class.simpleName}", token)
     }
 
     private inline fun <reified T : Token> getNextToken(): T {
         val token = getAnyNextToken()
         return if (token is T) token
         else throw SourceLocationException("Expected token ${T::class.simpleName}, but got ${token::class.simpleName}", token)
+    }
+
+    private fun isNextKeyword(keyword: String): Boolean {
+        if (!isAnyNextToken()) return false
+        val state = pushTokensIterator()
+        val nextToken = getAnyNextToken()
+        val isMatched = nextToken.isKeyword(keyword)
+        state.restore()
+        return isMatched
     }
 
     private inline fun <reified T : Token> isNextToken(): Boolean {

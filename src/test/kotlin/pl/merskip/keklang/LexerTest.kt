@@ -1,37 +1,44 @@
 package pl.merskip.keklang
 
+import arrow.core.Ior
 import org.junit.jupiter.api.Test
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.Token.*
-import pl.merskip.keklang.lexer.Token.Number
-import pl.merskip.keklang.lexer.Token.Operator
 import java.io.File
 
 class LexerTest {
 
     @Test
-    fun `parse whitespace`() {
-        "a b\nc d\r\ne" assertTokens  {
+    fun `parse unix line break`() {
+        "a \n b \n\n c" assertTokens  {
             expect<Identifier>("a")
             expectWhitespace()
             expect<Identifier>("b")
             expectWhitespace()
             expect<Identifier>("c")
-            expectWhitespace()
-            expect<Identifier>("d")
-            expectWhitespace()
-            expect<Identifier>("e")
         }
     }
 
     @Test
-    fun `parse tokens`() {
+    fun `parse windows line break`() {
+        "a \r\n b \r\n\r\n c" assertTokens  {
+            expect<Identifier>("a")
+            expectWhitespace()
+            expect<Identifier>("b")
+            expectWhitespace()
+            expect<Identifier>("c")
+        }
+    }
+
+    @Test
+    fun `parse func`() {
         """
             func abc() {
                 123
             }
         """ assertTokens {
-            expect<Func>("func")
+            expectWhitespace()
+            expect<Identifier>("func")
             expectWhitespace()
             expect<Identifier>("abc")
             expect<LeftParenthesis>("(")
@@ -40,72 +47,75 @@ class LexerTest {
             expect<LeftBracket>("{")
             expectWhitespace()
 
-            expect<Number>("123")
+            expect<IntegerLiteral>("123")
             expectWhitespace()
 
             expect<RightBracket>("}")
+            expectWhitespace()
         }
     }
 
     @Test
-    fun `parse unknown token`() {
-        "a $" assertTokens {
+    fun `parse long unknown token`() {
+        "a $#c@! b" assertTokens {
             expect<Identifier>("a")
             expectWhitespace()
-            expect<Unknown>("$")
+            expect<Unknown>("$#c@!")
+            expectWhitespace()
+            expect<Identifier>("b")
         }
     }
 
     @Test
     fun `parse simple operator`() {
         "1 + 2" assertTokens {
-            expect<Number>("1")
+            expect<IntegerLiteral>("1")
             expectWhitespace()
             expect<Operator>("+")
             expectWhitespace()
-            expect<Number>("2")
+            expect<IntegerLiteral>("2")
         }
     }
 
     @Test
     fun `parse operator`() {
         "0 == 1 + 2 - 3 * 4 / 5" assertTokens {
-            expect<Number>("0")
+            expect<IntegerLiteral>("0")
             expectWhitespace()
             expect<Operator>("==")
             expectWhitespace()
-            expect<Number>("1")
+            expect<IntegerLiteral>("1")
             expectWhitespace()
             expect<Operator>("+")
             expectWhitespace()
-            expect<Number>("2")
+            expect<IntegerLiteral>("2")
             expectWhitespace()
             expect<Operator>("-")
             expectWhitespace()
-            expect<Number>("3")
+            expect<IntegerLiteral>("3")
             expectWhitespace()
             expect<Operator>("*")
             expectWhitespace()
-            expect<Number>("4")
+            expect<IntegerLiteral>("4")
             expectWhitespace()
             expect<Operator>("/")
             expectWhitespace()
-            expect<Number>("5")
+            expect<IntegerLiteral>("5")
         }
     }
 
     @Test
     fun `parse arrow`() {
         "2 -> 3 - 1" assertTokens {
-            expect<Number>("2")
+            expect<IntegerLiteral>("2")
             expectWhitespace()
             expect<Arrow>("->")
             expectWhitespace()
-            expect<Number>("3")
+            expect<IntegerLiteral>("3")
             expectWhitespace()
             expect<Operator>("-")
             expectWhitespace()
-            expect<Number>("1")
+            expect<IntegerLiteral>("1")
         }
     }
 
@@ -116,47 +126,49 @@ class LexerTest {
             else if (a == 2) {}
             else {}
         """ assertTokens {
-            expect<If>("if")
+            expectWhitespace()
+            expect<Identifier>("if")
             expectWhitespace()
             expect<LeftParenthesis>("(")
             expect<Identifier>("a")
             expectWhitespace()
             expect<Operator>("==")
             expectWhitespace()
-            expect<Number>("1")
+            expect<IntegerLiteral>("1")
             expect<RightParenthesis>(")")
             expectWhitespace()
             expect<LeftBracket>("{")
             expect<RightBracket>("}")
             expectWhitespace()
 
-            expect<Else>("else")
+            expect<Identifier>("else")
             expectWhitespace()
-            expect<If>("if")
+            expect<Identifier>("if")
             expectWhitespace()
             expect<LeftParenthesis>("(")
             expect<Identifier>("a")
             expectWhitespace()
             expect<Operator>("==")
             expectWhitespace()
-            expect<Number>("2")
+            expect<IntegerLiteral>("2")
             expect<RightParenthesis>(")")
             expectWhitespace()
             expect<LeftBracket>("{")
             expect<RightBracket>("}")
             expectWhitespace()
 
-            expect<Else>("else")
+            expect<Identifier>("else")
             expectWhitespace()
             expect<LeftBracket>("{")
             expect<RightBracket>("}")
+            expectWhitespace()
         }
     }
 
     @Test
     fun `parse variable declaration`() {
         "var foo: Integer" assertTokens {
-            expect<Var>("var")
+            expect<Identifier>("var")
             expectWhitespace()
             expect<Identifier>("foo")
             expect<Colon>(":")
@@ -172,21 +184,21 @@ class LexerTest {
             expectWhitespace()
             expect<Operator>("=")
             expectWhitespace()
-            expect<Number>("2")
+            expect<IntegerLiteral>("2")
         }
     }
 
     @Test
     fun `parse while loop`() {
         "while (1 == 2) { }" assertTokens {
-            expect<While>("while")
+            expect<Identifier>("while")
             expectWhitespace()
             expect<LeftParenthesis>("(")
-            expect<Number>("1")
+            expect<IntegerLiteral>("1")
             expectWhitespace()
             expect<Operator>("==")
             expectWhitespace()
-            expect<Number>("2")
+            expect<IntegerLiteral>("2")
             expect<RightParenthesis>(")")
             expectWhitespace()
             expect<LeftBracket>("{")
@@ -198,9 +210,9 @@ class LexerTest {
     @Test
     fun `parse builtin`() {
         "builtin func foo();" assertTokens {
-            expect<Builtin>("builtin")
+            expect<Identifier>("builtin")
             expectWhitespace()
-            expect<Func>("func")
+            expect<Identifier>("func")
             expectWhitespace()
             expect<Identifier>("foo")
             expect<LeftParenthesis>("(")
@@ -212,7 +224,7 @@ class LexerTest {
     @Test
     fun `parse operator definition`() {
         "operator := () {}" assertTokens {
-            expect<OperatorKeyword>("operator")
+            expect<Identifier>("operator")
             expectWhitespace()
             expect<Operator>(":=")
             expectWhitespace()
@@ -227,20 +239,44 @@ class LexerTest {
     @Test
     fun `parse operator declaration`() {
         "infix operator %% precedence 100" assertTokens {
-            expect<InfixKeyword>("infix")
+            expect<Identifier>("infix")
             expectWhitespace()
-            expect<OperatorKeyword>("operator")
+            expect<Identifier>("operator")
             expectWhitespace()
             expect<Operator>("%%")
             expectWhitespace()
-            expect<PrecedenceKeyword>("precedence")
+            expect<Identifier>("precedence")
             expectWhitespace()
-            expect<Number>("100")
+            expect<IntegerLiteral>("100")
+        }
+    }
+
+    @Test
+    fun `parse string literal`() {
+        "System.print(\"Hello world!\n\")" assertTokens {
+            expect<Identifier>("System")
+            expect<Dot>(".")
+            expect<Identifier>("print")
+            expect<LeftParenthesis>("(")
+            expect<StringLiteral>("\"Hello world!\n\"")
+            expect<RightParenthesis>(")")
+        }
+    }
+
+    @Test
+    fun `parse string literal with notional character`() {
+        "System.print(\"Witaj świecie!\n\")" assertTokens {
+            expect<Identifier>("System")
+            expect<Dot>(".")
+            expect<Identifier>("print")
+            expect<LeftParenthesis>("(")
+            expect<StringLiteral>("\"Witaj świecie!\n\"")
+            expect<RightParenthesis>(")")
         }
     }
 
     private infix fun String.assertTokens(callback: TokenTester.() -> Unit) {
-        val tokens = Lexer(File(""), this.trimIndent()).parse()
+        val tokens = Lexer(File(""), this).parse()
         val tester = TokenTester(tokens)
         callback(tester)
         tester.expectNoMoreTokens()

@@ -1,46 +1,47 @@
 package pl.merskip.keklang.lexer
 
-sealed class Token(
-    val sourceLocation: SourceLocation
-) {
-    class Unknown(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Whitespace(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class LineComment(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Func(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class OperatorKeyword(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Identifier(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Number(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class StringLiteral(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class If(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Else(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Operator(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class LeftParenthesis(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class RightParenthesis(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class LeftBracket(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class RightBracket(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Dot(sourceLocation: SourceLocation) : Token(sourceLocation) // .
-    class Comma(sourceLocation: SourceLocation) : Token(sourceLocation) // ,
-    class Semicolon(sourceLocation: SourceLocation) : Token(sourceLocation) // ;
-    class Colon(sourceLocation: SourceLocation) : Token(sourceLocation) // :
-    class Arrow(sourceLocation: SourceLocation) : Token(sourceLocation) // ->
-    class Var(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class While(sourceLocation: SourceLocation) : Token(sourceLocation)
+sealed class Token {
 
-    abstract class Modifier(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class Builtin(sourceLocation: SourceLocation) : Modifier(sourceLocation)
+    class Unknown : Token()
+    class Whitespace : Token()
+    class Identifier : Token()
+    class IntegerLiteral : Token()
+    class StringLiteral : Token()
+    class Operator : Token()
+    class LeftParenthesis : Token()
+    class RightParenthesis : Token()
+    class LeftBracket : Token()
+    class RightBracket : Token()
+    class Dot : Token()
+    class Comma : Token()
+    class Semicolon : Token()
+    class Colon : Token()
+    class Arrow : Token()
 
-    abstract class OperatorTypeKeyword(sourceLocation: SourceLocation) : Token(sourceLocation)
-    class PrefixKeyword(sourceLocation: SourceLocation) : OperatorTypeKeyword(sourceLocation)
-    class PostfixKeyword(sourceLocation: SourceLocation) : OperatorTypeKeyword(sourceLocation)
-    class InfixKeyword(sourceLocation: SourceLocation) : OperatorTypeKeyword(sourceLocation)
-    class PrecedenceKeyword(sourceLocation: SourceLocation) : Token(sourceLocation)
+    lateinit var sourceLocation: SourceLocation
 
     val text: String
         get() = sourceLocation.text
 
+    val escapedText: String
+        get() = sourceLocation.text.map { char ->
+            if (char.isISOControl()) {
+                val charHex = char.toInt().toString(16).toUpperCase().padStart(4, '0')
+                "\\U+$charHex"
+            }
+            else char.toString()
+        }.joinToString("")
+
+    fun isKeyword(keyword: String): Boolean {
+        return this is Identifier && text == keyword
+    }
+
     override fun toString(): String {
+        if (!this::sourceLocation.isInitialized)
+            return this::class.simpleName ?: this::class.toString()
+
         val fields = listOfNotNull(
-            text.trimIndent().ifEmpty { null }?.let { "\"$it\"" },
+            escapedText.ifEmpty { null }?.let { "\"$it\"" },
             sourceLocation.toString()
         )
         return "${this::class.simpleName}(${fields.joinToString(", ")})"

@@ -62,9 +62,14 @@ class HtmlBNFWriter {
     }
 
     private fun coloredString(expression: String): String {
-        return expression.encoded().replace(Regex("\\\"(\\\\.|[^\"\\\\])*\\\"")) {
+        return expression.encoded().replace(Regex("(\\\"(\\\\.|[^\"\\\\])*\\\")|(\\'(\\\\.|[^'\\\\])*\\')")) {
             "<span style='color: #ff5722; font-weight: bold'>${it.value.encoded()}</span>"
         }
+            .replace(Regex("--.*")) {
+                "<span style='color: #aaa; font-style: italic'>${it.value.encoded()}</span>"
+            }
+            .replace("..", "&nldr;")
+            .replace("|", "<span style='color: #aaa'>or</span>")
     }
 
     private fun String.encoded(): String =

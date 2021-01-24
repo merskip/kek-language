@@ -51,9 +51,9 @@ class TokenTester(
         expectedNextOffset = token.sourceLocation.endIndex.offset + 1
         if (token.text.contains('\n')) {
             expectedNextColumn =
-                if (token.sourceLocation.startIndex.line == token.sourceLocation.endIndex.line) 1 // Single line-break
+                if (token.sourceLocation.startIndex.line == token.sourceLocation.endIndex.line) 1 // Only line-break
                 else token.sourceLocation.endIndex.column + 1
-            expectedNextLine += 1
+            expectedNextLine += token.text.count { it == '\n' }
         }
         else {
             expectedNextColumn = token.sourceLocation.endIndex.column + 1

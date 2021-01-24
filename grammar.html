@@ -30,37 +30,142 @@
 <p class='font-monospace mb-1'>
     <span>whitespace</span> 
     <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>" "</span></span>
+    <span>whitespace-item [ whitespace ]</span>
 </p>
 <p class='font-monospace mb-1'>
-    <span>whitespace</span> 
+    <span>whitespace-item</span> 
+    <span style='color: #777'>:≡</span> 
+    <span>U+0020 <span style='color: #aaa; font-style: italic'>-- Space</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>whitespace-item</span> 
+    <span style='color: #777'>:≡</span> 
+    <span>U+0009 <span style='color: #aaa; font-style: italic'>-- Tabulation</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>whitespace-item</span> 
+    <span style='color: #777'>:≡</span> 
+    <span>comment-end-line</span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>whitespace-item</span> 
     <span style='color: #777'>:≡</span> 
     <span>line-break</span>
 </p>
 <p class='font-monospace mb-1'>
-    <span>line-comment</span> 
+    <span>comment-end-line</span> 
     <span style='color: #777'>:≡</span> 
     <span><span style='color: #ff5722; font-weight: bold'>"#"</span> &lt;any&gt; line-break</span>
 </p>
 <p class='font-monospace mb-1'>
-    <span>line-break</span> 
+    <span>comment-end-line</span> 
     <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"\n"</span></span>
+    <span><span style='color: #ff5722; font-weight: bold'>"//"</span> &lt;any&gt; line-break</span>
 </p>
 <p class='font-monospace mb-1'>
     <span>line-break</span> 
     <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"\r\n"</span></span>
+    <span>U+000A <span style='color: #aaa; font-style: italic'>-- End of Line</span></span>
 </p>
 <p class='font-monospace mb-1'>
-    <span>number</span> 
+    <span>line-break</span> 
     <span style='color: #777'>:≡</span> 
-    <span>{ <span style='color: #ff5722; font-weight: bold'>"0"</span> | <span style='color: #ff5722; font-weight: bold'>"1"</span> | <span style='color: #ff5722; font-weight: bold'>"2"</span> | <span style='color: #ff5722; font-weight: bold'>"3"</span> | <span style='color: #ff5722; font-weight: bold'>"4"</span> | <span style='color: #ff5722; font-weight: bold'>"5"</span> | <span style='color: #ff5722; font-weight: bold'>"6"</span> | <span style='color: #ff5722; font-weight: bold'>"7"</span> | <span style='color: #ff5722; font-weight: bold'>"8"</span> | <span style='color: #ff5722; font-weight: bold'>"9"</span> }</span>
+    <span>U+000D U+000A <span style='color: #aaa; font-style: italic'>-- Carriage Return and End of Line</span></span>
 </p>
 <p class='font-monospace mb-1'>
-    <span>arrow</span> 
+    <span>literal-integer</span> 
     <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"-&gt;"</span></span>
+    <span>literal-integer-digit [ integer-literal ]</span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>literal-integer-digit</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'0'</span>&nldr;<span style='color: #ff5722; font-weight: bold'>'9'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>literal-string</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'"'</span> &lt;any&gt; <span style='color: #ff5722; font-weight: bold'>'"'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier</span> 
+    <span style='color: #777'>:≡</span> 
+    <span>identifier-head [ identifier-body ]</span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier-head</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'_'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier-head</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'a'</span>&nldr;<span style='color: #ff5722; font-weight: bold'>'z'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier-head</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'A'</span>&nldr;<span style='color: #ff5722; font-weight: bold'>'Z'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier-body</span> 
+    <span style='color: #777'>:≡</span> 
+    <span>identifier-body-item [ identifier-body ]</span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier-body-item</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'_'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier-body-item</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'a'</span>&nldr;<span style='color: #ff5722; font-weight: bold'>'z'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier-body-item</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'A'</span>&nldr;<span style='color: #ff5722; font-weight: bold'>'Z'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>identifier-body-item</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'0'</span>&nldr;<span style='color: #ff5722; font-weight: bold'>'9'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>parenthesis-left</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'('</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>parenthesis-right</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>')'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>bracket-left</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'{'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>bracket-right</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'}'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>dot</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>'.'</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>comma</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>','</span></span>
+</p>
+<p class='font-monospace mb-1'>
+    <span>semicolon</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>';'</span></span>
 </p>
 <p class='font-monospace mb-1'>
     <span>colon</span> 
@@ -68,69 +173,19 @@
     <span><span style='color: #ff5722; font-weight: bold'>":"</span></span>
 </p>
 <p class='font-monospace mb-1'>
+    <span>arrow</span> 
+    <span style='color: #777'>:≡</span> 
+    <span><span style='color: #ff5722; font-weight: bold'>"-&gt;"</span></span>
+</p>
+<p class='font-monospace mb-1'>
     <span>operator</span> 
     <span style='color: #777'>:≡</span> 
-    <span>{ <span style='color: #ff5722; font-weight: bold'>"/"</span> | <span style='color: #ff5722; font-weight: bold'>"="</span> | <span style='color: #ff5722; font-weight: bold'>"-"</span> | <span style='color: #ff5722; font-weight: bold'>"+"</span> | <span style='color: #ff5722; font-weight: bold'>"!"</span> | <span style='color: #ff5722; font-weight: bold'>"*"</span> | <span style='color: #ff5722; font-weight: bold'>"%"</span> | <span style='color: #ff5722; font-weight: bold'>"&lt;"</span> | <span style='color: #ff5722; font-weight: bold'>"&gt;"</span> | <span style='color: #ff5722; font-weight: bold'>"&"</span> | <span style='color: #ff5722; font-weight: bold'>"|"</span> | <span style='color: #ff5722; font-weight: bold'>"^"</span> | <span style='color: #ff5722; font-weight: bold'>"~"</span> | <span style='color: #ff5722; font-weight: bold'>"?"</span> | <span style='color: #ff5722; font-weight: bold'>":"</span> }</span>
+    <span>operator-item [ operator ]</span>
 </p>
 <p class='font-monospace mb-1'>
-    <span>keyword</span> 
+    <span>operator-item</span> 
     <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"func"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"operator"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"if"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"else"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"var"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"while"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"builtin"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"prefix"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"postfix"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"infix"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>keyword</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"precedence"</span></span>
-</p>
-<p class='font-monospace mb-1'>
-    <span>string-literal</span> 
-    <span style='color: #777'>:≡</span> 
-    <span><span style='color: #ff5722; font-weight: bold'>"\""</span> &lt;any&gt; <span style='color: #ff5722; font-weight: bold'>"\""</span></span>
+    <span><span style='color: #ff5722; font-weight: bold'>'/'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'='</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'-'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'+'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'!'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'*'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'%'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'&lt;'</span>, <span style='color: #ff5722; font-weight: bold'>'&gt;'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'&'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'<span style='color: #aaa'>or</span>'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'^'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'~'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>'?'</span> <span style='color: #aaa'>or</span> <span style='color: #ff5722; font-weight: bold'>':'</span></span>
 </p>
 </div></div>
 </div>

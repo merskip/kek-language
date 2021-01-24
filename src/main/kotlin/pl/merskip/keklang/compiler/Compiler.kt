@@ -102,10 +102,10 @@ class Compiler(
 
     private fun registerDeclarationOperator(node: OperatorDeclarationASTNode) {
         context.typesRegister.register(DeclaredOperator(
-            type = when (node.type) {
-                is Token.PrefixKeyword -> DeclaredOperator.Type.Prefix
-                is Token.PostfixKeyword -> DeclaredOperator.Type.Postfix
-                is Token.InfixKeyword -> DeclaredOperator.Type.Infix
+            type = when {
+                node.type.isKeyword("prefix") -> DeclaredOperator.Type.Prefix
+                node.type.isKeyword("postfix") -> DeclaredOperator.Type.Postfix
+                node.type.isKeyword("infix") -> DeclaredOperator.Type.Infix
                 else -> throw SourceLocationException("Unknown operator type", node)
             },
             operator = node.operator.text,

@@ -76,11 +76,12 @@ class BackendCompiler(
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
 
+        logger.info("Write executable file into $executableFile")
         val process = processBuilder.start()
 
         if (!process.waitFor(10, TimeUnit.SECONDS)) {
             process.destroy()
-            throw RuntimeException("execution timed out: $this")
+            throw RuntimeException("Execution timedout: $process")
         }
         if (process.exitValue() != 0) {
             throw RuntimeException("execution failed with code ${process.exitValue()}: $this")
@@ -90,7 +91,10 @@ class BackendCompiler(
     private val File.wslPath: String
         get() {
             val process = ProcessBuilder("wsl.exe", "wslpath", "'$path'").start()
-            process.waitFor(1, TimeUnit.SECONDS)
+            if (!process.waitFor(10, TimeUnit.SECONDS)) {
+                process.destroy()
+                throw RuntimeException("Execution timedout: $process")
+            }
             return process.inputStream.reader().readText().trimEnd()
         }
 }

@@ -1,5 +1,6 @@
 package pl.merskip.keklang.lexer
 
+import pl.merskip.keklang.logger.Logger
 import java.io.File
 import kotlin.math.min
 
@@ -10,6 +11,192 @@ class Lexer(
 
     private var offset: Int = 0
     private var sourceLocationOffset: Int? = null
+
+    private val logger = Logger(this::class)
+
+    /**
+     * whitespace ::= whitespace-item [ whitespace ]
+     * whitespace-item ::= U+0020 -- Space
+     * whitespace-item ::= U+0009 -- Tabulation
+     * whitespace-item ::= comment-end-line
+     * whitespace-item ::= line-break
+     */
+    private val whitespaceMatcher = TokenMatcher(
+        tokenClass = Token.Whitespace::class,
+        isHead = { char, index ->
+            char == '\u0020' || char == '\u0009' || lineBreakMatcher.isMatchHead(char, index)
+        },
+        isBody = { char, index ->
+            char == '\u0020' || char == '\u0009' || lineBreakMatcher.isMatchHead(char, index) || lineBreakMatcher.isMatchBody(char, index)
+        }
+    )
+
+    /**
+     * comment-end-line ::= "#" <any> line-break
+     * comment-end-line ::= "//" <any> line-break
+     */
+    private val commentEndLineMatcher = TokenMatcher(
+        tokenClass = Token.Whitespace::class,
+        isHead = { char, index ->
+            char == '#' || (char == '/' && index.next == '/')
+        },
+        isBody = { char, index ->
+            !lineBreakMatcher.isMatchBody(char, index)
+        }
+    )
+
+    /**
+     * line-break ::= U+000A -- End of Line
+     * line-break ::= U+000D U+000A -- Carriage Return and End of Line
+     */
+    private val lineBreakMatcher = TokenMatcher(
+        tokenClass = Token.Whitespace::class,
+        isHead = { char, index ->
+            char == '\u000A' || (char == '\u000D' && index.next == '\u000A')
+        },
+        isBody = { char, index ->
+            char == '\u000A'
+        }
+    )
+
+    /**
+     * literal-integer ::= literal-integer-digit [ integer-literal ]
+     * literal-integer-digit ::= '0'..'9'
+     */
+    private val integerLiteralMatcher = TokenRangesMatcher(
+        tokenClass = Token.IntegerLiteral::class,
+        head = listOf('0'..'9'),
+        body = listOf('0'..'9')
+    )
+
+    /**
+     * literal-string ::= '"' <any> '"'
+     */
+    private val stringLiteralMatcher = TokenMatcher(
+        tokenClass = Token.StringLiteral::class,
+        isHead = { char, _ ->
+            char == '"'
+        },
+        isBody = { char, index ->
+            !(char == '\"' && index.previous != '\\')
+        },
+        isIncludingLastChar = true
+    )
+
+    /**
+     * identifier ::= identifier-head [ identifier-body ]
+     * identifier-head ::= '_'
+     * identifier-head ::= 'a'..'z'
+     * identifier-head ::= 'A'..'Z'
+     * identifier-body ::= identifier-body-item [ identifier-body ]
+     * identifier-body-item ::= '_'
+     * identifier-body-item ::= 'a'..'z'
+     * identifier-body-item ::= 'A'..'Z'
+     * identifier-body-item ::= '0'..'9'
+     */
+    private val identifierMatcher = TokenRangesMatcher(
+        tokenClass = Token.Identifier::class,
+        head = listOf('_'.asRange(), 'a'..'z', 'A'..'Z'),
+        body = listOf('_'.asRange(), 'a'..'z', 'A'..'Z', '0'..'9')
+    )
+
+    /**
+     * parenthesis-left ::= '('
+     */
+    private val leftParenthesisMatcher = ExplicitTokenMatcher(
+        tokenClass = Token.LeftParenthesis::class,
+        characters = "("
+    )
+
+    /**
+     * parenthesis-right ::= ')'
+     */
+    private val rightParenthesisMatcher = ExplicitTokenMatcher(
+        tokenClass = Token.RightParenthesis::class,
+        characters = ")"
+    )
+
+    /**
+     * bracket-left ::= '{'
+     */
+    private val leftBracketMatcher = ExplicitTokenMatcher(
+        tokenClass = Token.LeftBracket::class,
+        characters = "{"
+    )
+
+    /**
+     * bracket-right ::= '}'
+     */
+    private val rightBracketMatcher = ExplicitTokenMatcher(
+        tokenClass = Token.RightBracket::class,
+        characters = "}"
+    )
+
+    /**
+     * dot ::= '.'
+     */
+    private val dotMatcher = ExplicitTokenMatcher(
+        tokenClass = Token.Dot::class,
+        characters = "."
+    )
+
+    /**
+     * comma ::= ','
+     */
+    private val commaMatcher = ExplicitTokenMatcher(
+        tokenClass = Token.Comma::class,
+        characters = ","
+    )
+
+    /**
+     * semicolon ::= ';'
+     */
+    private val semicolonMatcher = ExplicitTokenMatcher(
+        tokenClass = Token.Semicolon::class,
+        characters = ";"
+    )
+
+    /**
+     * colon ::= ":"
+     * arrow ::= "->"
+     * operator ::= operator-item [ operator ]
+     * operator-item ::= '/' | '=' | '-' | '+' | '!' | '*' | '%' | '<', '>' | '&' | '|' | '^' | '~' | '?' | ':'
+     */
+    private val operatorMatcher = object : TokenMatching() {
+
+        private val allowed = listOf(
+            '/', '=', '-', '+', '!', '*', '%', '<', '>', '&', '|', '^', '~', '?', ':'
+        )
+
+        override fun isMatchHead(char: Char, index: Index) =
+            allowed.contains(char)
+
+        override fun isMatchBody(char: Char, index: Index) =
+            allowed.contains(char)
+
+        override fun createToken(text: String) =
+            when (text) {
+                ":" -> Token.Colon()
+                "->" -> Token.Arrow()
+                else -> Token.Operator()
+            }
+    }
+
+    private val matchers = listOf(
+        whitespaceMatcher,
+        commentEndLineMatcher,
+        integerLiteralMatcher,
+        stringLiteralMatcher,
+        identifierMatcher,
+        leftParenthesisMatcher,
+        rightParenthesisMatcher,
+        leftBracketMatcher,
+        rightBracketMatcher,
+        dotMatcher,
+        commaMatcher,
+        semicolonMatcher,
+        operatorMatcher
+    )
 
     fun parse(): List<Token> {
         this.offset = -1
@@ -23,181 +210,59 @@ class Lexer(
     }
 
     private fun readNextToken(): Token? {
-        val char = getNextCharacter() ?: return null
+        var char = getNextCharacter() ?: return null
+        var index = getCurrentCharacterIndex(0)
         beginTokenSourceLocation()
 
-        return when {
-            isWhitespaceHead(char) -> consumeWhitespace() // Consume eg. ' ', \r, \n
-            isLineCommentHead(char) -> consumeLineComment() // Consume # Lorem ipsum\n
-            isNumberHead(char) -> consumeNumber() // Consume [0-9]+
-            isIdentifierHead(char) -> consumeIdentifierOrKeyword() // Consume [_a-Z][_a-Z0-9]
-            isOperatorHead(char) -> consumeOperatorOrOtherToken() // Consume +, -, *, /, =, == and ->
-            isStringLiteralHead(char) -> consumeStringLiteral()
-            char == '(' -> Token.LeftParenthesis(createSourceLocation())
-            char == ')' -> Token.RightParenthesis(createSourceLocation())
-            char == '{' -> Token.LeftBracket(createSourceLocation())
-            char == '}' -> Token.RightBracket(createSourceLocation())
-            char == ',' -> Token.Comma(createSourceLocation())
-            char == '.' -> Token.Dot(createSourceLocation())
-            char == ';' -> Token.Semicolon(createSourceLocation())
-            char == ':' -> Token.Colon(createSourceLocation())
-            else -> Token.Unknown(createSourceLocation())
+        val tokenMatchers = matchers.filter { it.isMatchHead(char, index) }
+        val tokenMatcher = when {
+            tokenMatchers.isEmpty() -> return createUnknownToken()
+            tokenMatchers.size > 1 -> throw SourceLocationException(
+                "Ambiguous token, found candidates: ${tokenMatchers.joinToString()}",
+                createSourceLocation()
+            )
+            else -> tokenMatchers.single()
         }
-    }
 
-    private fun isWhitespaceHead(char: Char): Boolean {
-        return char.isWhitespace()
-    }
-
-    /**
-     * whitespace ::= " "
-     * whitespace ::= line-break
-     */
-    private fun consumeWhitespace(): Token.Whitespace {
-        consumeCharactersWhile {
-            it == ' ' || it.isLineBreak()
-        }
-        return Token.Whitespace(createSourceLocation())
-    }
-
-    private fun isLineCommentHead(char: Char): Boolean {
-        return char == '#'
-    }
-
-    /**
-     * line-comment ::= "#" <any> line-break
-     */
-    private fun consumeLineComment(): Token.LineComment {
-        consumeCharactersWhile { !it.isLineBreak() }
-        return Token.LineComment(createSourceLocation())
-    }
-
-    /**
-     * line-break ::= "\n"
-     * line-break ::= "\r\n"
-     */
-    private fun Char.isLineBreak(): Boolean =
-        this == '\n' || (this == '\r' && isNextCharacter('\n'))
-
-    private fun isNumberHead(char: Char): Boolean {
-        return char.isDigit()
-    }
-
-    /**
-     * number ::= { "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" }
-     */
-    private fun consumeNumber(): Token.Number {
-        consumeCharactersWhile { it.isISOLatinDigit() }
-        return Token.Number(createSourceLocation())
-    }
-
-    private fun Char.isISOLatinDigit(): Boolean =
-        this == '0' || this == '1' || this =='2' || this == '3' || this == '4'
-                || this == '5' || this == '6' || this == '7' || this == '9'
-
-    private fun isIdentifierHead(char: Char): Boolean {
-        return char.isLetter() || char == '_'
-    }
-
-
-    private fun isOperatorHead(char: Char): Boolean {
-        return char.isOperatorAllowed()
-    }
-
-    /**
-     * arrow ::= "->"
-     * colon ::= ":"
-     * operator ::= { "/" | "=" | "-" | "+" | "!" | "*" | "%" | "<" | ">" | "&" | "|" | "^" | "~" | "?" | ":" }
-     */
-    private fun consumeOperatorOrOtherToken(): Token {
-        @Suppress("MoveVariableDeclarationIntoWhen")
-        val text = consumeCharactersWhile { it.isOperatorAllowed() }
-        return when (text) {
-            "->" -> Token.Arrow(createSourceLocation())
-            ":" -> Token.Colon(createSourceLocation())
-            else -> Token.Operator(createSourceLocation())
-        }
-    }
-
-    private fun Char.isOperatorAllowed(): Boolean =
-        this == '/' || this == '=' || this == '-' || this == '+'
-                || this == '!' || this == '*' || this == '%' || this == '<'
-                || this == '>' || this == '&' || this == '|' || this == '^'
-                || this == '~' || this == '?' || this == ':'
-
-    private fun consumeIdentifierOrKeyword(): Token {
-        val text = consumeCharactersWhile { it.isLetterOrDigit() || it == '_' }
-        return consumeKeyword(text)
-            ?: Token.Identifier(createSourceLocation())
-    }
-
-    /**
-     * keyword ::= "func"
-     * keyword ::= "operator"
-     * keyword ::= "if"
-     * keyword ::= "else"
-     * keyword ::= "var"
-     * keyword ::= "while"
-     * keyword ::= "builtin"
-     * keyword ::= "prefix"
-     * keyword ::= "postfix"
-     * keyword ::= "infix"
-     * keyword ::= "precedence"
-     */
-    private fun consumeKeyword(text: String): Token? {
-        return when (text) {
-            "func" -> Token.Func(createSourceLocation())
-            "operator" -> Token.OperatorKeyword(createSourceLocation())
-            "if" -> Token.If(createSourceLocation())
-            "else" -> Token.Else(createSourceLocation())
-            "var" -> Token.Var(createSourceLocation())
-            "while" -> Token.While(createSourceLocation())
-            "builtin" -> Token.Builtin(createSourceLocation())
-            "prefix" -> Token.PrefixKeyword(createSourceLocation())
-            "postfix" -> Token.PostfixKeyword(createSourceLocation())
-            "infix" -> Token.InfixKeyword(createSourceLocation())
-            "precedence" -> Token.PrecedenceKeyword(createSourceLocation())
-            else -> null
-        }
-    }
-
-    private fun isStringLiteralHead(char: Char) = char == '"'
-
-    /**
-     * string-literal ::= "\"" <any> "\""
-     */
-    private fun consumeStringLiteral(): Token.StringLiteral {
-        consumeCharactersWhile { it != '"' }
-        getNextCharacter()
-        return Token.StringLiteral(createSourceLocation())
-    }
-
-    private fun consumeCharactersWhile(condition: (Char) -> Boolean): String {
-        var text = "" + source.getOrNull(offset)
         while (true) {
-            val char = getNextCharacterIf(condition) ?: break
-            text += char
+            char = getNextCharacter() ?: break
+            index = getCurrentCharacterIndex(getCurrentTokenLength())
+
+            if (!tokenMatcher.isMatchBody(char, index)) break
         }
-        return text
-    }
-
-    private fun isNextCharacter(character: Char): Boolean {
-        return getNextCharacterIf { it == character } != null
-    }
-
-    private fun getNextCharacterIf(condition: (Char) -> Boolean): Char? {
-        val char = getNextCharacter()
-        return if (char != null && condition(char)) {
-            char
-        } else {
+        if (!tokenMatcher.isIncludingLastChar)
             backToPreviousCharacter()
-            null
+
+        val sourceLocation = createSourceLocation()
+        val token = tokenMatcher.createToken(sourceLocation.text)
+        token.sourceLocation = sourceLocation
+        return token
+    }
+
+    private fun createUnknownToken(): Token.Unknown {
+        while (true) {
+            val nextChar = getNextCharacter()
+            if (nextChar == null || nextChar.isWhitespace()) break
+        }
+        backToPreviousCharacter()
+        return Token.Unknown().apply {
+            sourceLocation = createSourceLocation()
+            logger.warning("Unknown token \"$escapedText\" in $sourceLocation")
         }
     }
 
     private fun getNextCharacter(): Char? {
         if (offset == source.length) return null
         return source.getOrNull(++offset)
+    }
+
+    private fun getCurrentCharacterIndex(index: Int): TokenMatching.Index {
+        val offset = offset
+        return object : TokenMatching.Index {
+            override val index: Int = index
+            override val previous: Char? get() = source.getOrNull(offset - 1)
+            override val next: Char? get() = source.getOrNull(offset + 1)
+        }
     }
 
     private fun backToPreviousCharacter() {
@@ -207,6 +272,8 @@ class Lexer(
     private fun beginTokenSourceLocation() {
         sourceLocationOffset = offset
     }
+
+    private fun getCurrentTokenLength() = offset - (sourceLocationOffset ?: 0)
 
     private fun createSourceLocation(): SourceLocation {
         val sourceOffset = sourceLocationOffset ?: throw IllegalStateException("Method beginSourceLocation must be called before")
