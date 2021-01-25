@@ -14,58 +14,70 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.21")
     implementation(group = "org.bytedeco", name = "llvm-platform", version = "10.0.1-1.5.4")
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.6.0")
-    implementation("com.xenomachina:kotlin-argparser:2.0.7")
+    implementation(group = "com.xenomachina", name = "kotlin-argparser", version = "2.0.7")
 }
 
 tasks.compileKotlin {
-    kotlinOptions.jvmTarget = "12"
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 tasks.compileTestKotlin {
-    kotlinOptions.jvmTarget = "12"
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 tasks.test {
     useJUnitPlatform()
 }
 
-tasks.jar {
+val archs = listOf(
+    "linux-x86",
+    "linux-x86_64",
+    "linux-armhf",
+    "linux-arm64",
+    "linux-ppc64le",
+    "windows-x86",
+    "windows-x86_64",
+    "macosx-x86_64",
+    "android-arm",
+    "android-arm64",
+    "android-x86",
+    "android-x86_64",
+    "ios-arm64",
+    "ios-x86_64"
+)
 
-    manifest {
-        attributes["Main-Class"] = "pl.merskip.keklang.MainKt"
+tasks {
+
+    fun createJarTask(arch: String) {
+        register("jar-$arch", Jar::class.java) {
+            group = "build jar"
+            manifest {
+                attributes["Main-Class"] = "pl.merskip.keklang.MainKt"
+            }
+            from(sourceSets.main.get().output)
+            dependsOn(configurations.runtimeClasspath)
+
+            from({
+                configurations.runtimeClasspath.get()
+                    .filter { file -> file.name.endsWith("jar") }
+                    .filter { file ->
+                        val containsArch = archs.any { arch ->
+                            file.name.endsWith("$arch.jar")
+                        }
+                        if (containsArch) file.name.endsWith("$arch.jar")
+                        else true
+                    }.map { zipTree(it) }
+            })
+            archiveFileName.set("kek-${arch}.jar")
+        }
     }
 
-    // To add all of the dependencies
-    from(sourceSets.main.get().output)
+    for (arch in archs) createJarTask(arch)
 
-    dependsOn(configurations.runtimeClasspath)
-    from({
-        configurations.runtimeClasspath.get().filter {
-            // Skip other than linux-x86_64
-            if (it.name.endsWith("linux-x86.jar")
-                || it.name.endsWith("linux-linux-x86_64.jar")
-                || it.name.endsWith("linux-armhf.jar")
-                || it.name.endsWith("linux-arm64.jar")
-                || it.name.endsWith("linux-ppc64le.jar")
-                || it.name.endsWith("windows-x86.jar")
-                || it.name.endsWith("windows-x86_64.jar")
-                || it.name.endsWith("android-arm.jar")
-                || it.name.endsWith("android-arm64.jar")
-                || it.name.endsWith("android-x86.jar")
-                || it.name.endsWith("android-x86_64.jar")
-                || it.name.endsWith("ios-arm64.jar")
-                || it.name.endsWith("ios-x86_64.jar")
-                || it.name.endsWith("linux-armhf.jar")
-                || it.name.endsWith("linux-arm64.jar")
-                || it.name.endsWith("linux-ppc64le.jar")
-                || it.name.endsWith("linux-x86.jar")
-            ) false
-            else it.name.endsWith("jar")
-        }.map { zipTree(it) }
-    })
-
-    archiveFileName.set("kek-macos-x86_64.jar")
+    create("jar-all") {
+        group = "build jar"
+        for (arch in archs) dependsOn("jar-$arch")
+    }
 }

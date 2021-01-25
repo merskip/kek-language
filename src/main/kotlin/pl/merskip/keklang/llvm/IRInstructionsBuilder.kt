@@ -225,7 +225,7 @@ class IRInstructionsBuilder(
         val branchValueRef = LLVMBuildCondBr(irBuilder,
             condition.reference,
             ifTrue.block.blockReference,
-            (ifFalse?.block ?: ifTrue.finallyBlock)!!.blockReference
+            (ifFalse?.block ?: ifTrue.finallyBlock).blockReference
         )
 
         // Create ifTrue block

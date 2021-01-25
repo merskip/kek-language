@@ -7,6 +7,7 @@ import pl.merskip.keklang.llvm.enum.OperatingSystem
 import pl.merskip.keklang.logger.Logger
 import pl.merskip.keklang.toInt
 import java.io.File
+import java.io.InputStream
 
 typealias BuiltinImplementation = (CompilerContext, List<Reference>) -> Unit
 
@@ -229,16 +230,16 @@ class Builtin(
         builtinFunctions[operatorIdentifier] = implementation
     }
 
-    fun getBuiltinFiles(): List<File> {
-        val directory = this::class.java.classLoader.getResource("builtin")
-        if (directory == null) {
-            logger.warning("Not found builtin directory")
-            return emptyList()
-        }
-        return File(directory.file)
-            .walkTopDown()
-            .filter { it.extension == "kek" }
-            .toList()
+    fun getBuiltinFiles(): List<InputStream> {
+        val classLoader = this::class.java.classLoader
+        return listOf(
+            classLoader.getResourceAsStream("builtin/BytePointer.kek"),
+            classLoader.getResourceAsStream("builtin/Integer.kek"),
+            classLoader.getResourceAsStream("builtin/Memory.kek"),
+            classLoader.getResourceAsStream("builtin/Operators.kek"),
+            classLoader.getResourceAsStream("builtin/String.kek"),
+            classLoader.getResourceAsStream("builtin/System.kek")
+        )
     }
 
     fun createBoolean(value: Boolean): Reference {

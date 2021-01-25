@@ -54,7 +54,7 @@ class Lexer(
         isHead = { char, index ->
             char == '\u000A' || (char == '\u000D' && index.next == '\u000A')
         },
-        isBody = { char, index ->
+        isBody = { char, _ ->
             char == '\u000A'
         }
     )
