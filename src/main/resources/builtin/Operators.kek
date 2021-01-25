@@ -1,6 +1,6 @@
 
-infix operator = precedence 10
-infix operator := precedence 10
+infix operator = precedence 10 associative right
+infix operator := precedence 10 associative right
 
 infix operator == precedence 20
 infix operator != precedence 20

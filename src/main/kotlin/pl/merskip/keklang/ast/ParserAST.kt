@@ -388,14 +388,19 @@ class ParserAST(
             .sourceLocation(leftParenthesis, rightParenthesis)
     }
 
-    private fun parseOperatorDeclaration(operatorTypeKeywordToken: Token.Identifier): OperatorDeclarationASTNode {
+    private fun parseOperatorDeclaration(typeToken: Token.Identifier): OperatorDeclarationASTNode {
         getNextKeyword("operator")
-        val operator = getNextToken<Token.Operator>()
+        val operatorToken = getNextToken<Token.Operator>()
         getNextKeyword("precedence")
-        val precedence = getNextToken<Token.IntegerLiteral>()
+        val precedenceToken = getNextToken<Token.IntegerLiteral>()
 
-        return OperatorDeclarationASTNode(operatorTypeKeywordToken, operator, precedence)
-            .sourceLocation(operatorTypeKeywordToken, precedence)
+        val associativeToken = if (isNextKeyword("associative")) {
+            getNextKeyword("associative")
+            getNextToken<Token.Identifier>()
+        } else null
+
+        return OperatorDeclarationASTNode(typeToken, operatorToken, precedenceToken, associativeToken)
+            .sourceLocation(typeToken, associativeToken ?: precedenceToken)
     }
 
     private fun getNextKeyword(keyword: String): Token.Identifier {

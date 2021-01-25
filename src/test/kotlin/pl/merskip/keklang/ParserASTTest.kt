@@ -227,6 +227,30 @@ internal class ParserASTTest {
         assertTrue(callNode.parameters.isEmpty())
     }
 
+    @Test
+    fun `parsing operator declaration`() {
+        val source = """
+            infix operator + precedence 20
+            infix operator = precedence 10 associative right
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        assertEquals(2, fileNodeAST.nodes.size)
+
+        val plusOperatorDeclaration = fileNodeAST.nodes[0] as OperatorDeclarationASTNode
+        assertEquals("infix", plusOperatorDeclaration.type.text)
+        assertEquals("+", plusOperatorDeclaration.operator.text)
+        assertEquals("20", plusOperatorDeclaration.precedence.text)
+        assertNull(plusOperatorDeclaration.associative)
+
+        val equalOperatorDeclaration = fileNodeAST.nodes[1] as OperatorDeclarationASTNode
+
+        assertEquals("infix", equalOperatorDeclaration.type.text)
+        assertEquals("=", equalOperatorDeclaration.operator.text)
+        assertEquals("10", equalOperatorDeclaration.precedence.text)
+        assertEquals("right", equalOperatorDeclaration.associative!!.text)
+    }
+
 
     private fun parseForFunction(source: String): FunctionDefinitionASTNode {
         return parse(source).nodes.single() as FunctionDefinitionASTNode
