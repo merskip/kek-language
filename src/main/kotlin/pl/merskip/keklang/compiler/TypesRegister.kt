@@ -4,7 +4,7 @@ import pl.merskip.keklang.logger.Logger
 
 class TypesRegister {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     private val types = mutableListOf<DeclaredType>()
     private val operators = mutableListOf<DeclaredOperator>()

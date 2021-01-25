@@ -10,7 +10,7 @@ typealias ImplementationBuilder = (List<Reference>) -> Unit
 
 class FunctionBuilder() {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     private lateinit var identifier: Identifier
     private lateinit var parameters: List<DeclaredSubroutine.Parameter>
@@ -132,7 +132,7 @@ class FunctionBuilder() {
 
     companion object {
 
-        private val logger = Logger(this::class)
+        private val logger = Logger(this::class.java)
 
         fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): DeclaredSubroutine {
             val functionBuilder = FunctionBuilder()

@@ -34,7 +34,7 @@ class TokenMatcher(
 class TokenRangesMatcher(
     private val head: List<CharRange>,
     private val body: List<CharRange>,
-    private val token: () -> Token,
+    private val token: () -> Token
 ): TokenMatching() {
 
     override fun isMatchHead(char: Char, index: Index): Boolean {
@@ -50,7 +50,7 @@ class TokenRangesMatcher(
 
 class ExplicitTokenMatcher(
     private val characters: String,
-    private val token: () -> Token,
+    private val token: () -> Token
 ): TokenMatching() {
 
     init {

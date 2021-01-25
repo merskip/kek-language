@@ -12,7 +12,7 @@ class CHeaderGenerator(
     val typesRegister: TypesRegister
 ) {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     fun generate(sourceFile: File, outputFile: File) {
         logger.info("Generating c-header file to ${outputFile.absolutePath}")

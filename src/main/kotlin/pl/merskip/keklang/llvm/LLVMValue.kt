@@ -10,7 +10,7 @@ abstract class LLVMValue(
     override val reference: LLVMValueRef
 ) : LLVMReferencing<LLVMValueRef> {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     fun getAnyType() = getType<LLVMType>()
 

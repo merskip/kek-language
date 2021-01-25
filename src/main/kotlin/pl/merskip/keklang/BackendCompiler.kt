@@ -7,13 +7,14 @@ import pl.merskip.keklang.llvm.disposable
 import pl.merskip.keklang.logger.Logger
 import java.io.File
 import java.util.concurrent.TimeUnit
+import kotlin.math.log
 
 
 class BackendCompiler(
     private val context: CompilerContext
 ) {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(javaClass)
 
     fun compile(executableFile: File, dumpAssembler: Boolean, generateBitcode: Boolean) {
 
@@ -58,7 +59,7 @@ class BackendCompiler(
             LLVM.LLVMTargetMachineEmitToFile(targetMachine, context.module.reference, BytePointer(assemblerFile.path), LLVM.LLVMAssemblyFile, error)
         }
 
-        val objectFile = executableFile.withExtension("o")
+        val objectFile = File("a.o")
         logger.info("Write object file into $objectFile")
         val errorMessage = BytePointer()
         if (LLVM.LLVMTargetMachineEmitToFile(targetMachine, context.module.reference, BytePointer(objectFile.path), LLVM.LLVMObjectFile, errorMessage) != 0) {
@@ -72,11 +73,10 @@ class BackendCompiler(
         }
 
         logger.info("Write executable file into $executableFile")
-        val processBuilder = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", context.entryPointSubroutine.identifier.mangled, "-o", executableFile.wslPath, objectFile.wslPath)
+        val processBuilder = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", context.entryPointSubroutine.identifier.mangled, "-o", "a.out", "a.o")
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
 
-        logger.info("Write executable file into $executableFile")
         val process = processBuilder.start()
 
         if (!process.waitFor(10, TimeUnit.SECONDS)) {
@@ -90,11 +90,14 @@ class BackendCompiler(
 
     private val File.wslPath: String
         get() {
+            logger.verbose("Converting \"$path\" to WSL path...")
             val process = ProcessBuilder("wsl.exe", "wslpath", "'$path'").start()
             if (!process.waitFor(10, TimeUnit.SECONDS)) {
                 process.destroy()
                 throw RuntimeException("Execution timedout: $process")
             }
-            return process.inputStream.reader().readText().trimEnd()
+            val wslPath = process.inputStream.reader().readText().trimEnd()
+            logger.verbose(" ... is \"$wslPath\"")
+            return wslPath
         }
 }

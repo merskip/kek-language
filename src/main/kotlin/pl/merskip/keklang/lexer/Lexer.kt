@@ -12,7 +12,7 @@ class Lexer(
     private var offset: Int = 0
     private var sourceLocationOffset: Int? = null
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     /**
      * whitespace ::= whitespace-item [ whitespace ]

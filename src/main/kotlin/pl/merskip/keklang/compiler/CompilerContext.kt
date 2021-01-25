@@ -18,7 +18,7 @@ class CompilerContext(
     val debugBuilder: DebugInformationBuilder
 ) {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     lateinit var entryPointSubroutine: DeclaredSubroutine
     private val debugFiles = mutableMapOf<File, LLVMFileMetadata>()

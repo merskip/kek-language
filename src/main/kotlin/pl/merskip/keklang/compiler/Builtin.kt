@@ -16,7 +16,7 @@ class Builtin(
     private val typesRegister: TypesRegister
 ) {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     /* Primitive types */
     val voidType: PrimitiveType

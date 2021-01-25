@@ -89,7 +89,7 @@ class ParserAST(
 
     private fun parseSubroutineDefinition(
         token: Token,
-        modifiers: List<Token>,
+        modifiers: List<Token>
     ): SubroutineDefinitionASTNode {
         var isBuiltin = false
         for (modifier in modifiers) when {

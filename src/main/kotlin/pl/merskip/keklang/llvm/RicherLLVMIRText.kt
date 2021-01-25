@@ -11,7 +11,7 @@ class RicherLLVMIRText(
     private val typesRegister: TypesRegister
 ) {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     private val stringLimiterCharacter = '"'
     private val endLineCommentCharacter = ';'

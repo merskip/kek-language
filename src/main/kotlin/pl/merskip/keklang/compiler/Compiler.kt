@@ -20,7 +20,7 @@ class Compiler(
     val context: CompilerContext
 ) {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     private val subroutineCompiler = SubroutineDefinitionCompiler(context)
 

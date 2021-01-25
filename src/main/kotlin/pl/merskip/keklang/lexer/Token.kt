@@ -38,13 +38,13 @@ sealed class Token {
 
     override fun toString(): String {
         if (!this::sourceLocation.isInitialized)
-            return this::class.simpleName ?: this::class.toString()
+            return this::class.java.toString()
 
         val fields = listOfNotNull(
             escapedText.ifEmpty { null }?.let { "\"$it\"" },
             sourceLocation.toString()
         )
-        return "${this::class.simpleName}(${fields.joinToString(", ")})"
+        return "${this::class.java}(${fields.joinToString(", ")})"
     }
 
 }

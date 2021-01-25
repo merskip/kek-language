@@ -10,7 +10,7 @@ class SubroutineDefinitionCompiler(
     val context: CompilerContext
 ) {
 
-    private val logger = Logger(this::class)
+    private val logger = Logger(this::class.java)
 
     fun registerSubroutine(node: SubroutineDefinitionASTNode): DeclaredSubroutine {
         return when (node) {
