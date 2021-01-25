@@ -128,7 +128,11 @@ class Compiler(
             },
             operator = node.operator.text,
             precedence = node.precedence.text.toInt(),
-            associative = if (node.operator.text == "=" || node.operator.text == ":=") DeclaredOperator.Associative.Right else DeclaredOperator.Associative.Left
+            associative = when {
+                node.associative?.isKeyword("right") ?: false -> DeclaredOperator.Associative.Right
+                node.associative?.isKeyword("left") ?: false -> DeclaredOperator.Associative.Left
+                else -> DeclaredOperator.Associative.Left
+            }
         ))
     }
 
