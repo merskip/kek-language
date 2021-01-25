@@ -15,6 +15,12 @@ import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
 import pl.merskip.keklang.llvm.enum.SourceLanguage
 import pl.merskip.keklang.logger.Logger
 import java.io.File
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.Reader
+import java.net.URL
+import java.nio.file.Paths
+import kotlin.io.path.toPath
 
 class Compiler(
     val context: CompilerContext
@@ -24,7 +30,7 @@ class Compiler(
 
     private val subroutineCompiler = SubroutineDefinitionCompiler(context)
 
-    private val files = mutableListOf<File>()
+    private val files = mutableListOf<URL>()
 
     init {
         context.addNodeCompiler(CodeBlockCompiler(context))
@@ -41,15 +47,20 @@ class Compiler(
         context.addNodeCompiler(ExpressionCompiler(context))
 
         context.builtin.getBuiltinFiles()
-            .forEach { addFile(it) }
+            .apply { files.addAll(this) }
     }
 
     fun addFile(file: File) {
-        files.add(file)
+        logger.verbose("Adding file to compile: $file")
+        files.add(file.toURI().toURL())
     }
 
     fun compile() {
         logger.measure(Logger.Level.SUCCESS, "Compilation has been successfully completed") {
+
+            context.module.addFlag(ModuleFlagBehavior.Warning, "Dwarf Version", 2)
+            context.module.addFlag(ModuleFlagBehavior.Warning, "Debug Info Version", LLVM.LLVMDebugMetadataVersion().toLong())
+
             val filesNodes = parseFiles()
             val filesSubroutines = registerSubroutines(filesNodes)
             compileFilesSubroutines(filesSubroutines)
@@ -61,8 +72,13 @@ class Compiler(
     }
 
     private fun parseFiles(): List<FileASTNode> {
-        return files.mapIndexed { index, file ->
-            val content = file.readText()
+
+        val builtinFiles = context.builtin.getBuiltinFiles()
+        val input = files.map { it to InputStreamReader(it.openStream()).readText() }
+
+        return input.map { (url, content) ->
+            logger.verbose("Parsing $url")
+            val file = File(url.path)
             val tokens = Lexer(file, content).parse()
 
             val parserNodeAST = ParserAST(file, content, tokens)
@@ -70,13 +86,15 @@ class Compiler(
                 parserNodeAST.parse()
             }
 
-            if (index == files.lastIndex) {
+            val isBuiltin = builtinFiles.contains(url)
+            if (!isBuiltin) {
                 val debugFile = createDebugFile(fileNode)
                 createCompileUnit(debugFile)
             }
 
             fileNode
         }
+
     }
 
     private fun registerSubroutines(filesNodes: List<FileASTNode>): List<FileSubroutines> {
@@ -125,15 +143,12 @@ class Compiler(
     }
 
     private fun createDebugFile(fileNode: FileASTNode): LLVMFileMetadata {
-        val debugFile = context.debugBuilder.createFile(fileNode.sourceLocation.file.name, fileNode.sourceLocation.file.parent)
+        val debugFile = context.debugBuilder.createFile(fileNode.sourceLocation.file.name, fileNode.sourceLocation.file.parent ?: ".")
         context.addDebugFile(fileNode.sourceLocation.file, debugFile)
         return debugFile
     }
 
     private fun createCompileUnit(debugFile: LLVMFileMetadata) {
-        context.module.addFlag(ModuleFlagBehavior.Warning, "Dwarf Version", 2)
-        context.module.addFlag(ModuleFlagBehavior.Warning, "Debug Info Version", LLVM.LLVMDebugMetadataVersion().toLong())
-
         context.debugBuilder.createCompileUnit(
             sourceLanguage = SourceLanguage.C89,
             file = debugFile,

@@ -8,6 +8,7 @@ import pl.merskip.keklang.logger.Logger
 import pl.merskip.keklang.toInt
 import java.io.File
 import java.io.InputStream
+import java.net.URL
 
 typealias BuiltinImplementation = (CompilerContext, List<Reference>) -> Unit
 
@@ -230,15 +231,15 @@ class Builtin(
         builtinFunctions[operatorIdentifier] = implementation
     }
 
-    fun getBuiltinFiles(): List<InputStream> {
+    fun getBuiltinFiles(): List<URL> {
         val classLoader = this::class.java.classLoader
         return listOf(
-            classLoader.getResourceAsStream("builtin/BytePointer.kek"),
-            classLoader.getResourceAsStream("builtin/Integer.kek"),
-            classLoader.getResourceAsStream("builtin/Memory.kek"),
-            classLoader.getResourceAsStream("builtin/Operators.kek"),
-            classLoader.getResourceAsStream("builtin/String.kek"),
-            classLoader.getResourceAsStream("builtin/System.kek")
+            classLoader.getResource("builtin/BytePointer.kek"),
+            classLoader.getResource("builtin/Integer.kek"),
+            classLoader.getResource("builtin/Memory.kek"),
+            classLoader.getResource("builtin/Operators.kek"),
+            classLoader.getResource("builtin/String.kek"),
+            classLoader.getResource("builtin/System.kek")
         )
     }
 
