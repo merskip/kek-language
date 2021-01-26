@@ -1,14 +1,12 @@
 package pl.merskip.keklang
 
-import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.CompilerContext
-import pl.merskip.keklang.linker.EmbeddedClangLinker
 import pl.merskip.keklang.linker.WSLLinker
 import pl.merskip.keklang.llvm.*
 import pl.merskip.keklang.llvm.enum.CodeGenerationFileType
 import pl.merskip.keklang.logger.Logger
 import java.io.File
-import java.util.concurrent.TimeUnit
+import java.nio.file.Files
 
 
 class BackendCompiler(
@@ -17,7 +15,7 @@ class BackendCompiler(
 
     private val logger = Logger(javaClass)
 
-    fun compile(executableFile: File) {
+    fun compile(outputFile: File) {
 
         LLVMInitialize.allTargetInfos()
         LLVMInitialize.allTargets()
@@ -38,31 +36,38 @@ class BackendCompiler(
 
         val emitter = LLVMEmitter(targetMachine, context.module)
 
-//        if (dumpAssembler) {
-//            val assemblerFile = executableFile.withExtension(".asm")
-//            logger.info("Write assembler into $assemblerFile")
-//            targetMachine.setAssemblerVerbosity(true)
-//            emitter.emitToFile(assemblerFile, CodeGenerationFileType.AssemblyFile)
-//        }
+        when {
+            outputFile.hasExtension(".ll") -> {
+                logger.info("Writing LLVM IR to $outputFile")
+                outputFile.writeText(context.module.getIR())
+            }
+            outputFile.hasExtension(".bc") -> {
+                logger.info("Writing Bitcode to $outputFile")
+                outputFile.writeBytes(context.module.getBitcode())
+            }
+            outputFile.hasExtension(".asm") -> {
+                logger.info("Writing assembler to $outputFile")
+                targetMachine.setAssemblerVerbosity(true)
+                emitter.emitToFile(outputFile, CodeGenerationFileType.AssemblyFile)
+            }
+            outputFile.hasExtension(".o") -> {
+                val objectFile = outputFile.withExtension(".o")
+                logger.info("Writing object file to $outputFile")
+                emitter.emitToFile(objectFile, CodeGenerationFileType.ObjectFile)
+            }
+            else -> {
+                logger.info("Writing executable file to $outputFile")
+                val temporaryObjectFile = Files.createTempFile(outputFile.nameWithoutExtension, ".o").toFile()
+                temporaryObjectFile.deleteOnExit()
 
-        val objectFile = executableFile.withExtension(".o")
-        logger.info("Write object file into $objectFile")
-        emitter.emitToFile(objectFile, CodeGenerationFileType.ObjectFile)
+                emitter.emitToFile(temporaryObjectFile, CodeGenerationFileType.ObjectFile)
 
-//        if (generateBitcode) {
-//            val bitcodeFile = executableFile.withExtension("bc")
-//            logger.info("Write bitcode into $bitcodeFile")
-//            LLVM.LLVMWriteBitcodeToFile(context.module.reference, bitcodeFile.path)
-//        }
-
-        logger.info("Write executable file into $executableFile")
-
-        WSLLinker(targetTriple).compile(
-            inputFiles = listOf(objectFile),
-            entryPoint = context.entryPointSubroutine.identifier.mangled,
-            outputFile = executableFile
-        )
+                WSLLinker(targetTriple).compile(
+                    inputFiles = listOf(temporaryObjectFile),
+                    entryPoint = context.entryPointSubroutine.identifier.mangled,
+                    outputFile = outputFile
+                )
+            }
+        }
     }
-
-
 }

@@ -1,9 +1,13 @@
 package pl.merskip.keklang.llvm
 
 import org.bytedeco.javacpp.BytePointer
+import org.bytedeco.llvm.LLVM.LLVMMemoryBufferRef
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
+import org.bytedeco.llvm.global.LLVM
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
+import pl.merskip.keklang.toByteArray
+import java.io.File
 
 class LLVMModule(
     val reference: LLVMModuleRef
@@ -44,8 +48,12 @@ class LLVMModule(
         LLVMSetModuleDataLayout(reference, dataLayout.reference)
     }
 
-    fun getIntermediateRepresentation(): String {
+    fun getIR(): String {
         return LLVMPrintModuleToString(reference).disposable.string
+    }
+
+    fun getBitcode(): ByteArray {
+        return LLVMWriteBitcodeToMemoryBuffer(reference).toByteArray()
     }
 
     fun verify() {
@@ -59,4 +67,5 @@ class LLVMModule(
     }
 
     class FailedVerifyModule(message: String) : Exception("Failed verify module:\n$message")
+
 }

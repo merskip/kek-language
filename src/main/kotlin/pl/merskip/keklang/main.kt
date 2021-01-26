@@ -57,7 +57,7 @@ fun main(args: Array<String>) = mainBody {
                     .generate(File(cHeaderOutput!!))
 
             if (llvmIRDump) {
-                val plainIR = module.getIntermediateRepresentation()
+                val plainIR = module.getIR()
                 val richIR = RicherLLVMIRText(plainIR, typesRegister).rich()
                 println(richIR)
             }
@@ -74,6 +74,8 @@ fun main(args: Array<String>) = mainBody {
             printException(e)
         } catch (e: Exception) {
             printException(e)
+        } finally {
+            module.dispose()
         }
     }
 }

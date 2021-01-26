@@ -42,7 +42,8 @@ class ApplicationArguments(parser: ArgParser) {
                 " - \".o\", then emitting object file\n" +
                 " - \".ll\", then emitting LLVM IR\n" +
                 " - \".bc\", then emitting Bitcode\n" +
-                " - otherwise emitting executable file\n" +
+                " - \".asm\", then emitting assembler\n" +
+                " - else emitting executable file\n" +
                 "The default value is \"a.out\"."
     ).default("a.out")
 
