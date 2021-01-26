@@ -2,6 +2,9 @@ package pl.merskip.keklang
 
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.mainBody
+import org.bytedeco.javacpp.BytePointer
+import org.bytedeco.llvm.LLVM.LLVMFatalErrorHandler
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.PrinterASTNode
 import pl.merskip.keklang.compiler.*
@@ -83,8 +86,18 @@ fun ApplicationArguments.processModule(context: CompilerContext) {
     backendCompiler.compile(outputFile, asmDump, bitcode)
 }
 
+class FatalErrorHandler: LLVMFatalErrorHandler() {
+
+    override fun call(reason: BytePointer?) {
+        throw Exception("Fatal error: ${reason?.disposable?.string ?: "no reason"}")
+    }
+}
+
 fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
+
+        LLVM.LLVMInstallFatalErrorHandler(FatalErrorHandler())
+        LLVM.LLVMEnablePrettyStackTrace()
 
         val context = LLVMContext()
         val targetTriple = targetTriple?.let { LLVMTargetTriple.from(it) } ?: LLVMTargetTriple.default()
