@@ -3,10 +3,7 @@ package pl.merskip.keklang
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.CompilerContext
-import pl.merskip.keklang.llvm.LLVMInitialize
-import pl.merskip.keklang.llvm.LLVMPassManager
-import pl.merskip.keklang.llvm.LLVMTargetMachine
-import pl.merskip.keklang.llvm.disposable
+import pl.merskip.keklang.llvm.*
 import pl.merskip.keklang.logger.Logger
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -34,14 +31,8 @@ class BackendCompiler(
 
         val targetTriple = context.module.getTargetTriple()
         val targetMachine = LLVMTargetMachine.create(targetTriple)
-
-        val dataLayout = LLVM.LLVMCreateTargetDataLayout(targetMachine.reference)
-        LLVM.LLVMSetDataLayout(context.module.reference, BytePointer(dataLayout))
-
-        val err = BytePointer(1024L)
-        if (LLVM.LLVMVerifyModule(context.module.reference, LLVM.LLVMPrintMessageAction, err) != 0) {
-            println(err.string)
-        }
+        val dataLayout = LLVMTargetData.from(targetMachine)
+        context.module.setDataLayout(dataLayout)
 
         if (dumpAssembler) {
             val assemblerFile = executableFile.withExtension("asm")

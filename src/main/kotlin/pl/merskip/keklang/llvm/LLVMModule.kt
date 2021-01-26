@@ -43,6 +43,10 @@ class LLVMModule(
         return LLVMTargetTriple.from(targetTriple)
     }
 
+    fun setDataLayout(dataLayout: LLVMTargetData) {
+        LLVMSetModuleDataLayout(reference, dataLayout.reference)
+    }
+
     fun getIntermediateRepresentation(): String {
         return LLVMPrintModuleToString(reference).disposable.string
     }
