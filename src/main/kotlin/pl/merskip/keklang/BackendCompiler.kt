@@ -1,9 +1,9 @@
 package pl.merskip.keklang
 
-import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.llvm.*
+import pl.merskip.keklang.llvm.enum.CodeGenerationFileType
 import pl.merskip.keklang.logger.Logger
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -34,20 +34,18 @@ class BackendCompiler(
         val dataLayout = LLVMTargetData.from(targetMachine)
         context.module.setDataLayout(dataLayout)
 
+        val emitter = LLVMEmitter(targetMachine, context.module)
+
         if (dumpAssembler) {
-            val assemblerFile = executableFile.withExtension("asm")
+            val assemblerFile = executableFile.withExtension(".asm")
             logger.info("Write assembler into $assemblerFile")
-            val error = BytePointer(512L)
-            LLVM.LLVMSetTargetMachineAsmVerbosity(targetMachine.reference, 1)
-            LLVM.LLVMTargetMachineEmitToFile(targetMachine.reference, context.module.reference, BytePointer(assemblerFile.path), LLVM.LLVMAssemblyFile, error)
+            targetMachine.setAssemblerVerbosity(true)
+            emitter.emitToFile(assemblerFile, CodeGenerationFileType.AssemblyFile)
         }
 
         val objectFile = executableFile.withExtension(".o")
         logger.info("Write object file into $objectFile")
-        val errorMessage = BytePointer()
-        if (LLVM.LLVMTargetMachineEmitToFile(targetMachine.reference, context.module.reference, BytePointer(objectFile.path), LLVM.LLVMObjectFile, errorMessage) != 0) {
-            throw Exception("Failed create object file: ${errorMessage.disposable.string}")
-        }
+        emitter.emitToFile(objectFile, CodeGenerationFileType.ObjectFile)
 
         if (generateBitcode) {
             val bitcodeFile = executableFile.withExtension("bc")

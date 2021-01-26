@@ -5,10 +5,15 @@ import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.llvm.enum.CodeGenerationOptimizationLevel
 import pl.merskip.keklang.llvm.enum.CodeModel
 import pl.merskip.keklang.llvm.enum.RelocationMode
+import pl.merskip.keklang.toInt
 
 class LLVMTargetMachine(
     override val reference: LLVMTargetMachineRef,
 ) : LLVMReferencing<LLVMTargetMachineRef> {
+
+    fun setAssemblerVerbosity(verbosity: Boolean) {
+        LLVM.LLVMSetTargetMachineAsmVerbosity(reference, verbosity.toInt())
+    }
 
     fun dispose() {
         LLVM.LLVMDisposeTargetMachine(reference)
