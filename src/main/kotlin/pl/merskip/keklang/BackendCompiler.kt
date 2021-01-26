@@ -2,6 +2,8 @@ package pl.merskip.keklang
 
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.CompilerContext
+import pl.merskip.keklang.linker.EmbeddedClangLinker
+import pl.merskip.keklang.linker.WSLLinker
 import pl.merskip.keklang.llvm.*
 import pl.merskip.keklang.llvm.enum.CodeGenerationFileType
 import pl.merskip.keklang.logger.Logger
@@ -55,31 +57,12 @@ class BackendCompiler(
 
         logger.info("Write executable file into $executableFile")
 
-        val processBuilder = ProcessBuilder("wsl.exe", "--exec", "ld", "-e", context.entryPointSubroutine.identifier.mangled, "-o", executableFile.wslPath, objectFile.wslPath)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-
-        val commandLine = processBuilder.command().joinToString(" ")
-        logger.debug("Executing `$commandLine`...")
-        val process = processBuilder.start()
-
-        if (!process.waitFor(10, TimeUnit.SECONDS)) {
-            process.destroy()
-            throw RuntimeException("Execution timeout: `$commandLine`")
-        }
-        if (process.exitValue() != 0) {
-            throw RuntimeException("Execution `$commandLine` failed with code ${process.exitValue()}")
-        }
+        WSLLinker(targetTriple).compile(
+            inputFiles = listOf(objectFile),
+            entryPoint = context.entryPointSubroutine.identifier.mangled,
+            outputFile = executableFile
+        )
     }
 
-    private val File.wslPath: String
-        get() {
-            val process = ProcessBuilder("wsl.exe", "wslpath", "-a", "'$path'").start()
-            if (!process.waitFor(10, TimeUnit.SECONDS)) {
-                process.destroy()
-                throw RuntimeException("Execution timeout: $process")
-            }
-            val wslPath = process.inputStream.reader().readText().trimEnd()
-            return wslPath
-        }
+
 }

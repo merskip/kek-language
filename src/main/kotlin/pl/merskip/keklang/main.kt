@@ -100,7 +100,7 @@ fun main(args: Array<String>) = mainBody {
         LLVM.LLVMEnablePrettyStackTrace()
 
         val context = LLVMContext()
-        val targetTriple = targetTriple?.let { LLVMTargetTriple.from(it) } ?: LLVMTargetTriple.default()
+        val targetTriple = targetTriple?.let { LLVMTargetTriple.from(it) } ?: LLVMTargetTriple.host()
         val module = LLVMModule("kek-lang", context, targetTriple)
         val typesRegister = TypesRegister()
         val builtin = Builtin(context, module, typesRegister)

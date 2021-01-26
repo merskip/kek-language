@@ -34,7 +34,7 @@ data class LLVMTargetTriple(
     }
 
     companion object {
-        fun default(): LLVMTargetTriple {
+        fun host(): LLVMTargetTriple {
             val targetTriple = LLVM.LLVMGetDefaultTargetTriple().disposable.string
             return from(targetTriple)
         }
