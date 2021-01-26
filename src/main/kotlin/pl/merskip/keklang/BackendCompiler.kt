@@ -17,7 +17,7 @@ class BackendCompiler(
 
     private val logger = Logger(javaClass)
 
-    fun compile(executableFile: File, dumpAssembler: Boolean, generateBitcode: Boolean) {
+    fun compile(executableFile: File) {
 
         LLVMInitialize.allTargetInfos()
         LLVMInitialize.allTargets()
@@ -38,22 +38,22 @@ class BackendCompiler(
 
         val emitter = LLVMEmitter(targetMachine, context.module)
 
-        if (dumpAssembler) {
-            val assemblerFile = executableFile.withExtension(".asm")
-            logger.info("Write assembler into $assemblerFile")
-            targetMachine.setAssemblerVerbosity(true)
-            emitter.emitToFile(assemblerFile, CodeGenerationFileType.AssemblyFile)
-        }
+//        if (dumpAssembler) {
+//            val assemblerFile = executableFile.withExtension(".asm")
+//            logger.info("Write assembler into $assemblerFile")
+//            targetMachine.setAssemblerVerbosity(true)
+//            emitter.emitToFile(assemblerFile, CodeGenerationFileType.AssemblyFile)
+//        }
 
         val objectFile = executableFile.withExtension(".o")
         logger.info("Write object file into $objectFile")
         emitter.emitToFile(objectFile, CodeGenerationFileType.ObjectFile)
 
-        if (generateBitcode) {
-            val bitcodeFile = executableFile.withExtension("bc")
-            logger.info("Write bitcode into $bitcodeFile")
-            LLVM.LLVMWriteBitcodeToFile(context.module.reference, bitcodeFile.path)
-        }
+//        if (generateBitcode) {
+//            val bitcodeFile = executableFile.withExtension("bc")
+//            logger.info("Write bitcode into $bitcodeFile")
+//            LLVM.LLVMWriteBitcodeToFile(context.module.reference, bitcodeFile.path)
+//        }
 
         logger.info("Write executable file into $executableFile")
 

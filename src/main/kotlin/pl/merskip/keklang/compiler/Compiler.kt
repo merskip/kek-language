@@ -47,12 +47,17 @@ class Compiler(
         context.addNodeCompiler(ExpressionCompiler(context))
 
         context.builtin.getBuiltinFiles()
-            .apply { files.addAll(this) }
+            .forEach {
+                addFileURL(it)
+            }
     }
 
-    fun addFile(file: File) {
+    fun addFile(file: File) =
+        addFileURL(file.toURI().toURL())
+
+    private fun addFileURL(file: URL) {
         logger.verbose("Adding file to compile: $file")
-        files.add(file.toURI().toURL())
+        files.add(file)
     }
 
     fun compile() {
@@ -65,19 +70,17 @@ class Compiler(
             val filesSubroutines = registerSubroutines(filesNodes)
             compileFilesSubroutines(filesSubroutines)
 
-            createEntryPoint()
+            createEntryPoint("_start")
             context.debugBuilder.finalize()
             verifyModule()
         }
     }
 
     private fun parseFiles(): List<FileASTNode> {
-
         val builtinFiles = context.builtin.getBuiltinFiles()
         val input = files.map { it to InputStreamReader(it.openStream()).readText() }
 
         return input.map { (url, content) ->
-            logger.verbose("Parsing $url")
             val file = File(url.path)
             val tokens = Lexer(file, content).parse()
 
@@ -94,7 +97,6 @@ class Compiler(
 
             fileNode
         }
-
     }
 
     private fun registerSubroutines(filesNodes: List<FileASTNode>): List<FileSubroutines> {
@@ -168,11 +170,11 @@ class Compiler(
         )
     }
 
-    private fun createEntryPoint() {
-        logger.debug("Adding entry point")
+    private fun createEntryPoint(symbol: String) {
+        logger.debug("Adding entry point: \"$symbol\"")
         context.entryPointSubroutine = FunctionBuilder.register(context) {
             isExtern(true)
-            identifier(Identifier.Extern("_start"))
+            identifier(Identifier.Extern(symbol))
             parameters(emptyList())
             returnType(context.builtin.voidType)
             implementation {

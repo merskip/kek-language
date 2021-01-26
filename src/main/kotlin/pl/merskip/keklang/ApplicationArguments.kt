@@ -2,6 +2,7 @@ package pl.merskip.keklang
 
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.default
+import java.io.File
 
 class ApplicationArguments(parser: ArgParser) {
 
@@ -20,19 +21,9 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Enable dumps LLVM IR. Prints to standard output."
     )
 
-    val asmDump by parser.flagging(
-        "--dump-asm",
-        help = "Enable dumps assembler. Store into file with .asm extension."
-    )
-
-    val bitcode by parser.flagging(
-        "--bitcode",
-        help = "Generate bitcode. Store into file with .bc extension."
-    )
-
     val targetTriple by parser.storing(
-        "-t", "--target-triple",
-        help = "Specify the target triple"
+        "-t", "--target",
+        help = "Specify the target, eg. \"x86_64-pc-linux\""
     ).default<String?>(null)
 
     val runJIT by parser.flagging(
@@ -47,11 +38,16 @@ class ApplicationArguments(parser: ArgParser) {
 
     val output by parser.storing(
         "-o", "--output",
-        help = "Specify the output binary object file."
-    ).default<String?>(null)
+        help = "Specify the output file. If the file ends with ...\n" +
+                " - \".o\", then emitting object file\n" +
+                " - \".ll\", then emitting LLVM IR\n" +
+                " - \".bc\", then emitting Bitcode\n" +
+                " - otherwise emitting executable file\n" +
+                "The default value is \"a.out\"."
+    ).default("a.out")
 
-    val input by parser.positional(
-        "INPUT",
-        help = "Input source file name. If provided nothing, the interpreter run."
+    val inputFiles by parser.positionalList(
+        "INPUT_FILES",
+        help = "Input sources files."
     )
 }

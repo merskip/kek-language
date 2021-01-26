@@ -64,14 +64,11 @@ class EmbeddedClangLinker(
     }
 
     private fun copyFromLLVM(directory: Path, filename: String): File {
-        val path = "org/bytedeco/llvm/${host.toOSWithArchString()}/$filename"
+        val path = "org/bytedeco/llvm/${host.toSimpleString()}/$filename"
         val inputStream = LLVM::class.java.classLoader.getResourceAsStream(path)
             ?: throw Exception("Not found `$filename` under: $path")
         val targetFile = directory.resolve(filename)
         Files.copy(inputStream, directory.resolve(filename))
         return targetFile.toFile()
     }
-
-    private fun LLVMTargetTriple.toOSWithArchString(): String =
-        listOfNotNull(operatingSystem, archType).joinToString("-") { it.name }.toLowerCase()
 }

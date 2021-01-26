@@ -1,13 +1,8 @@
 package pl.merskip.keklang.linker
 
-import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.llvm.LLVMTargetTriple
-import pl.merskip.keklang.llvm.enum.OperatingSystem
 import pl.merskip.keklang.logger.Logger
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.Files.createTempDirectory
-import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 class WSLLinker(
@@ -22,7 +17,7 @@ class WSLLinker(
             ProcessBuilder(
                 "wsl.exe", "--exec",
                 "ld",
-                "-A", target.toOSWithArchString(),
+                "-A", target.toSimpleString(),
                 "-e", entryPoint,
                 "-o", outputFile.wslPath,
                 inputFiles.joinToString(" ") { it.wslPath }

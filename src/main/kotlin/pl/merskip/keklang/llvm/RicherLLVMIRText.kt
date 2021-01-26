@@ -66,7 +66,6 @@ class RicherLLVMIRText(
             if (line.startsWith(prefix)) {
                 val dataLayout = stringRegex.find(line)?.groupValues?.get(1)
                 if (dataLayout != null) {
-                    logger.verbose("Found data layout: \"$dataLayout\"")
                     val specifications = dataLayout.split('-')
                     for (specification in specifications) {
                         val description = getDataLayoutSpecificationDescription(specification)
@@ -170,7 +169,6 @@ class RicherLLVMIRText(
             if (line.contains("define") && mangledIdentifier != null) {
                 val type = typesRegister.find<DeclaredSubroutine> { it.identifier.mangled == mangledIdentifier }
                 if (type != null) {
-                    logger.verbose("Matched \"${mangledIdentifier}\" to \"${type.getDebugDescription()}\"")
                     lineIterator.addBefore(line.getIndent() + "; " + type.getDebugDescription())
                 }
             }

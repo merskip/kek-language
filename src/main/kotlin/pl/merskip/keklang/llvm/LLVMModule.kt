@@ -9,9 +9,6 @@ class LLVMModule(
     val reference: LLVMModuleRef
 ) {
 
-     var isValid: Boolean = false
-         private set
-
     constructor(name: String, context: LLVMContext, targetTriple: LLVMTargetTriple)
             : this(LLVMModuleCreateWithNameInContext(name, context.reference)) {
         LLVMSetTarget(reference, targetTriple.toString())
@@ -52,11 +49,9 @@ class LLVMModule(
     }
 
     fun verify() {
-        isValid = false
         val message = BytePointer()
         if (LLVMVerifyModule(reference, LLVMReturnStatusAction, message) != 0)
             throw FailedVerifyModule(message.disposable.string)
-        isValid = true
     }
 
     fun dispose() {

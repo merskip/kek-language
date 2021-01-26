@@ -29,6 +29,9 @@ data class LLVMTargetTriple(
         return true
     }
 
+    fun toSimpleString(): String =
+        listOfNotNull(operatingSystem, archType).joinToString("-") { it.name }.toLowerCase()
+
     override fun toString(): String {
         return listOfNotNull(archType, vendor, operatingSystem, environment).joinToString("-") { it.name }.toLowerCase()
     }
