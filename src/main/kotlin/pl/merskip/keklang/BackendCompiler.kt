@@ -3,6 +3,8 @@ package pl.merskip.keklang
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.compiler.CompilerContext
+import pl.merskip.keklang.llvm.LLVMInitialize
+import pl.merskip.keklang.llvm.LLVMPassManager
 import pl.merskip.keklang.llvm.LLVMTargetMachine
 import pl.merskip.keklang.llvm.disposable
 import pl.merskip.keklang.logger.Logger
@@ -18,17 +20,17 @@ class BackendCompiler(
 
     fun compile(executableFile: File, dumpAssembler: Boolean, generateBitcode: Boolean) {
 
-        LLVM.LLVMInitializeAllTargetInfos()
-        LLVM.LLVMInitializeAllTargets()
-        LLVM.LLVMInitializeAllTargetMCs()
-        LLVM.LLVMInitializeAllAsmParsers()
-        LLVM.LLVMInitializeAllAsmPrinters()
+        LLVMInitialize.allTargetInfos()
+        LLVMInitialize.allTargets()
+        LLVMInitialize.allTargetMCs()
+        LLVMInitialize.allAsmParsers()
+        LLVMInitialize.allAsmPrinters()
 
-        val passManager = LLVM.LLVMCreatePassManager()
-        LLVM.LLVMAddAlwaysInlinerPass(passManager)
-        LLVM.LLVMAddJumpThreadingPass(passManager)
-        LLVM.LLVMAddPromoteMemoryToRegisterPass(passManager)
-        LLVM.LLVMRunPassManager(passManager, context.module.reference)
+        LLVMPassManager.runOn(context.module) {
+            addAlwaysInliner()
+            addJumpThreading()
+            addPromoteMemoryToRegister()
+        }
 
         val targetTriple = context.module.getTargetTriple()
         val targetMachine = LLVMTargetMachine.create(targetTriple)
