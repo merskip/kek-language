@@ -41,7 +41,11 @@ class TypesRegister {
         if (operators.any { it.operator == operator.operator })
             throw DeclaredOperatorAlreadyExistsException(operator)
         operators.add(operator)
-        logger.verbose("Registered operator type=${operator.type}, operator=\"${operator.operator}\", precedence=${operator.precedence}")
+        logger.verbose("Registered operator " +
+                "type=${operator.type}, " +
+                "operator=\"${operator.operator}\", " +
+                "precedence=${operator.precedence}, " +
+                "associative=${operator.associative}")
     }
 
     fun getOperator(operator: String): DeclaredOperator? {

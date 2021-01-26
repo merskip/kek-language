@@ -8,7 +8,7 @@ class Disposable(
 ) {
 
     val string: String by lazyDisposeAfter {
-        pointer.string
+        pointer.string.takeWhile { it != '\u0000' }
     }
 
     private fun <T> lazyDisposeAfter(block: () -> T): Lazy<T> {

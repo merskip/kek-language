@@ -12,10 +12,9 @@ class LLVMModule(
      var isValid: Boolean = false
          private set
 
-    constructor(name: String, context: LLVMContext, targetTriple: LLVMTargetTriple?)
+    constructor(name: String, context: LLVMContext, targetTriple: LLVMTargetTriple)
             : this(LLVMModuleCreateWithNameInContext(name, context.reference)) {
-        if (targetTriple != null) LLVMSetTarget(reference, targetTriple.toString())
-        else LLVMSetTarget(reference, LLVMGetDefaultTargetTriple())
+        LLVMSetTarget(reference, targetTriple.toString())
     }
 
     fun addFunction(name: String, type: LLVMFunctionType): LLVMFunctionValue {
@@ -41,7 +40,7 @@ class LLVMModule(
 
     fun getTargetTriple(): LLVMTargetTriple {
         val targetTriple = LLVMGetTarget(reference).string
-        return LLVMTargetTriple.fromString(targetTriple)
+        return LLVMTargetTriple.from(targetTriple)
     }
 
     fun getIntermediateRepresentation(): String {

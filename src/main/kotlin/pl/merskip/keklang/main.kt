@@ -87,7 +87,8 @@ fun main(args: Array<String>) = mainBody {
     ArgParser(args).parseInto(::ApplicationArguments).run {
 
         val context = LLVMContext()
-        val module = LLVMModule("kek-lang", context, targetTriple?.let { LLVMTargetTriple.fromString(it) })
+        val targetTriple = targetTriple?.let { LLVMTargetTriple.from(it) } ?: LLVMTargetTriple.default()
+        val module = LLVMModule("kek-lang", context, targetTriple)
         val typesRegister = TypesRegister()
         val builtin = Builtin(context, module, typesRegister)
         try {

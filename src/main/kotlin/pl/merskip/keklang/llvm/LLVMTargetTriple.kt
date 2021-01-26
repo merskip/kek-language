@@ -1,5 +1,6 @@
 package pl.merskip.keklang.llvm
 
+import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.EnvironmentType
 import pl.merskip.keklang.llvm.enum.OperatingSystem
@@ -33,7 +34,12 @@ data class LLVMTargetTriple(
     }
 
     companion object {
-        fun fromString(string: String): LLVMTargetTriple {
+        fun default(): LLVMTargetTriple {
+            val targetTriple = LLVM.LLVMGetDefaultTargetTriple().disposable.string
+            return from(targetTriple)
+        }
+
+        fun from(string: String): LLVMTargetTriple {
             val chunks = string.split("-")
             try {
                 return LLVMTargetTriple(
