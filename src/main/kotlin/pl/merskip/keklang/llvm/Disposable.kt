@@ -11,6 +11,10 @@ class Disposable(
         pointer.string.takeWhile { it != '\u0000' }
     }
 
+    val bytes: ByteArray by lazyDisposeAfter {
+        pointer.stringBytes
+    }
+
     private fun <T> lazyDisposeAfter(block: () -> T): Lazy<T> {
         return lazy {
             disposeAfter(block)
