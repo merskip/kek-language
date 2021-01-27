@@ -1,0 +1,13 @@
+
+structure Foo(
+    bar: String
+)
+
+func print(foo: Foo) {
+    System.print(foo.bar)
+}
+
+func main() {
+    var foo: Foo = Foo.init("Hello world!\n")
+    print(foo)
+}

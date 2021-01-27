@@ -150,7 +150,7 @@ class Compiler(
             identifier = Identifier.Type(node.identifier.text),
             fields = fields,
             wrappedType = context.context.createStructure(
-                name = "String",
+                name = node.identifier.text,
                 types = fields.map { it.type.wrappedType },
                 isPacked = false
             )
