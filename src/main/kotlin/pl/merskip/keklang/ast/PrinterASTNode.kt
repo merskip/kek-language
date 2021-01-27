@@ -229,6 +229,28 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
         )
     }
 
+    override fun visitStructureDefinitionASTNode(node: StructureDefinitionASTNode) {
+        print(
+            node = node,
+            parameters = mapOf(
+                "identifier" to node.identifier.text
+            ),
+            children = mapOf(
+                "fields" to node.fields
+            )
+        )
+    }
+
+    override fun visitStructureFieldASTNode(node: StructureFieldASTNode) {
+        print(
+            node = node,
+            parameters = mapOf(
+                "identifier" to node.identifier.text,
+                "type" to node.type.identifier
+            )
+        )
+    }
+
     private fun print(
         node: ASTNode,
         parameters: Map<String, String?> = emptyMap(),

@@ -283,6 +283,30 @@ internal class ParserASTTest {
         assertEquals("right", equalOperatorDeclaration.associative!!.text)
     }
 
+    @Test
+    fun `parsing structure declaration`() {
+        val source = """
+            structure Foo(
+                bar1: Integer,
+                bar2: Boolean
+            )
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+
+        val structNode = fileNodeAST.nodes.single() as StructureDefinitionASTNode
+
+        assertEquals("Foo", structNode.identifier.text)
+        assertEquals(2, structNode.fields.size)
+
+        val bar1Node = structNode.fields[0]
+        assertEquals("bar1", bar1Node.identifier.text)
+        assertEquals("Integer", bar1Node.type.identifier)
+
+        val bar2Node = structNode.fields[1]
+        assertEquals("bar2", bar2Node.identifier.text)
+        assertEquals("Boolean", bar2Node.type.identifier)
+    }
 
     private fun parseForFunction(source: String): FunctionDefinitionASTNode {
         return parse(source).nodes.single() as FunctionDefinitionASTNode

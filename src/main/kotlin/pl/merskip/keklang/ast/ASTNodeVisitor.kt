@@ -23,4 +23,6 @@ interface ASTNodeVisitor<T> {
     fun visitOperatorDeclaration(node: OperatorDeclarationASTNode): T
     fun visitExpressionNode(node: ExpressionASTNode): T
     fun visitOperatorNode(node: OperatorASTNode): T
+    fun visitStructureDefinitionASTNode(node: StructureDefinitionASTNode): T
+    fun visitStructureFieldASTNode(node: StructureFieldASTNode): T
 }
