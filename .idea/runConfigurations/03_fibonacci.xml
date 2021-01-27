@@ -2,12 +2,12 @@
   <configuration default="false" name="03_conditions" type="JetRunConfigurationType">
     <module name="kek-language.main" />
     <option name="VM_PARAMETERS" value="" />
-    <option name="PROGRAM_PARAMETERS" value="--dump-llvm-ir --target-triple x86_64-pc-linux examples/03_fibonacci/03_fibonacci.kek" />
+    <option name="PROGRAM_PARAMETERS" value="--dump-llvm-ir --target x86_64-pc-linux 03_fibonacci.kek" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="ALTERNATIVE_JRE_PATH" value="11" />
     <option name="PASS_PARENT_ENVS" value="true" />
     <option name="MAIN_CLASS_NAME" value="pl.merskip.keklang.MainKt" />
-    <option name="WORKING_DIRECTORY" value="" />
+    <option name="WORKING_DIRECTORY" value="file://examples/01_hello_world/" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
