@@ -39,8 +39,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
             parameters = mapOf(
                 "declaringType" to node.declaringType,
                 "identifier" to node.identifier,
-                "isBuiltin" to if (node.isBuiltin) "true" else "false",
-                "isInline" to if (node.isInline) "true" else "false"
+                "modifiers" to node.modifiers.joinToString { it.text }
             ),
             children = mapOf(
                 "parameters" to node.parameters,
@@ -55,8 +54,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
             node = node,
             parameters = mapOf(
                 "operator" to node.operator,
-                "isBuiltin" to if (node.isBuiltin) "true" else "false",
-                "isInline" to if (node.isInline) "true" else "false"
+                "modifiers" to node.modifiers.joinToString { it.text }
             ),
             children = mapOf(
                 "parameters" to node.parameters,

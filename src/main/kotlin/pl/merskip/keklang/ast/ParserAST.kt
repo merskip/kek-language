@@ -92,15 +92,14 @@ class ParserAST(
 
     private fun parseSubroutineDefinition(
         token: Token,
-        modifiers: List<Token>
+        modifiers: List<Token.Identifier>
     ): SubroutineDefinitionASTNode {
-        var isBuiltin = false
-        var isInline = false
-        for (modifier in modifiers) when {
-            modifier.isKeyword("builtin") -> isBuiltin = true
-            modifier.isKeyword("inline") -> isInline = true
-            else -> throw Exception("Illegal modifier for a subroutine definition: $modifier")
+
+        val unknownModifiers = modifiers.filterNot {
+            SubroutineDefinitionASTNode.allowedModifiers.contains(it.text)
         }
+        if (unknownModifiers.isNotEmpty())
+            throw Exception("Illegal modifiers for a subroutine definition: ${unknownModifiers.joinToString()}")
 
         return when {
             token.isKeyword("func") -> {
@@ -114,9 +113,9 @@ class ParserAST(
 
                 val parameters = parseFunctionParameters()
                 val returnType = parseReturnType()
-                val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon(isBuiltin)
+                val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon()
 
-                FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin, isInline)
+                FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, modifiers)
                     .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
             token.isKeyword("operator") -> {
@@ -124,9 +123,9 @@ class ParserAST(
 
                 val parameters = parseFunctionParameters()
                 val returnType = parseReturnType()
-                val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon(isBuiltin)
+                val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon()
 
-                OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, isBuiltin, isInline)
+                OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, modifiers)
                     .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
             else -> {
@@ -159,7 +158,7 @@ class ParserAST(
         } else null
     }
 
-    private fun parseCodeBlockOrSemicolon(isBuiltin: Boolean): Pair<CodeBlockASTNode?, SourceLocation> {
+    private fun parseCodeBlockOrSemicolon(): Pair<CodeBlockASTNode?, SourceLocation> {
         val trailingSourceLocation: SourceLocation
         val body: CodeBlockASTNode? = when {
             isNextToken<Token.Semicolon>() -> {
@@ -167,8 +166,6 @@ class ParserAST(
                 null
             }
             isNextToken<Token.LeftBracket>() -> {
-                if (isBuiltin)
-                    throw Exception("If function is builtin, than cannot be have a body")
                 val body = parseCodeBlock()
                 trailingSourceLocation = body.sourceLocation
                 body
