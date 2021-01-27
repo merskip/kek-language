@@ -141,18 +141,6 @@ class Builtin(
             context.instructionsBuilder.createReturnVoid()
         }
 
-        register(Identifier.Type("String"), "init", listOf(Identifier.Type("BytePointer"), Identifier.Type("Integer"))) { context, (guts, length) ->
-            val structure = context.instructionsBuilder.createStructureInitialize(
-                structureType = context.typesRegister.find(Identifier.Type("String")) as StructureType,
-                fields = mapOf(
-                    "guts" to guts.get,
-                    "length" to length.get
-                ),
-                name = null
-            )
-            context.instructionsBuilder.createReturn(structure.get)
-        }
-
         register("+", integerType, integerType) { context, (lhs, rhs) ->
             val result = context.instructionsBuilder.createAddition(lhs.get, rhs.get, "add")
             context.instructionsBuilder.createReturn(result)

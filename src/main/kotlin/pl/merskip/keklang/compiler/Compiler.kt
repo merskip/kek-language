@@ -156,6 +156,30 @@ class Compiler(
             )
         )
         context.typesRegister.register(structureType)
+
+        FunctionBuilder.register(context) {
+            declaringType(structureType)
+            identifier(Identifier.Function(structureType, "init", fields.map { it.type }))
+            parameters(fields.map { field ->
+                DeclaredSubroutine.Parameter(
+                    name = field.name,
+                    type = field.type,
+                    sourceLocation = null
+                )
+            })
+            returnType(structureType)
+            isInline(true)
+            implementation { parameters ->
+                val structure = context.instructionsBuilder.createStructureInitialize(
+                    structureType = structureType,
+                    fields = fields.zip(parameters).map { (field, parameter) ->
+                        field.name to parameter.get
+                    }.toMap(),
+                    name = null
+                )
+                context.instructionsBuilder.createReturn(structure.get)
+            }
+        }
     }
 
     private fun compileFilesSubroutines(filesSubroutines: List<FileSubroutines>) {

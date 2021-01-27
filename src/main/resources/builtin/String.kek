@@ -4,8 +4,6 @@ structure String(
     length: Integer
 )
 
-builtin func String.init(guts: BytePointer, length: Integer) -> String;
-
 operator + (lhs: String, rhs: String) -> String {
     var resultLength: Integer = lhs.length + rhs.length
     var resultGuts: BytePointer = Memory.allocate(resultLength)
