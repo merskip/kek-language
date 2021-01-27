@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="04_string_concatenation" type="JetRunConfigurationType">
+  <configuration default="false" name="04_string_concatenation" type="JetRunConfigurationType" folderName="Examples">
     <module name="kek-language.main" />
     <option name="VM_PARAMETERS" value="" />
     <option name="PROGRAM_PARAMETERS" value="--dump-llvm-ir --target x86_64-pc-linux 04_string_concatenation.kek" />
