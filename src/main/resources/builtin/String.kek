@@ -1,5 +1,8 @@
 
-builtin func String.init(guts: BytePointer, length: Integer) -> String;
+structure String(
+    guts: BytePointer,
+    length: Integer
+)
 
 operator + (lhs: String, rhs: String) -> String {
     var resultLength: Integer = lhs.length + rhs.length

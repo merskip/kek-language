@@ -4,6 +4,7 @@ import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
 import pl.merskip.keklang.ast.node.FileASTNode
 import pl.merskip.keklang.ast.node.OperatorDeclarationASTNode
+import pl.merskip.keklang.ast.node.StructureDefinitionASTNode
 import pl.merskip.keklang.ast.node.SubroutineDefinitionASTNode
 import pl.merskip.keklang.compiler.node.*
 import pl.merskip.keklang.lexer.Lexer
@@ -111,6 +112,7 @@ class Compiler(
                                 subroutines.add(FileSubroutines.Subroutine(node, subroutine))
                             }
                             is OperatorDeclarationASTNode -> registerDeclarationOperator(node)
+                            is StructureDefinitionASTNode -> registerStructureDeclaration(node)
                             else -> throw Exception("Illegal node at top level: $node")
                         }
                     }
@@ -136,6 +138,48 @@ class Compiler(
                 else -> DeclaredOperator.Associative.Left
             }
         ))
+    }
+
+    private fun registerStructureDeclaration(node: StructureDefinitionASTNode) {
+        val fields = node.fields.map { fieldNode ->
+            val type = context.typesRegister.find(Identifier.Type(fieldNode.type.identifier))
+                ?: throw Exception("Not found type: ${fieldNode.type.identifier}")
+            StructureType.Field(fieldNode.identifier.text, type)
+        }
+        val structureType = StructureType(
+            identifier = Identifier.Type(node.identifier.text),
+            fields = fields,
+            wrappedType = context.context.createStructure(
+                name = node.identifier.text,
+                types = fields.map { it.type.wrappedType },
+                isPacked = false
+            )
+        )
+        context.typesRegister.register(structureType)
+
+        FunctionBuilder.register(context) {
+            declaringType(structureType)
+            identifier(Identifier.Function(structureType, "init", fields.map { it.type }))
+            parameters(fields.map { field ->
+                DeclaredSubroutine.Parameter(
+                    name = field.name,
+                    type = field.type,
+                    sourceLocation = null
+                )
+            })
+            returnType(structureType)
+            isInline(true)
+            implementation { parameters ->
+                val structure = context.instructionsBuilder.createStructureInitialize(
+                    structureType = structureType,
+                    fields = fields.zip(parameters).map { (field, parameter) ->
+                        field.name to parameter.get
+                    }.toMap(),
+                    name = null
+                )
+                context.instructionsBuilder.createReturn(structure.get)
+            }
+        }
     }
 
     private fun compileFilesSubroutines(filesSubroutines: List<FileSubroutines>) {

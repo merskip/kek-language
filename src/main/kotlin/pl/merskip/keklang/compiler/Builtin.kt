@@ -30,7 +30,6 @@ class Builtin(
     /* Builtin types */
     val systemType: DeclaredType
     val memoryType: DeclaredType
-    val stringType: StructureType
 
     private val builtinFunctions: MutableMap<Identifier, BuiltinImplementation> = mutableMapOf()
 
@@ -68,21 +67,6 @@ class Builtin(
             PrimitiveType(Identifier.Type("Memory"), voidType.wrappedType)
         }
 
-        stringType = registerType {
-            StructureType(
-                identifier = Identifier.Type("String"),
-                fields = listOf(
-                    StructureType.Field("guts", bytePointerType),
-                    StructureType.Field("length", integerType)
-                ),
-                wrappedType = createStructure(
-                    name = "String",
-                    types = listOf(bytePointerType.wrappedType, integerType.wrappedType),
-                    isPacked = false
-                )
-            )
-        }
-
         register(systemType, "exit", listOf(integerType)) { context, (exitCode) ->
             val targetTriple = context.module.getTargetTriple()
             if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
@@ -103,7 +87,7 @@ class Builtin(
             context.instructionsBuilder.createUnreachable()
         }
 
-        register(systemType, "print", listOf(stringType)) { context, (string) ->
+        register(Identifier.Type("System"), "print", listOf(Identifier.Type("String"))) { context, (string) ->
             val standardOutput = createInteger(1L).get
             val guts = context.instructionsBuilder.createStructureLoad(string, "guts")
             val length = context.instructionsBuilder.createStructureLoad(string, "length")
@@ -155,18 +139,6 @@ class Builtin(
             val value = context.instructionsBuilder.createLoad(source.get, "byteValue")
             context.instructionsBuilder.createStore(destination.get, value)
             context.instructionsBuilder.createReturnVoid()
-        }
-
-        register(stringType, "init", listOf(bytePointerType, integerType)) { context, (guts, length) ->
-            val structure = context.instructionsBuilder.createStructureInitialize(
-                structureType = context.builtin.stringType,
-                fields = mapOf(
-                    "guts" to guts.get,
-                    "length" to length.get
-                ),
-                name = null
-            )
-            context.instructionsBuilder.createReturn(structure.get)
         }
 
         register("+", integerType, integerType) { context, (lhs, rhs) ->
@@ -223,6 +195,11 @@ class Builtin(
         val functionIdentifier =
             if (declaringType != null) Identifier.Function(declaringType, identifier, parameters)
             else Identifier.Function(null, identifier, parameters)
+        builtinFunctions[functionIdentifier] = implementation
+    }
+
+    private fun register(declaringType: Identifier?, identifier: String, parameters: List<Identifier>, implementation: BuiltinImplementation) {
+        val functionIdentifier = Identifier.Function(declaringType, identifier, parameters)
         builtinFunctions[functionIdentifier] = implementation
     }
 

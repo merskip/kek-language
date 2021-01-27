@@ -59,6 +59,7 @@ class ParserAST(
             is Token.Identifier -> when {
                 token.isKeyword("func") -> parseSubroutineDefinition(token, modifiers)
                 token.isKeyword("operator") -> parseSubroutineDefinition(token, modifiers)
+                token.isKeyword("structure") -> parseStructureDefinition(token)
                 token.isKeyword("if") -> parseIfElseCondition(token)
                 token.isKeyword("var") -> parseVariableDeclaration(token)
                 token.isKeyword("while") -> parseWhileLoop(token)
@@ -189,6 +190,33 @@ class ParserAST(
         val identifier = getNextToken<Token.Identifier>()
         return TypeReferenceASTNode(identifier.text)
             .sourceLocation(identifier)
+    }
+
+    private fun parseStructureDefinition(structureKeyword: Token.Identifier): StructureDefinitionASTNode {
+        val identifier = getNextToken<Token.Identifier>()
+        getNextToken<Token.LeftParenthesis>()
+
+        val fields = mutableListOf<StructureFieldASTNode>()
+        while (true) {
+            if (isNextToken<Token.RightParenthesis>()) break
+            val field = parseStructureField()
+            fields.add(field)
+
+            if (isNextToken<Token.RightParenthesis>()) break
+            getNextToken<Token.Comma>()
+        }
+        val endToken = getNextToken<Token.RightParenthesis>()
+
+        return StructureDefinitionASTNode(identifier, fields)
+            .sourceLocation(structureKeyword, endToken)
+    }
+
+    private fun parseStructureField(): StructureFieldASTNode {
+        val identifier = getNextToken<Token.Identifier>()
+        getNextToken<Token.Colon>()
+        val type = parseTypeReference()
+        return StructureFieldASTNode(identifier, type)
+            .sourceLocation(identifier.sourceLocation, type.sourceLocation)
     }
 
     private fun parseIfElseCondition(ifToken: Token): IfElseConditionNodeAST {
