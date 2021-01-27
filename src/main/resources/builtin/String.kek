@@ -1,4 +1,9 @@
 
+structure String(
+    guts: BytePointer,
+    length: Integer
+)
+
 builtin func String.init(guts: BytePointer, length: Integer) -> String;
 
 operator + (lhs: String, rhs: String) -> String {

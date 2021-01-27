@@ -7,7 +7,7 @@
     <option name="ALTERNATIVE_JRE_PATH" value="11" />
     <option name="PASS_PARENT_ENVS" value="true" />
     <option name="MAIN_CLASS_NAME" value="pl.merskip.keklang.MainKt" />
-    <option name="WORKING_DIRECTORY" value="file://examples/01_hello_world/" />
+    <option name="WORKING_DIRECTORY" value="file://examples/04_string_concatenation/" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

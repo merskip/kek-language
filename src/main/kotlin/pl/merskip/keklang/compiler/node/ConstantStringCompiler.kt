@@ -1,9 +1,7 @@
 package pl.merskip.keklang.compiler.node
 
 import pl.merskip.keklang.ast.node.ConstantStringASTNode
-import pl.merskip.keklang.compiler.CompilerContext
-import pl.merskip.keklang.compiler.Reference
-import pl.merskip.keklang.compiler.createStructureInitialize
+import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.llvm.LLVMArrayType
 import pl.merskip.keklang.llvm.LLVMPointerType
 import pl.merskip.keklang.shortHash
@@ -22,7 +20,7 @@ class ConstantStringCompiler(
             .getLength()
 
         return context.instructionsBuilder.createStructureInitialize(
-            structureType = context.builtin.stringType,
+            structureType = context.typesRegister.find(Identifier.Type("String")) as StructureType,
             fields = mapOf(
                 "guts" to context.builtin.createCastToBytePointer(context, stringArrayPointer).get,
                 "length" to context.builtin.createInteger(stringLength - 1 /* null character */).get
