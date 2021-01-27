@@ -56,14 +56,14 @@ fun main(args: Array<String>) = mainBody {
                 CHeaderGenerator(compiler.context.typesRegister)
                     .generate(File(cHeaderOutput!!))
 
+            BackendCompiler(compiler.context)
+                .compile(File(output))
+
             if (llvmIRDump) {
                 val plainIR = module.getIR()
                 val richIR = RicherLLVMIRText(plainIR, typesRegister).rich()
                 println(richIR)
             }
-
-            BackendCompiler(compiler.context)
-                .compile(File(output))
 
             if (runJIT) {
                 val mainFunction = compiler.context.typesRegister.find<DeclaredSubroutine> { it.identifier.canonical == "main" }

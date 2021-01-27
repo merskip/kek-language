@@ -7,8 +7,9 @@ class OperatorDefinitionASTNode(
     parameters: List<ReferenceDeclarationASTNode>,
     returnType: TypeReferenceASTNode?,
     body: CodeBlockASTNode?,
-    isBuiltin: Boolean
-): SubroutineDefinitionASTNode(parameters, returnType, body, isBuiltin) {
+    isBuiltin: Boolean,
+    isInline: Boolean
+): SubroutineDefinitionASTNode(parameters, returnType, body, isBuiltin, isInline) {
 
     override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitOperatorDefinitionNode(this)
 }

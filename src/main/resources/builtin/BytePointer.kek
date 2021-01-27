@@ -1,6 +1,6 @@
 
-builtin operator + (lhs: BytePointer, rhs: Integer) -> BytePointer;
+builtin inline operator + (lhs: BytePointer, rhs: Integer) -> BytePointer;
 
-operator := (lhs: BytePointer, rhs: BytePointer) {
+inline operator := (lhs: BytePointer, rhs: BytePointer) {
     Memory.setValue(lhs, rhs)
 }

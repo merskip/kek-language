@@ -4,5 +4,6 @@ abstract class SubroutineDefinitionASTNode constructor(
     val parameters: List<ReferenceDeclarationASTNode>,
     val returnType: TypeReferenceASTNode?,
     val body: CodeBlockASTNode?,
-    val isBuiltin: Boolean
+    val isBuiltin: Boolean,
+    val isInline: Boolean
 ) : ASTNode()

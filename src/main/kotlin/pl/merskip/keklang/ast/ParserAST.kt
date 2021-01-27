@@ -81,6 +81,8 @@ class ParserAST(
         while (true) {
             if (isNextKeyword("builtin"))
                 modifiers.add(getNextToken())
+            else if (isNextKeyword("inline"))
+                modifiers.add(getNextToken())
             else
                 break
         }
@@ -92,8 +94,10 @@ class ParserAST(
         modifiers: List<Token>
     ): SubroutineDefinitionASTNode {
         var isBuiltin = false
+        var isInline = false
         for (modifier in modifiers) when {
             modifier.isKeyword("builtin") -> isBuiltin = true
+            modifier.isKeyword("inline") -> isInline = true
             else -> throw Exception("Illegal modifier for a subroutine definition: $modifier")
         }
 
@@ -111,7 +115,7 @@ class ParserAST(
                 val returnType = parseReturnType()
                 val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon(isBuiltin)
 
-                FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin)
+                FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin, isInline)
                     .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
             token.isKeyword("operator") -> {
@@ -121,7 +125,7 @@ class ParserAST(
                 val returnType = parseReturnType()
                 val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon(isBuiltin)
 
-                OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, isBuiltin)
+                OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, isBuiltin, isInline)
                     .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
             else -> {

@@ -211,6 +211,38 @@ internal class ParserASTTest {
     }
 
     @Test
+    fun `parsing inline function`() {
+        val source = """
+            inline func foo() {}
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
+
+        assertEquals("foo", funcDef.identifier)
+        assertTrue(funcDef.parameters.isEmpty())
+        assertNull(funcDef.returnType)
+        assertFalse(funcDef.isBuiltin)
+        assertTrue(funcDef.isInline)
+    }
+
+    @Test
+    fun `parsing builtin and inline function`() {
+        val source = """
+            builtin inline func foo();
+        """.trimIndent()
+
+        val fileNodeAST = parse(source)
+        val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
+
+        assertEquals("foo", funcDef.identifier)
+        assertTrue(funcDef.parameters.isEmpty())
+        assertNull(funcDef.returnType)
+        assertTrue(funcDef.isBuiltin)
+        assertTrue(funcDef.isInline)
+    }
+
+    @Test
     fun `parsing call with declaring type`() {
         val source = """
             func foo() {
