@@ -11,21 +11,21 @@ class ConstantStringCompiler(
 ) : ASTNodeCompiling<ConstantStringASTNode> {
 
     override fun compile(node: ConstantStringASTNode): Reference {
-        val string = node.string.replace("\\n", "\n")
-        val stringArrayPointer = context.instructionsBuilder.createGlobalString(string, "str.${string.shortHash()}")
+        val stringContent = node.string.replace("\\n", "\n")
+        val stringArrayPointer = context.instructionsBuilder.createGlobalString(stringContent, null)
 
         val stringLength = stringArrayPointer
             .getType<LLVMPointerType>()
             .getElementType<LLVMArrayType>()
             .getLength()
 
-        return context.instructionsBuilder.createStructureInitialize(
-            structureType = context.typesRegister.find(Identifier.Type("String")) as StructureType,
-            fields = mapOf(
-                "guts" to context.builtin.createCastToBytePointer(context, stringArrayPointer).get,
-                "length" to context.builtin.createInteger(stringLength - 1 /* null character */).get
-            ),
-            name = "string_${string.shortHash()}"
-        )
+        val stringType = context.typesRegister.find(Identifier.Type("String")) as StructureType
+        val stringConstant = stringType.wrappedType.constant(listOf(
+            stringArrayPointer,
+            context.context.createConstant(stringLength - 1 /* minus null character */)
+        ))
+        val stringGlobalConstant = context.module.addGlobalConstant("str.${stringContent.shortHash()}", stringType.wrappedType, stringConstant)
+
+        return ReadableMemoryReference(stringType, stringGlobalConstant, context.instructionsBuilder)
     }
 }

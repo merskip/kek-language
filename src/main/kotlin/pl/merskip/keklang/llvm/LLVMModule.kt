@@ -16,15 +16,15 @@ class LLVMModule(
         LLVMSetTarget(reference, targetTriple.toString())
     }
 
-    fun addGlobalConstant(name: String, type: LLVMType, value: LLVMValue): LLVMConstantValue {
+    fun addGlobalConstant(name: String?, type: LLVMType, value: LLVMValue): LLVMConstantValue {
         val globalValue = addGlobal(name, type)
         LLVMSetGlobalConstant(globalValue.reference, true.toInt())
         LLVMSetInitializer(globalValue.reference, value.reference)
         return LLVMConstantValue(globalValue.reference)
     }
 
-    fun addGlobal(name: String, type: LLVMType): LLVMValue {
-        return LLVMValue.just(LLVMAddGlobal(reference, type.reference, name))
+    fun addGlobal(name: String?, type: LLVMType): LLVMValue {
+        return LLVMValue.just(LLVMAddGlobal(reference, type.reference, name ?: ""))
     }
 
     fun addFunction(name: String, type: LLVMFunctionType): LLVMFunctionValue {

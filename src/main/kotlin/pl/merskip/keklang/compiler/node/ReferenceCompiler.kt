@@ -25,6 +25,6 @@ class ReferenceCompiler(
             ?: return null
         val metadataType = context.typesRegister.find(Identifier.Type("Metadata")) as StructureType
         val metadata = context.typesRegister.getMetadata(type)
-        return DirectlyReference(metadataType, metadata)
+        return ReadableMemoryReference(metadataType, metadata, context.instructionsBuilder)
     }
 }

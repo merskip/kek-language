@@ -1,0 +1,12 @@
+
+structure Foo(
+    bar: String
+)
+
+func main() {
+    System.print("Metadata of Foo:\n")
+    System.print(" - name: '" + Foo.name + "'\n")
+    System.print(" - mangledName: '" + Foo.mangledName + "'\n")
+    System.print(" - llvmType: '" + Foo.llvmType + "'\n")
+    System.print("\n")
+}

@@ -33,11 +33,11 @@ class DirectlyReference(
     override val get: LLVMValue get() = value
 }
 
-open class MemoryReference(
+open class ReadableMemoryReference(
     type: DeclaredType,
     val pointer: LLVMValue,
-    private val instructionsBuilder: IRInstructionsBuilder
-) : Reference(type, pointer), ReadableReference, WriteableReference {
+    protected val instructionsBuilder: IRInstructionsBuilder,
+) : Reference(type, pointer), ReadableReference {
 
     init {
         if (pointer.getAnyType() !is LLVMPointerType) {
@@ -47,6 +47,14 @@ open class MemoryReference(
 
     override val get: LLVMValue
         get() = instructionsBuilder.createLoad(value, null)
+}
+
+
+open class WritableMemoryReference(
+    type: DeclaredType,
+    pointer: LLVMValue,
+    instructionsBuilder: IRInstructionsBuilder,
+) : ReadableMemoryReference(type, pointer, instructionsBuilder), WriteableReference {
 
     override val set: (LLVMValue) -> Unit
         get() = { newValue ->
@@ -59,7 +67,7 @@ class IdentifiableMemoryReference(
     type: DeclaredType,
     pointer: LLVMValue,
     instructionsBuilder: IRInstructionsBuilder
-) : MemoryReference(type, pointer, instructionsBuilder), IdentifiableReference {
+) : WritableMemoryReference(type, pointer, instructionsBuilder), IdentifiableReference {
 
     override val reference: Reference = this
 }

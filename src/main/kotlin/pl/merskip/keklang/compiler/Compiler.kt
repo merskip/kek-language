@@ -9,6 +9,7 @@ import pl.merskip.keklang.ast.node.SubroutineDefinitionASTNode
 import pl.merskip.keklang.compiler.node.*
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
+import pl.merskip.keklang.llvm.LLVMConstantValue
 import pl.merskip.keklang.llvm.LLVMFileMetadata
 import pl.merskip.keklang.llvm.enum.EmissionKind
 import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
@@ -186,13 +187,21 @@ class Compiler(
         val metadataType = context.typesRegister.find(Identifier.Type("Metadata")) as StructureType
 
         val metadata = metadataType.wrappedType.constant(listOf(
-            context.instructionsBuilder.createGlobalString(type.identifier.canonical, null),
-            context.instructionsBuilder.createGlobalString(type.identifier.mangled, null),
-            context.instructionsBuilder.createGlobalString(type.wrappedType.getStringRepresentable(), null)
+            createGlobalString(type.identifier.canonical),
+            createGlobalString(type.identifier.mangled),
+            createGlobalString(type.wrappedType.getStringRepresentable())
         ))
 
         val metadataGlobal = context.module.addGlobalConstant(type.identifier.canonical + ".Metadata", metadataType.wrappedType, metadata)
         context.typesRegister.setMetadata(type, metadataGlobal)
+    }
+
+    private fun createGlobalString(value: String): LLVMConstantValue {
+        val stringType = context.typesRegister.find(Identifier.Type("String")) as StructureType
+        return stringType.wrappedType.constant(listOf(
+            context.instructionsBuilder.createGlobalString(value, null),
+            context.context.createConstant(value.length.toLong())
+        ))
     }
 
     private fun compileFilesSubroutines(filesSubroutines: List<FileSubroutines>) {
