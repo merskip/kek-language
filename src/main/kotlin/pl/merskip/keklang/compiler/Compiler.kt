@@ -186,11 +186,11 @@ class Compiler(
         val metadataType = context.typesRegister.find(Identifier.Type("Metadata")) as StructureType
 
         val metadata = metadataType.wrappedType.constant(listOf(
-            context.instructionsBuilder.createGlobalString(type.identifier.canonical),
-            context.instructionsBuilder.createGlobalString(type.identifier.mangled)
+            context.instructionsBuilder.createGlobalString(type.identifier.canonical, null),
+            context.instructionsBuilder.createGlobalString(type.identifier.mangled, null)
         ))
 
-        val metadataGlobal = context.module.addGlobalConstant(type.identifier.mangled + "Metadata", metadataType.wrappedType, metadata)
+        val metadataGlobal = context.module.addGlobalConstant(type.identifier.canonical + ".Metadata", metadataType.wrappedType, metadata)
         context.typesRegister.setMetadata(type, metadataGlobal)
     }
 

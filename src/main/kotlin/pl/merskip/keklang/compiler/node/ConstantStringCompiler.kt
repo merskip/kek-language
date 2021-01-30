@@ -12,7 +12,7 @@ class ConstantStringCompiler(
 
     override fun compile(node: ConstantStringASTNode): Reference {
         val string = node.string.replace("\\n", "\n")
-        val stringArrayPointer = context.instructionsBuilder.createGlobalString(string)
+        val stringArrayPointer = context.instructionsBuilder.createGlobalString(string, "str.${string.shortHash()}")
 
         val stringLength = stringArrayPointer
             .getType<LLVMPointerType>()

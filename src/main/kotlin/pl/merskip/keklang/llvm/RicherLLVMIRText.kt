@@ -18,8 +18,9 @@ class RicherLLVMIRText(
 
     /** See [https://llvm.org/docs/LangRef.html#identifiers] */
     private val globalIdentifierRegex = Regex("@[-a-zA-Z\$._][-a-zA-Z\$._0-9]*")
+    private val unnamedGlobalIdentifierRegex = Regex("@[0-9]+")
     private val localIdentifierRegex = Regex("%[-a-zA-Z\$._][-a-zA-Z\$._0-9]*")
-    private val unnamedIdentifierRegex = Regex("%[0-9]+")
+    private val unnamedLocalIdentifierRegex = Regex("%[0-9]+")
 
     /** See https://llvm.org/docs/LangRef.html#type-system */
     private val typeVoidRegex = Regex("void")
@@ -180,8 +181,9 @@ class RicherLLVMIRText(
         for (line in lineIterator) {
             lineIterator.set(
                 line.colored(globalIdentifierRegex, Color.Blue)
+                    .colored(unnamedGlobalIdentifierRegex, Color.Blue)
                     .colored(localIdentifierRegex, Color.Cyan)
-                    .colored(unnamedIdentifierRegex, Color.Cyan)
+                    .colored(unnamedLocalIdentifierRegex, Color.Cyan)
                     .colored(metadataRegex, Color.Red)
                     .colored(attributeRegex, Color.BrightRed)
                     .colored(anyConstantRegex, Color.White)
