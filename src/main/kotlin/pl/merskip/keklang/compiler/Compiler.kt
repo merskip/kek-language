@@ -187,7 +187,8 @@ class Compiler(
 
         val metadata = metadataType.wrappedType.constant(listOf(
             context.instructionsBuilder.createGlobalString(type.identifier.canonical, null),
-            context.instructionsBuilder.createGlobalString(type.identifier.mangled, null)
+            context.instructionsBuilder.createGlobalString(type.identifier.mangled, null),
+            context.instructionsBuilder.createGlobalString(type.wrappedType.getStringRepresentable(), null)
         ))
 
         val metadataGlobal = context.module.addGlobalConstant(type.identifier.canonical + ".Metadata", metadataType.wrappedType, metadata)
