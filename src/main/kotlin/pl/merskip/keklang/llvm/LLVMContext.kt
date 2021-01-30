@@ -12,7 +12,7 @@ class LLVMContext(
     constructor() : this(LLVMContextCreate())
 
     fun createConstant(value: Long, bitsSize: Int = 32): LLVMConstantValue {
-        return createIntegerType(bitsSize).constantValue(value, false)
+        return createIntegerType(bitsSize).constant(value, false)
     }
 
     fun createVoidType(): LLVMVoidType {

@@ -1,0 +1,5 @@
+
+structure Metadata(
+    name: String,
+    mangledName: String
+)

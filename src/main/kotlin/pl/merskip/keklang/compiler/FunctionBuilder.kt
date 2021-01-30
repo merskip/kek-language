@@ -74,60 +74,62 @@ class FunctionBuilder() {
             parameterValue.setName(parameter.name)
         }
 
-        val sourceLocation = sourceLocation
-        val debugFile = context.getDebugFile(sourceLocation)
-        if (debugFile != null && sourceLocation != null) {
-
-            val debugParameters = parameters.map { parameter ->
-                val sizeInBits = (parameter.type.wrappedType as? LLVMIntegerType)?.getSize() ?: 0
-                context.debugBuilder.createBasicType(parameter.name, sizeInBits, Encoding.Signed, flags = 0)
-            }
-
-            val subroutine = context.debugBuilder.createSubroutineType(
-                file = debugFile,
-                parametersTypes = debugParameters,
-                flags = 0
-            )
-
-            val subprogram = context.debugBuilder.createSubprogram(
-                scope = debugFile,
-                name = function.getDebugDescription(),
-                linkageName = function.identifier.mangled,
-                file = debugFile,
-                lineNumber = sourceLocation.startIndex.line,
-                type = subroutine,
-                isLocalToUnit = false,
-                isDefinition = true,
-                scopeLine = sourceLocation.startIndex.line,
-                flags = 0,
-                isOptimized = true
-            )
-
-            function.setDebugSubprogram(subprogram)
-
-            function.debugVariableParameters = parameters.zip(debugParameters).mapIndexed { index, (parameter, debugParameterType) ->
-                context.debugBuilder.createParameterVariable(
-                    scope = subprogram,
-                    name = parameter.name,
-                    argumentIndex = index,
-                    file = debugFile,
-                    lineNumber = sourceLocation.startIndex.line,
-                    type = debugParameterType,
-                    alwaysPreserve = true,
-                    flags = 0
-                )
-            }
-
-        }
-        else {
-            logger.warning("Cannot create debug information for function: ${function.getDebugDescription()}")
-        }
+        createDebugInformation(context, function)
 
         if (implementation != null) {
             buildImplementation(context, function, implementation!!)
         }
 
         return function
+    }
+
+    private fun createDebugInformation(context: CompilerContext, function: DeclaredSubroutine) {
+        val sourceLocation = sourceLocation
+        val debugFile = context.getDebugFile(sourceLocation)
+        if (debugFile == null || sourceLocation == null) {
+            logger.warning("Cannot create debug information for function: ${function.getDebugDescription()}")
+            return
+        }
+
+        val debugParameters = parameters.map { parameter ->
+            val sizeInBits = (parameter.type.wrappedType as? LLVMIntegerType)?.getSize() ?: 0
+            context.debugBuilder.createBasicType(parameter.name, sizeInBits, Encoding.Signed, flags = 0)
+        }
+
+        val subroutine = context.debugBuilder.createSubroutineType(
+            file = debugFile,
+            parametersTypes = debugParameters,
+            flags = 0
+        )
+
+        val subprogram = context.debugBuilder.createSubprogram(
+            scope = debugFile,
+            name = function.getDebugDescription(),
+            linkageName = function.identifier.mangled,
+            file = debugFile,
+            lineNumber = sourceLocation.startIndex.line,
+            type = subroutine,
+            isLocalToUnit = false,
+            isDefinition = true,
+            scopeLine = sourceLocation.startIndex.line,
+            flags = 0,
+            isOptimized = true
+        )
+
+        function.setDebugSubprogram(subprogram)
+
+        function.debugVariableParameters = parameters.zip(debugParameters).mapIndexed { index, (parameter, debugParameterType) ->
+            context.debugBuilder.createParameterVariable(
+                scope = subprogram,
+                name = parameter.name,
+                argumentIndex = index,
+                file = debugFile,
+                lineNumber = sourceLocation.startIndex.line,
+                type = debugParameterType,
+                alwaysPreserve = true,
+                flags = 0
+            )
+        }
     }
 
     companion object {
