@@ -191,6 +191,7 @@ class Compiler(
         ))
 
         val metadataGlobal = context.module.addGlobalConstant(type.identifier.mangled + "Metadata", metadataType.wrappedType, metadata)
+        context.typesRegister.setMetadata(type, metadataGlobal)
     }
 
     private fun compileFilesSubroutines(filesSubroutines: List<FileSubroutines>) {
