@@ -12,6 +12,6 @@ class FieldReferenceCompiler(
     override fun compile(node: FieldReferenceASTNode): Reference {
         val reference = context.compile(node.reference)
             ?: throw Exception("Not found reference for ${node.reference.identifier}")
-        return context.instructionsBuilder.createStructureLoad(reference, node.fieldName)
+        return context.instructionsBuilder.createStructureLoad(reference, node.fieldName.text)
     }
 }

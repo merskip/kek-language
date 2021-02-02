@@ -1,10 +1,12 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.ASTNodeVisitor
+import pl.merskip.keklang.lexer.Token
 
 data class TypeReferenceASTNode(
-    val identifier: String
+    val identifier: Token.Identifier
 ): ASTNode() {
 
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitTypeReferenceNode(this)
+    override fun getChildren() = listOf(
+        Child.Single("identifier", identifier)
+    )
 }

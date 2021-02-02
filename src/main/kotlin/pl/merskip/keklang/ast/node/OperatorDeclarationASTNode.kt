@@ -1,6 +1,5 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.ASTNodeVisitor
 import pl.merskip.keklang.lexer.Token
 
 class OperatorDeclarationASTNode(
@@ -10,5 +9,10 @@ class OperatorDeclarationASTNode(
     val associative: Token.Identifier?
 ) : ASTNode() {
 
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitOperatorDeclaration(this)
+    override fun getChildren() = listOf(
+        Child.Single("type", type),
+        Child.Single("operator", operator),
+        Child.Single("precedence", precedence),
+        Child.Single("associative", associative)
+    )
 }

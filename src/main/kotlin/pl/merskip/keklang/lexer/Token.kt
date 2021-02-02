@@ -1,6 +1,8 @@
 package pl.merskip.keklang.lexer
 
-sealed class Token {
+import pl.merskip.keklang.ast.node.ASTNode
+
+sealed class Token : ASTNode() {
 
     class Unknown : Token()
     class Whitespace : Token()
@@ -18,33 +20,9 @@ sealed class Token {
     class Colon : Token()
     class Arrow : Token()
 
-    lateinit var sourceLocation: SourceLocation
-
-    val text: String
-        get() = sourceLocation.text
-
-    val escapedText: String
-        get() = sourceLocation.text.map { char ->
-            if (char.isISOControl()) {
-                val charHex = char.toInt().toString(16).toUpperCase().padStart(4, '0')
-                "\\U+$charHex"
-            }
-            else char.toString()
-        }.joinToString("")
+    override fun getChildren(): List<Child> = emptyList()
 
     fun isKeyword(keyword: String): Boolean {
         return this is Identifier && text == keyword
     }
-
-    override fun toString(): String {
-        if (!this::sourceLocation.isInitialized)
-            return this::class.java.toString()
-
-        val fields = listOfNotNull(
-            escapedText.ifEmpty { null }?.let { "\"$it\"" },
-            sourceLocation.toString()
-        )
-        return "${this::class.java}(${fields.joinToString(", ")})"
-    }
-
 }

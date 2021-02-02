@@ -1,10 +1,12 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.ASTNodeVisitor
+import pl.merskip.keklang.lexer.Token
 
 data class IntegerConstantASTNode(
-    val value: Long
+    val value: Token.IntegerLiteral
 ) : ConstantValueNodeAST() {
 
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitConstantValueNode(this)
+    override fun getChildren() = listOf(
+        Child.Single("value", value)
+    )
 }
