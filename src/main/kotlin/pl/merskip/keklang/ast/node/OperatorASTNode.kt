@@ -4,4 +4,9 @@ import pl.merskip.keklang.lexer.Token
 
 data class OperatorASTNode(
     val operator: Token.Operator
-): ASTNode()
+): ASTNode() {
+
+    override fun getChildren() = listOf(
+        Child.Single("operator", operator)
+    )
+}

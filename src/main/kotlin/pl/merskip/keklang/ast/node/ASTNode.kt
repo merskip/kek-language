@@ -15,28 +15,16 @@ abstract class ASTNode {
 
         class Single(
             name: String,
-            val node: ASTNode,
+            val node: ASTNode?,
         ) : Child(name)
 
-        class List(
+        class Collection(
             name: String,
-            val nodes: kotlin.collections.List<ASTNode>,
+            val nodes: List<ASTNode>,
         ) : Child(name)
     }
 
-    fun getChildren(): List<Child> {
-        val cls = this::class.java
-        return cls.declaredFields.mapNotNull { field ->
-            field.isAccessible = true
-            @Suppress("UNCHECKED_CAST")
-            when (val value = field.get(this)) {
-                is List<*> -> Child.List(field.name, value as List<ASTNode>)
-                is ASTNode -> Child.Single(field.name, value)
-                else -> null
-//                else -> throw Exception("In class: ${cls.simpleName}, field: ${field.name}, isn't ASTNode or List<ASTNode>: $value")
-            }
-        }
-    }
+    abstract fun getChildren(): List<Child>
 
     override fun toString(): String {
         if (!this::sourceLocation.isInitialized)

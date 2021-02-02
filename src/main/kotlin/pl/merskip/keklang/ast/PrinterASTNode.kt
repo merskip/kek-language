@@ -3,6 +3,7 @@ package pl.merskip.keklang.ast
 import pl.merskip.keklang.Color
 import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.colored
+import pl.merskip.keklang.lexer.Token
 
 class PrinterASTNode {
 
@@ -21,46 +22,38 @@ class PrinterASTNode {
     }
 
     private fun printNode(node: ASTNode) {
-        val children = node.getChildren()
-        print(node, children)
-    }
+        if (node !is Token)
+            output += "\n$indent"
 
-    private fun print(
-        node: ASTNode,
-        children: List<ASTNode.Child>,
-    ) {
-        output += "$indent[${node::class.simpleName?.colored(Color.Blue)}\n"
+        output += "[${node::class.simpleName?.colored(Color.Blue)}"
 
-
-        children
-            .forEach { child ->
-                output += "$indent - " + child.name.colored(Color.Green) + ":\n"
+        if (node is Token) {
+            output += " \"${node.getEscapedText().colored(Color.White)}\"]"
+        } else {
+            node.getChildren().forEach { child ->
+                output += "\n$indent " + child.name.colored(Color.Green) + ": "
 
                 indentLevel++
                 when (child) {
                     is ASTNode.Child.Single -> {
-                        printNode(child.node)
+                        if (child.node != null)
+                            printNode(child.node)
+                        else
+                            output += "null".colored(Color.White)
                     }
-                    is ASTNode.Child.List -> {
-                        child.nodes.forEach(this::printNode)
+                    is ASTNode.Child.Collection -> {
+                        if (child.nodes.isNotEmpty()) {
+                            child.nodes.forEach { childNode ->
+                                printNode(childNode)
+                            }
+                        } else {
+                            output += "[]".colored(Color.White)
+                        }
                     }
                 }
                 indentLevel--
             }
-
-        output += "$indent]\n"
-    }
-
-    private fun String.escapeParamValue(): String =
-        let {
-            var newString = ""
-            it.forEach { char ->
-                if (!char.isISOControl()) newString += char
-                else newString += "\\${char.toHex()}"
-            }
-            newString
+            output += "\n$indent]"
         }
-            .let { "\"$it\"" }
-
-    private fun Char.toHex() = toByte().toString(16).padStart(2, '0').toUpperCase()
+    }
 }

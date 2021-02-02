@@ -9,6 +9,6 @@ class ConstantIntegerCompiler(
 ): ASTNodeCompiling<IntegerConstantASTNode> {
 
     override fun compile(node: IntegerConstantASTNode): Reference {
-        return context.builtin.createInteger(node.value)
+        return context.builtin.createInteger(node.value.text.toLong())
     }
 }

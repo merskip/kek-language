@@ -20,6 +20,8 @@ sealed class Token : ASTNode() {
     class Colon : Token()
     class Arrow : Token()
 
+    override fun getChildren(): List<Child> = emptyList()
+
     fun isKeyword(keyword: String): Boolean {
         return this is Identifier && text == keyword
     }

@@ -7,4 +7,12 @@ class OperatorDeclarationASTNode(
     val operator: Token.Operator,
     val precedence: Token.IntegerLiteral,
     val associative: Token.Identifier?
-) : ASTNode()
+) : ASTNode() {
+
+    override fun getChildren() = listOf(
+        Child.Single("type", type),
+        Child.Single("operator", operator),
+        Child.Single("precedence", precedence),
+        Child.Single("associative", associative)
+    )
+}

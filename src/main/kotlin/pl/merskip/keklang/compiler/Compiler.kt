@@ -148,7 +148,7 @@ class Compiler(
 
     private fun registerStructureDeclaration(node: StructureDefinitionASTNode) {
         val fields = node.fields.map { fieldNode ->
-            val type = context.typesRegister.find(Identifier.Type(fieldNode.type.identifier))
+            val type = context.typesRegister.find(Identifier.Type(fieldNode.type.identifier.text))
                 ?: throw Exception("Not found type: ${fieldNode.type.identifier}")
             StructureType.Field(fieldNode.identifier.text, type)
         }

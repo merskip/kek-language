@@ -4,4 +4,9 @@ import pl.merskip.keklang.lexer.Token
 
 data class ReferenceASTNode(
     val identifier: Token.Identifier
-) : StatementASTNode()
+) : StatementASTNode() {
+
+    override fun getChildren() = listOf(
+        Child.Single("identifier", identifier)
+    )
+}

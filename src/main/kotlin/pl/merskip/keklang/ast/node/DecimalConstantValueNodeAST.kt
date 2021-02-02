@@ -1,9 +1,14 @@
 package pl.merskip.keklang.ast.node
 
-import java.math.BigDecimal
+import pl.merskip.keklang.lexer.Token
 
 data class DecimalConstantValueNodeAST(
-    val integerPart: Int,
-    val decimalPart: Int,
-    val value: BigDecimal
-) : ConstantValueNodeAST()
+    val integerPart: Token.IntegerLiteral,
+    val decimalPart: Token.IntegerLiteral,
+) : ConstantValueNodeAST() {
+
+    override fun getChildren() = listOf(
+        Child.Single("integerPart", integerPart),
+        Child.Single("decimalPart", decimalPart)
+    )
+}
