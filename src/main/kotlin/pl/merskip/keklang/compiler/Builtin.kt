@@ -150,7 +150,7 @@ class Builtin(
                         /* len= */ size.get
                     ),
                     voidType.wrappedType,
-                    "syscall_munmap"
+                    null
                 )
                 context.instructionsBuilder.createReturnVoid()
             } else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
@@ -161,7 +161,7 @@ class Builtin(
                         size.get
                     ),
                     bytePointerType.wrappedType,
-                    "syscall_heap_free"
+                    null
                 )
                 context.instructionsBuilder.createReturnVoid()
             }
@@ -184,6 +184,16 @@ class Builtin(
         register(bytePointerType, "set", listOf(bytePointerType, byteType)) { context, (`this`, value) ->
             context.instructionsBuilder.createStore(`this`.get, value.get)
             context.instructionsBuilder.createReturnVoid()
+        }
+
+        register("==", booleanType, booleanType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.get, rhs.get, "isEqual")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("!=", booleanType, booleanType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.NE, lhs.get, rhs.get, "isNotEqual")
+            context.instructionsBuilder.createReturn(result)
         }
 
         register("+", integerType, integerType) { context, (lhs, rhs) ->
@@ -277,7 +287,8 @@ class Builtin(
             classLoader.getResource("builtin/Integer.kek"),
             classLoader.getResource("builtin/Memory.kek"),
             classLoader.getResource("builtin/Operators.kek"),
-            classLoader.getResource("builtin/System.kek")
+            classLoader.getResource("builtin/System.kek"),
+            classLoader.getResource("builtin/Boolean.kek"),
         )
     }
 

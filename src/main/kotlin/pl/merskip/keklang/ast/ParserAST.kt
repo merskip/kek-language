@@ -6,7 +6,6 @@ import pl.merskip.keklang.lexer.SourceLocationException
 import pl.merskip.keklang.lexer.Token
 import pl.merskip.keklang.lexer.UnexpectedTokenException
 import java.io.File
-import java.math.BigDecimal
 
 
 class ParserAST(
@@ -52,11 +51,12 @@ class ParserAST(
         }
 
         val parsedNode = when (token) {
-            is Token.IntegerLiteral -> parseConstantValue(token)
+            is Token.IntegerLiteral -> parseIntegerValue(token)
             is Token.LeftParenthesis -> parseParenthesis(token)
             is Token.Operator -> parseExpression(token, popStatement())
             is Token.StringLiteral -> parseConstantString(token)
             is Token.Identifier -> when {
+                token.isKeyword("true", "false") -> parseBooleanValue(token)
                 token.isKeyword("func") -> parseSubroutineDefinition(token, modifiers)
                 token.isKeyword("operator") -> parseSubroutineDefinition(token, modifiers)
                 token.isKeyword("structure") -> parseStructureDefinition(token)
@@ -323,9 +323,14 @@ class ParserAST(
         return arguments.toList() to getNextToken()
     }
 
-    private fun parseConstantValue(integerLiteralToken: Token.IntegerLiteral): ConstantValueNodeAST {
-        return IntegerConstantASTNode(integerLiteralToken)
-            .sourceLocation(integerLiteralToken)
+    private fun parseBooleanValue(booleanLiteral: Token.Identifier): ConstantBooleanASTNode {
+        return ConstantBooleanASTNode(booleanLiteral)
+            .sourceLocation(booleanLiteral)
+    }
+
+    private fun parseIntegerValue(integerLiteral: Token.IntegerLiteral): ConstantIntegerASTNode {
+        return ConstantIntegerASTNode(integerLiteral)
+            .sourceLocation(integerLiteral)
     }
 
     private fun parseConstantString(stringLiteral: Token.StringLiteral): ConstantStringASTNode {

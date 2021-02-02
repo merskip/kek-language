@@ -119,7 +119,7 @@ internal class ParserASTTest {
         assertEquals("a", callNode.identifier)
 
         val argument = callNode.parameters.single()
-                as IntegerConstantASTNode
+                as ConstantIntegerASTNode
         assertEquals(1, argument.value)
     }
 
@@ -190,7 +190,7 @@ internal class ParserASTTest {
         assertEquals("==", expression.items[1].sourceLocation.text)
         assertEquals("2", expression.items[2].sourceLocation.text)
 
-        assert(whileLoop.body.statements[0] is IntegerConstantASTNode)
+        assert(whileLoop.body.statements[0] is ConstantIntegerASTNode)
         assertEquals("3", whileLoop.body.statements[0].sourceLocation.text)
     }
 
@@ -323,7 +323,7 @@ internal class ParserASTTest {
     }
 
     private fun assertConstValue(expected: Long, node: ASTNode) {
-        val integerConstantValueNode = node as IntegerConstantASTNode
+        val integerConstantValueNode = node as ConstantIntegerASTNode
         assertEquals(expected, integerConstantValueNode.value)
     }
 }

@@ -37,6 +37,7 @@ class Compiler(
         context.addNodeCompiler(CodeBlockCompiler(context))
         context.addNodeCompiler(StatementCompiler(context))
         context.addNodeCompiler(ReferenceCompiler(context))
+        context.addNodeCompiler(ConstantBooleanCompiler(context))
         context.addNodeCompiler(ConstantIntegerCompiler(context))
         context.addNodeCompiler(ConstantStringCompiler(context))
         context.addNodeCompiler(FunctionCallCompiler(context))

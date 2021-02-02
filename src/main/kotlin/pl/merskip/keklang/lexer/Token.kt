@@ -22,7 +22,7 @@ sealed class Token : ASTNode() {
 
     override fun getChildren(): List<Child> = emptyList()
 
-    fun isKeyword(keyword: String): Boolean {
-        return this is Identifier && text == keyword
+    fun isKeyword(vararg keywords: String): Boolean {
+        return this is Identifier && keywords.contains(text)
     }
 }

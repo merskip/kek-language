@@ -1,0 +1,8 @@
+
+builtin inline operator == (lhs: Boolean, rhs: Boolean) -> Boolean;
+builtin inline operator != (lhs: Boolean, rhs: Boolean) -> Boolean;
+
+func Boolean.toString(this: Boolean) -> String {
+    if (this) { "true" }
+    else { "false" }
+}
