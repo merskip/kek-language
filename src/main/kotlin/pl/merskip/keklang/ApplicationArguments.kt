@@ -16,6 +16,11 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Enable dumps AST (Abstract Syntax Tree). Prints to standard output."
     )
 
+    val astGraphDump by parser.flagging(
+        "--dump-graph-ast",
+        help = "Enable dumps graph of AST (Abstract Syntax Tree) using Graphviz. Prints to standard output."
+    )
+
     val llvmIRDump by parser.flagging(
         "--dump-llvm-ir",
         help = "Enable dumps LLVM IR. Prints to standard output."

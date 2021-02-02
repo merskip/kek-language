@@ -5,6 +5,7 @@ import com.xenomachina.argparser.mainBody
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.LLVM.LLVMFatalErrorHandler
 import org.bytedeco.llvm.global.LLVM
+import pl.merskip.keklang.ast.GraphvizGeneratorASTNode
 import pl.merskip.keklang.ast.PrinterASTNode
 import pl.merskip.keklang.ast.node.FileASTNode
 import pl.merskip.keklang.compiler.*
@@ -56,6 +57,10 @@ fun main(args: Array<String>) = mainBody {
                 override fun onParsed(file: File, node: FileASTNode, isBuiltin: Boolean) {
                     if (astDump && !isBuiltin) {
                         println(PrinterASTNode().print(node))
+                    }
+                    if (astGraphDump && !isBuiltin) {
+                        val graph = GraphvizGeneratorASTNode().print(node)
+                        File("ast.gv").writeText(graph)
                     }
                 }
             })
