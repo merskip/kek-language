@@ -13,7 +13,7 @@ typealias BuiltinImplementation = (CompilerContext, List<Reference>) -> Unit
 class Builtin(
     private val context: LLVMContext,
     module: LLVMModule,
-    private val typesRegister: TypesRegister
+    private val typesRegister: TypesRegister,
 ) {
 
     private val logger = Logger(this::class.java)
@@ -128,8 +128,15 @@ class Builtin(
                 )
                 context.instructionsBuilder.createReturn(address)
             } else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
-                // TODO: Wait to implement syscall allocate on GunwOS side. Now just return 0x0 address
-                context.instructionsBuilder.createReturn(createCastToBytePointer(context, createInteger(0L).get).get)
+                val address = context.instructionsBuilder.createSystemCall(
+                    0x05,
+                    listOf(
+                        size.get
+                    ),
+                    bytePointerType.wrappedType,
+                    "syscall_heap_allocate"
+                )
+                context.instructionsBuilder.createReturn(address)
             }
         }
 
@@ -146,9 +153,16 @@ class Builtin(
                     "syscall_munmap"
                 )
                 context.instructionsBuilder.createReturnVoid()
-            }
-            else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
-                // TODO: GunwOS is a perfect system that monitoring usage of full memory and automatically free unused memory with zero cost
+            } else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
+                context.instructionsBuilder.createSystemCall(
+                    0x05,
+                    listOf(
+                        address.get,
+                        size.get
+                    ),
+                    bytePointerType.wrappedType,
+                    "syscall_heap_free"
+                )
                 context.instructionsBuilder.createReturnVoid()
             }
         }
@@ -224,7 +238,7 @@ class Builtin(
     }
 
     private fun <T : DeclaredType> registerType(
-        getType: LLVMContext.() -> T
+        getType: LLVMContext.() -> T,
     ): T {
         val type = getType(context)
         typesRegister.register(type)
