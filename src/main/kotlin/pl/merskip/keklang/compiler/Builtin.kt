@@ -133,6 +133,15 @@ class Builtin(
             }
         }
 
+        register(memoryType, "allocateOnStack", listOf(integerType)) { context, (size) ->
+            val address = context.instructionsBuilder.createAllocaArray(
+                type = context.builtin.byteType.wrappedType,
+                size = size.get,
+                name = null
+            )
+            context.instructionsBuilder.createReturn(address)
+        }
+
         register(bytePointerType, "get", listOf(bytePointerType)) { context, (`this`) ->
             val value = context.instructionsBuilder.createLoad(`this`.get, "value")
             context.instructionsBuilder.createReturn(value)
