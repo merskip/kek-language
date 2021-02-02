@@ -5,7 +5,4 @@ import pl.merskip.keklang.lexer.Token
 
 data class ReferenceASTNode(
     val identifier: Token.Identifier
-) : StatementASTNode() {
-
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitReferenceNode(this)
-}
+) : StatementASTNode()

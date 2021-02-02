@@ -8,7 +8,4 @@ class OperatorDeclarationASTNode(
     val operator: Token.Operator,
     val precedence: Token.IntegerLiteral,
     val associative: Token.Identifier?
-) : ASTNode() {
-
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitOperatorDeclaration(this)
-}
+) : ASTNode()

@@ -10,7 +10,4 @@ class FunctionDefinitionASTNode(
     returnType: TypeReferenceASTNode?,
     body: CodeBlockASTNode?,
     modifiers: List<Token.Identifier>
-): SubroutineDefinitionASTNode(parameters, returnType, body, modifiers) {
-
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitFunctionDefinitionNode(this)
-}
+): SubroutineDefinitionASTNode(parameters, returnType, body, modifiers)

@@ -21,7 +21,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
     }
 
     private fun printNode(node: ASTNode) {
-        node.accept(this)
+//        node.accept(this)
     }
 
     override fun visitFileNode(node: FileASTNode) {
@@ -151,7 +151,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
     override fun visitStringNode(node: ConstantStringASTNode) {
         print(
             node = node,
-            parameters = mapOf("string" to node.string)
+            parameters = mapOf("string" to node.stringToken.text)
         )
     }
 

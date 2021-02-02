@@ -247,7 +247,7 @@ class Lexer(
         backToPreviousCharacter()
         return Token.Unknown().apply {
             sourceLocation = createSourceLocation()
-            logger.warning("Unknown token \"$escapedText\" in $sourceLocation")
+            logger.warning("Unknown token \"${getEscapedText()}\" in $sourceLocation")
         }
     }
 

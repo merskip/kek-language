@@ -7,7 +7,4 @@ data class FunctionCallASTNode(
     val callee: ASTNode?,
     val identifier: Token.Identifier,
     val parameters: List<StatementASTNode>
-) : StatementASTNode() {
-
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitFunctionCallNode(this)
-}
+) : StatementASTNode()

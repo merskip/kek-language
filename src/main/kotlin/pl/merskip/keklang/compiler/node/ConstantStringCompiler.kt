@@ -11,7 +11,7 @@ class ConstantStringCompiler(
 ) : ASTNodeCompiling<ConstantStringASTNode> {
 
     override fun compile(node: ConstantStringASTNode): Reference {
-        val stringContent = node.string.replace("\\n", "\n")
+        val stringContent = node.stringToken.text.removePrefix("\"").removeSuffix("\"").replace("\\n", "\n")
         val stringArrayPointer = context.instructionsBuilder.createGlobalString(stringContent, null)
 
         val stringLength = stringArrayPointer

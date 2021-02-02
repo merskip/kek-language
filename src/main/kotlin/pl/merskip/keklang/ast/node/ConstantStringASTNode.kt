@@ -1,10 +1,8 @@
 package pl.merskip.keklang.ast.node
 
 import pl.merskip.keklang.ast.ASTNodeVisitor
+import pl.merskip.keklang.lexer.Token
 
 class ConstantStringASTNode(
-    val string: String
-): StatementASTNode() {
-
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitStringNode(this)
-}
+    val stringToken: Token.StringLiteral
+): StatementASTNode()
