@@ -171,6 +171,22 @@ class IRInstructionsBuilder(
     }
 
     /**
+     * Creates a 'sdiv <type> <lhs>, <rhs>` instruction
+     * Type of <lhs> and <rhs> must be the same.
+     */
+    fun createDivision(lhs: LLVMValue, rhs: LLVMValue, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildSDiv(irBuilder, lhs.reference, rhs.reference, name ?: ""))
+    }
+
+    /**
+     * Creates a 'srem <type> <lhs>, <rhs>` instruction
+     * Type of <lhs> and <rhs> must be the same.
+     */
+    fun createRemainder(lhs: LLVMValue, rhs: LLVMValue, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildSRem(irBuilder, lhs.reference, rhs.reference, name ?: ""))
+    }
+
+    /**
      * Creates a 'icmp <predicate> <type> <lhs>, <rhs>' instruction
      * * Type of <lhs> and <rhs> must be the integer type.
      */
