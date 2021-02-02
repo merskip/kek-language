@@ -87,7 +87,7 @@ class FunctionBuilder() {
         val sourceLocation = sourceLocation
         val debugFile = context.getDebugFile(sourceLocation)
         if (debugFile == null || sourceLocation == null) {
-            logger.warning("Cannot create debug information for function: ${function.getDebugDescription()}")
+            logger.warning("Cannot create debug information for function: $function")
             return
         }
 
@@ -104,7 +104,7 @@ class FunctionBuilder() {
 
         val subprogram = context.debugBuilder.createSubprogram(
             scope = debugFile,
-            name = function.getDebugDescription(),
+            name = function.toString() ,
             linkageName = function.identifier.mangled,
             file = debugFile,
             lineNumber = sourceLocation.startIndex.line,

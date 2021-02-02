@@ -4,7 +4,9 @@ import pl.merskip.keklang.ast.node.FunctionDefinitionASTNode
 import pl.merskip.keklang.ast.node.OperatorDefinitionASTNode
 import pl.merskip.keklang.ast.node.SubroutineDefinitionASTNode
 import pl.merskip.keklang.compiler.*
+import pl.merskip.keklang.lexer.SourceLocationException
 import pl.merskip.keklang.logger.Logger
+import javax.xml.transform.Source
 
 class SubroutineDefinitionCompiler(
     val context: CompilerContext
@@ -37,6 +39,9 @@ class SubroutineDefinitionCompiler(
     }
 
     private fun registerOperator(node: OperatorDefinitionASTNode): DeclaredSubroutine {
+        if (node.isStatic)
+            throw SourceLocationException("Illegal modifier static for operator", node)
+
         val (lhsParameter, rhsParameter) = getParameters(node)
         val identifier = Identifier.Operator(node.operator, lhsParameter.type, rhsParameter.type)
         val returnType = getReturnType(node)
@@ -56,12 +61,20 @@ class SubroutineDefinitionCompiler(
                 ?: throw Exception("Not found type: ${node.declaringType}")
         else null
 
-    private fun getParameters(node: SubroutineDefinitionASTNode): List<DeclaredSubroutine.Parameter> =
-        node.parameters.map {
+    private fun getParameters(node: SubroutineDefinitionASTNode): List<DeclaredSubroutine.Parameter> {
+        if (node is FunctionDefinitionASTNode && !node.isStatic && node.declaringType != null) {
+            val thisParameter = node.parameters[0]
+            if (thisParameter.identifier != "this"
+                && thisParameter.type.identifier != node.declaringType)
+                throw SourceLocationException("Non-static function with declaring type must have \"this\" as the first parameter with type of declaring type",
+                    node)
+        }
+        return node.parameters.map {
             val type = context.typesRegister.find(Identifier.Type(it.type.identifier))
                 ?: throw Exception("Not found type: ${it.type.identifier}")
             DeclaredSubroutine.Parameter(it.identifier, type, it.sourceLocation)
         }
+    }
 
     private fun getReturnType(node: SubroutineDefinitionASTNode): DeclaredType =
         if (node.returnType != null)

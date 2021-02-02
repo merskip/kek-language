@@ -80,27 +80,25 @@ class ParserAST(
     private fun parseModifiers(): List<Token.Identifier> {
         val modifiers = mutableListOf<Token.Identifier>()
         while (true) {
-            if (isNextKeyword("builtin"))
-                modifiers.add(getNextToken())
-            else if (isNextKeyword("inline"))
-                modifiers.add(getNextToken())
-            else
-                break
+            if (isNextKeyword("builtin")
+                || isNextKeyword("inline")
+                || isNextKeyword("static")
+            ) modifiers.add(getNextToken())
+            else break
         }
         return modifiers.toList()
     }
 
     private fun parseSubroutineDefinition(
         token: Token,
-        modifiers: List<Token>
+        modifiers: List<Token.Identifier>
     ): SubroutineDefinitionASTNode {
-        var isBuiltin = false
-        var isInline = false
-        for (modifier in modifiers) when {
-            modifier.isKeyword("builtin") -> isBuiltin = true
-            modifier.isKeyword("inline") -> isInline = true
-            else -> throw Exception("Illegal modifier for a subroutine definition: $modifier")
+
+        val unknownModifiers = modifiers.filterNot {
+            SubroutineDefinitionASTNode.allowedModifiers.contains(it.text)
         }
+        if (unknownModifiers.isNotEmpty())
+            throw Exception("Illegal modifiers for a subroutine definition: ${unknownModifiers.joinToString()}")
 
         return when {
             token.isKeyword("func") -> {
@@ -114,9 +112,9 @@ class ParserAST(
 
                 val parameters = parseFunctionParameters()
                 val returnType = parseReturnType()
-                val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon(isBuiltin)
+                val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon()
 
-                FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, isBuiltin, isInline)
+                FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, modifiers)
                     .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
             token.isKeyword("operator") -> {
@@ -124,9 +122,9 @@ class ParserAST(
 
                 val parameters = parseFunctionParameters()
                 val returnType = parseReturnType()
-                val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon(isBuiltin)
+                val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon()
 
-                OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, isBuiltin, isInline)
+                OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, modifiers)
                     .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
             else -> {
@@ -159,7 +157,7 @@ class ParserAST(
         } else null
     }
 
-    private fun parseCodeBlockOrSemicolon(isBuiltin: Boolean): Pair<CodeBlockASTNode?, SourceLocation> {
+    private fun parseCodeBlockOrSemicolon(): Pair<CodeBlockASTNode?, SourceLocation> {
         val trailingSourceLocation: SourceLocation
         val body: CodeBlockASTNode? = when {
             isNextToken<Token.Semicolon>() -> {
@@ -167,8 +165,6 @@ class ParserAST(
                 null
             }
             isNextToken<Token.LeftBracket>() -> {
-                if (isBuiltin)
-                    throw Exception("If function is builtin, than cannot be have a body")
                 val body = parseCodeBlock()
                 trailingSourceLocation = body.sourceLocation
                 body
@@ -282,27 +278,27 @@ class ParserAST(
         return when {
             isNextToken<Token.LeftParenthesis>() -> {
                 val (arguments, rightParenthesis) = parseArguments()
-                FunctionCallASTNode(identifierToken.text, arguments)
+                FunctionCallASTNode(null, identifierToken, arguments)
                     .sourceLocation(identifierToken, rightParenthesis)
             }
             isNextToken<Token.Dot>() -> {
                 getNextToken<Token.Dot>()
 
-                val beforeDotIdentifier = TypeReferenceASTNode(identifierToken.text)
+                val beforeDotIdentifier = ReferenceASTNode(identifierToken)
                     .sourceLocation(identifierToken)
                 val afterDotIdentifier = getNextToken<Token.Identifier>()
                 if (isNextToken<Token.LeftParenthesis>()) {
                     val (arguments, rightParenthesis) = parseArguments()
-                    StaticFunctionCallASTNode(beforeDotIdentifier, afterDotIdentifier.text, arguments)
+                    FunctionCallASTNode(beforeDotIdentifier, afterDotIdentifier, arguments)
                         .sourceLocation(identifierToken, rightParenthesis)
                 } else {
-                    val reference = ReferenceASTNode(beforeDotIdentifier.identifier)
+                    val reference = ReferenceASTNode(identifierToken)
                     FieldReferenceASTNode(reference, afterDotIdentifier.text)
                         .sourceLocation(identifierToken, afterDotIdentifier)
                 }
             }
             else -> {
-                ReferenceASTNode(identifierToken.text)
+                ReferenceASTNode(identifierToken)
                     .sourceLocation(identifierToken)
             }
         }
