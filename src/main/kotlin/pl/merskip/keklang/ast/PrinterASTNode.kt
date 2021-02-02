@@ -97,21 +97,11 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
     override fun visitFunctionCallNode(node: FunctionCallASTNode) {
         print(
             node = node,
-            parameters = mapOf("identifier" to node.identifier),
-            children = mapOf(
-                "parameters" to node.parameters
-            )
-        )
-    }
-
-    override fun visitStaticFunctionCallNode(node: StaticFunctionCallASTNode) {
-        print(
-            node = node,
             parameters = mapOf(
-                "identifier" to node.identifier
+                "identifier" to node.identifier.text
             ),
             children = mapOf(
-                "type" to listOf(node.type),
+                "callee" to listOf(node.callee),
                 "parameters" to node.parameters
             )
         )
@@ -154,7 +144,7 @@ class PrinterASTNode : ASTNodeVisitor<Unit> {
     override fun visitReferenceNode(node: ReferenceASTNode) {
         print(
             node = node,
-            parameters = mapOf("identifier" to node.identifier)
+            parameters = mapOf("identifier" to node.identifier.text)
         )
     }
 

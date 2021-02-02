@@ -1,4 +1,4 @@
 
-builtin func System.exit(exitCode: Integer);
+static builtin func System.exit(exitCode: Integer);
 
-builtin func System.print(string: String);
+static builtin func System.print(string: String);

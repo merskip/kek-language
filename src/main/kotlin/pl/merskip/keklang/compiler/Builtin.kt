@@ -133,9 +133,13 @@ class Builtin(
             }
         }
 
-        register(memoryType, "setValue", listOf(bytePointerType, bytePointerType)) { context, (source, destination) ->
-            val value = context.instructionsBuilder.createLoad(source.get, "byteValue")
-            context.instructionsBuilder.createStore(destination.get, value)
+        register(bytePointerType, "get", listOf(bytePointerType)) { context, (`this`) ->
+            val value = context.instructionsBuilder.createLoad(`this`.get, "value")
+            context.instructionsBuilder.createReturn(value)
+        }
+
+        register(bytePointerType, "set", listOf(bytePointerType, byteType)) { context, (`this`, value) ->
+            context.instructionsBuilder.createStore(`this`.get, value.get)
             context.instructionsBuilder.createReturnVoid()
         }
 
@@ -185,7 +189,7 @@ class Builtin(
 
     fun compileBuiltinFunction(context: CompilerContext, identifier: Identifier, parameters: List<Reference>) {
         val implementation = builtinFunctions[identifier]
-            ?: throw Exception("Not found builtin function: $identifier with parameters " + parameters.map { it.type.getDebugDescription() })
+            ?: throw Exception("Not found builtin function: $identifier with parameters: $parameters")
         implementation(context, parameters)
     }
 

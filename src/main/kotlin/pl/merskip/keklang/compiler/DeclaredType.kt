@@ -15,6 +15,8 @@ abstract class DeclaredType(
         identifier == otherType.identifier
 
     abstract fun getDebugDescription(): String
+
+    override fun toString() = getDebugDescription()
 }
 
 class PrimitiveType(

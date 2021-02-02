@@ -80,12 +80,11 @@ class ParserAST(
     private fun parseModifiers(): List<Token.Identifier> {
         val modifiers = mutableListOf<Token.Identifier>()
         while (true) {
-            if (isNextKeyword("builtin"))
-                modifiers.add(getNextToken())
-            else if (isNextKeyword("inline"))
-                modifiers.add(getNextToken())
-            else
-                break
+            if (isNextKeyword("builtin")
+                || isNextKeyword("inline")
+                || isNextKeyword("static")
+            ) modifiers.add(getNextToken())
+            else break
         }
         return modifiers.toList()
     }
@@ -279,27 +278,27 @@ class ParserAST(
         return when {
             isNextToken<Token.LeftParenthesis>() -> {
                 val (arguments, rightParenthesis) = parseArguments()
-                FunctionCallASTNode(identifierToken.text, arguments)
+                FunctionCallASTNode(null, identifierToken, arguments)
                     .sourceLocation(identifierToken, rightParenthesis)
             }
             isNextToken<Token.Dot>() -> {
                 getNextToken<Token.Dot>()
 
-                val beforeDotIdentifier = TypeReferenceASTNode(identifierToken.text)
+                val beforeDotIdentifier = ReferenceASTNode(identifierToken)
                     .sourceLocation(identifierToken)
                 val afterDotIdentifier = getNextToken<Token.Identifier>()
                 if (isNextToken<Token.LeftParenthesis>()) {
                     val (arguments, rightParenthesis) = parseArguments()
-                    StaticFunctionCallASTNode(beforeDotIdentifier, afterDotIdentifier.text, arguments)
+                    FunctionCallASTNode(beforeDotIdentifier, afterDotIdentifier, arguments)
                         .sourceLocation(identifierToken, rightParenthesis)
                 } else {
-                    val reference = ReferenceASTNode(beforeDotIdentifier.identifier)
+                    val reference = ReferenceASTNode(identifierToken)
                     FieldReferenceASTNode(reference, afterDotIdentifier.text)
                         .sourceLocation(identifierToken, afterDotIdentifier)
                 }
             }
             else -> {
-                ReferenceASTNode(identifierToken.text)
+                ReferenceASTNode(identifierToken)
                     .sourceLocation(identifierToken)
             }
         }
