@@ -114,7 +114,7 @@ class Builtin(
             if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
                 /* void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) */
                 val address = context.instructionsBuilder.createSystemCall(
-                    0x09,
+                    9,
                     listOf(
                         /* addr= */ createInteger(0L).get,
                         /* length= */ size.get,
@@ -128,8 +128,28 @@ class Builtin(
                 )
                 context.instructionsBuilder.createReturn(address)
             } else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
-                // TODO: Wait to implement syscall allocate on GuwnOS side. Now just return 0x0 address
+                // TODO: Wait to implement syscall allocate on GunwOS side. Now just return 0x0 address
                 context.instructionsBuilder.createReturn(createCastToBytePointer(context, createInteger(0L).get).get)
+            }
+        }
+
+        register(memoryType, "free", listOf(bytePointerType, integerType)) { context, (address, size) ->
+            val targetTriple = context.module.getTargetTriple()
+            if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
+                context.instructionsBuilder.createSystemCall(
+                    11,
+                    listOf(
+                        /* addr= */ address.get,
+                        /* len= */ size.get
+                    ),
+                    voidType.wrappedType,
+                    "syscall_munmap"
+                )
+                context.instructionsBuilder.createReturnVoid()
+            }
+            else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
+                // TODO: GunwOS is a perfect system that monitoring usage of full memory and automatically free unused memory with zero cost
+                context.instructionsBuilder.createReturnVoid()
             }
         }
 

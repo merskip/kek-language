@@ -1,5 +1,7 @@
 
 static builtin func Memory.allocate(size: Integer) -> BytePointer;
+static builtin func Memory.free(address: BytePointer, size: Integer);
+
 static builtin inline func Memory.allocateOnStack(size: Integer) -> BytePointer;
 
 static func Memory.copy(source: BytePointer, destination: BytePointer, length: Integer) {
