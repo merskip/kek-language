@@ -25,7 +25,7 @@ class SubroutineDefinitionCompiler(
     private fun registerFunction(node: FunctionDefinitionASTNode): DeclaredSubroutine {
         val declaringType = getDeclaringType(node)
         val parameters = getParameters(node)
-        val identifier = Identifier.Function(declaringType, node.identifier, parameters.map { it.type })
+        val identifier = Identifier.Function(declaringType, node.identifier.text, parameters.map { it.type })
         val returnType = getReturnType(node)
 
         return FunctionBuilder.register(context) {
@@ -43,7 +43,7 @@ class SubroutineDefinitionCompiler(
             throw SourceLocationException("Illegal modifier static for operator", node)
 
         val (lhsParameter, rhsParameter) = getParameters(node)
-        val identifier = Identifier.Operator(node.operator, lhsParameter.type, rhsParameter.type)
+        val identifier = Identifier.Operator(node.operator.text, lhsParameter.type, rhsParameter.type)
         val returnType = getReturnType(node)
 
         return FunctionBuilder.register(context) {
@@ -57,28 +57,28 @@ class SubroutineDefinitionCompiler(
 
     private fun getDeclaringType(node: FunctionDefinitionASTNode): DeclaredType? =
         if (node.declaringType != null)
-            context.typesRegister.find(Identifier.Type(node.declaringType))
+            context.typesRegister.find(Identifier.Type(node.declaringType.text))
                 ?: throw Exception("Not found type: ${node.declaringType}")
         else null
 
     private fun getParameters(node: SubroutineDefinitionASTNode): List<DeclaredSubroutine.Parameter> {
         if (node is FunctionDefinitionASTNode && !node.isStatic && node.declaringType != null) {
             val thisParameter = node.parameters[0]
-            if (thisParameter.identifier != "this"
-                && thisParameter.type.identifier != node.declaringType)
+            if (thisParameter.identifier.text != "this"
+                && thisParameter.type.identifier.text != node.declaringType.text)
                 throw SourceLocationException("Non-static function with declaring type must have \"this\" as the first parameter with type of declaring type",
                     node)
         }
         return node.parameters.map {
-            val type = context.typesRegister.find(Identifier.Type(it.type.identifier))
+            val type = context.typesRegister.find(Identifier.Type(it.type.identifier.text))
                 ?: throw Exception("Not found type: ${it.type.identifier}")
-            DeclaredSubroutine.Parameter(it.identifier, type, it.sourceLocation)
+            DeclaredSubroutine.Parameter(it.identifier.text, type, it.sourceLocation)
         }
     }
 
     private fun getReturnType(node: SubroutineDefinitionASTNode): DeclaredType =
         if (node.returnType != null)
-            (context.typesRegister.find(Identifier.Type(node.returnType.identifier))
+            (context.typesRegister.find(Identifier.Type(node.returnType.identifier.text))
                 ?: throw Exception("Not found type: ${node.returnType.identifier}")) else context.builtin.voidType
 
     fun compileFunction(node: SubroutineDefinitionASTNode, subroutine: DeclaredSubroutine) {

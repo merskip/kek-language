@@ -114,7 +114,7 @@ class ParserAST(
                 val returnType = parseReturnType()
                 val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon()
 
-                FunctionDefinitionASTNode(declaringType?.text, identifierToken.text, parameters, returnType, body, modifiers)
+                FunctionDefinitionASTNode(declaringType, identifierToken, parameters, returnType, body, modifiers)
                     .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
             token.isKeyword("operator") -> {
@@ -124,7 +124,7 @@ class ParserAST(
                 val returnType = parseReturnType()
                 val (body, trailingSourceLocation) = parseCodeBlockOrSemicolon()
 
-                OperatorDefinitionASTNode(operatorToken.text, parameters, returnType, body, modifiers)
+                OperatorDefinitionASTNode(operatorToken, parameters, returnType, body, modifiers)
                     .sourceLocation(token.sourceLocation, trailingSourceLocation)
             }
             else -> {
@@ -178,13 +178,13 @@ class ParserAST(
         val identifier = getNextToken<Token.Identifier>()
         getNextToken<Token.Colon>()
         val type = parseTypeReference()
-        return ReferenceDeclarationASTNode(identifier.text, type)
+        return ReferenceDeclarationASTNode(identifier, type)
             .sourceLocation(identifier.sourceLocation, type.sourceLocation)
     }
 
     private fun parseTypeReference(): TypeReferenceASTNode {
         val identifier = getNextToken<Token.Identifier>()
-        return TypeReferenceASTNode(identifier.text)
+        return TypeReferenceASTNode(identifier)
             .sourceLocation(identifier)
     }
 
@@ -293,7 +293,7 @@ class ParserAST(
                         .sourceLocation(identifierToken, rightParenthesis)
                 } else {
                     val reference = ReferenceASTNode(identifierToken)
-                    FieldReferenceASTNode(reference, afterDotIdentifier.text)
+                    FieldReferenceASTNode(reference, afterDotIdentifier)
                         .sourceLocation(identifierToken, afterDotIdentifier)
                 }
             }
@@ -324,22 +324,12 @@ class ParserAST(
     }
 
     private fun parseConstantValue(integerLiteralToken: Token.IntegerLiteral): ConstantValueNodeAST {
-        return if (integerLiteralToken.text.contains('.')) {
-            val (integerPart, decimalPart) = integerLiteralToken.text.split('.', limit = 2)
-            DecimalConstantValueNodeAST(
-                integerPart.toInt(),
-                decimalPart.toInt(),
-                BigDecimal(integerLiteralToken.text)
-            ).sourceLocation(integerLiteralToken)
-        } else {
-            IntegerConstantASTNode(integerLiteralToken.text.toLong())
-                .sourceLocation(integerLiteralToken)
-        }
+        return IntegerConstantASTNode(integerLiteralToken)
+            .sourceLocation(integerLiteralToken)
     }
 
     private fun parseConstantString(stringLiteral: Token.StringLiteral): ConstantStringASTNode {
-        val string = stringLiteral.text.removePrefix("\"").removeSuffix("\"")
-        return ConstantStringASTNode(string)
+        return ConstantStringASTNode(stringLiteral)
             .sourceLocation(stringLiteral)
     }
 
@@ -354,7 +344,7 @@ class ParserAST(
         getNextToken<Token.Colon>()
         val typeIdentifier = parseTypeReference()
 
-        return VariableDeclarationASTNode(variableIdentifier.text, typeIdentifier)
+        return VariableDeclarationASTNode(variableIdentifier, typeIdentifier)
             .sourceLocation(from = varKeywordToken.sourceLocation, to = typeIdentifier.sourceLocation)
     }
 

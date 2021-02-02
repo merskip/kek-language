@@ -1,11 +1,12 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.ASTNodeVisitor
-
 data class IfConditionNodeAST(
     val condition: StatementASTNode,
     val body: CodeBlockASTNode
 ) : StatementASTNode() {
 
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitIfConditionNode(this)
+    override fun getChildren() = listOf(
+        Child.Single("condition", condition),
+        Child.Single("body", body)
+    )
 }

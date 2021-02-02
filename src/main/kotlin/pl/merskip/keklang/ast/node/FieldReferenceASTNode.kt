@@ -1,11 +1,14 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.ASTNodeVisitor
+import pl.merskip.keklang.lexer.Token
 
 data class FieldReferenceASTNode(
     val reference: ReferenceASTNode,
-    val fieldName: String
+    val fieldName: Token.Identifier
 ): StatementASTNode() {
 
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitFieldReferenceNode(this)
+    override fun getChildren() = listOf(
+        Child.Single("reference", reference),
+        Child.Single("fieldName", fieldName)
+    )
 }

@@ -1,6 +1,5 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.ASTNodeVisitor
 import pl.merskip.keklang.lexer.Token
 
 data class FunctionCallASTNode(
@@ -9,5 +8,9 @@ data class FunctionCallASTNode(
     val parameters: List<StatementASTNode>
 ) : StatementASTNode() {
 
-    override fun <T> accept(visitor: ASTNodeVisitor<T>) = visitor.visitFunctionCallNode(this)
+    override fun getChildren() = listOf(
+        Child.Single("callee", callee),
+        Child.Single("identifier", identifier),
+        Child.Collection("parameters", parameters)
+    )
 }

@@ -2,10 +2,7 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
-import pl.merskip.keklang.ast.node.FileASTNode
-import pl.merskip.keklang.ast.node.OperatorDeclarationASTNode
-import pl.merskip.keklang.ast.node.StructureDefinitionASTNode
-import pl.merskip.keklang.ast.node.SubroutineDefinitionASTNode
+import pl.merskip.keklang.ast.node.*
 import pl.merskip.keklang.compiler.node.*
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
@@ -18,16 +15,23 @@ import pl.merskip.keklang.logger.Logger
 import java.io.File
 import java.io.InputStreamReader
 import java.net.URL
+import javax.xml.transform.ErrorListener
 
 class Compiler(
-    val context: CompilerContext
+    val context: CompilerContext,
 ) {
+
+    interface Listener {
+
+        fun onParsed(file: File, node: FileASTNode, isBuiltin: Boolean)
+    }
 
     private val logger = Logger(this::class.java)
 
     private val subroutineCompiler = SubroutineDefinitionCompiler(context)
 
     private val files = mutableListOf<URL>()
+    private val listeners = mutableListOf<Listener>()
 
     init {
         context.addNodeCompiler(CodeBlockCompiler(context))
@@ -56,6 +60,8 @@ class Compiler(
         files.add(file)
     }
 
+    fun addListener(listener: Listener) = listeners.add(listener)
+
     fun compile() {
         logger.measure(Logger.Level.SUCCESS, "Compilation has been successfully completed") {
 
@@ -80,6 +86,7 @@ class Compiler(
         val input = files.map { it to InputStreamReader(it.openStream()).readText() }
 
         return input.map { (url, content) ->
+            val isBuiltin = builtinFiles.contains(url)
             val file = File(url.path)
             val tokens = Lexer(file, content).parse()
 
@@ -88,7 +95,8 @@ class Compiler(
                 parserNodeAST.parse()
             }
 
-            val isBuiltin = builtinFiles.contains(url)
+            listeners.forEach { it.onParsed(file, fileNode, isBuiltin) }
+
             if (!isBuiltin) {
                 val debugFile = createDebugFile(fileNode)
                 createCompileUnit(debugFile)
@@ -140,7 +148,7 @@ class Compiler(
 
     private fun registerStructureDeclaration(node: StructureDefinitionASTNode) {
         val fields = node.fields.map { fieldNode ->
-            val type = context.typesRegister.find(Identifier.Type(fieldNode.type.identifier))
+            val type = context.typesRegister.find(Identifier.Type(fieldNode.type.identifier.text))
                 ?: throw Exception("Not found type: ${fieldNode.type.identifier}")
             StructureType.Field(fieldNode.identifier.text, type)
         }
@@ -285,14 +293,14 @@ class Compiler(
 
     data class FileSubroutines(
         val fileNode: FileASTNode,
-        val subroutines: List<Subroutine>
+        val subroutines: List<Subroutine>,
     ) {
 
         val file = fileNode.sourceLocation.file
 
         data class Subroutine(
             val node: SubroutineDefinitionASTNode,
-            val subroutine: DeclaredSubroutine
+            val subroutine: DeclaredSubroutine,
         )
     }
 }
