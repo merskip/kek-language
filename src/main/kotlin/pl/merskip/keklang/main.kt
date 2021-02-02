@@ -5,6 +5,8 @@ import com.xenomachina.argparser.mainBody
 import org.bytedeco.javacpp.BytePointer
 import org.bytedeco.llvm.LLVM.LLVMFatalErrorHandler
 import org.bytedeco.llvm.global.LLVM
+import pl.merskip.keklang.ast.PrinterASTNode
+import pl.merskip.keklang.ast.node.FileASTNode
 import pl.merskip.keklang.compiler.*
 import pl.merskip.keklang.externc.CHeaderGenerator
 import pl.merskip.keklang.jit.JIT
@@ -50,6 +52,13 @@ fun main(args: Array<String>) = mainBody {
             inputFiles.forEach { inputFile ->
                 compiler.addFile(File(inputFile))
             }
+            compiler.addListener(object : Compiler.Listener {
+                override fun onParsed(file: File, node: FileASTNode, isBuiltin: Boolean) {
+                    if (astDump && !isBuiltin) {
+                        println(PrinterASTNode().print(node))
+                    }
+                }
+            })
             compiler.compile()
 
             if (cHeaderOutput != null)

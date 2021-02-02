@@ -1,6 +1,5 @@
 package pl.merskip.keklang.ast.node
 
-import pl.merskip.keklang.ast.ASTNodeVisitor
 import pl.merskip.keklang.lexer.SourceLocation
 
 abstract class ASTNode {
@@ -10,8 +9,33 @@ abstract class ASTNode {
     val text: String
         get() = sourceLocation.text
 
-    fun getChildren(): List<ASTNode> {
-        TODO("Impl")
+    sealed class Child(
+        val name: String,
+    ) {
+
+        class Single(
+            name: String,
+            val node: ASTNode,
+        ) : Child(name)
+
+        class List(
+            name: String,
+            val nodes: kotlin.collections.List<ASTNode>,
+        ) : Child(name)
+    }
+
+    fun getChildren(): List<Child> {
+        val cls = this::class.java
+        return cls.declaredFields.mapNotNull { field ->
+            field.isAccessible = true
+            @Suppress("UNCHECKED_CAST")
+            when (val value = field.get(this)) {
+                is List<*> -> Child.List(field.name, value as List<ASTNode>)
+                is ASTNode -> Child.Single(field.name, value)
+                else -> null
+//                else -> throw Exception("In class: ${cls.simpleName}, field: ${field.name}, isn't ASTNode or List<ASTNode>: $value")
+            }
+        }
     }
 
     override fun toString(): String {
