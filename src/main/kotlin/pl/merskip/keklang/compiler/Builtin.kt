@@ -158,8 +158,23 @@ class Builtin(
             context.instructionsBuilder.createReturn(result)
         }
 
+        register("/", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createDivision(lhs.get, rhs.get, "div")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("%", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createRemainder(lhs.get, rhs.get, "rem")
+            context.instructionsBuilder.createReturn(result)
+        }
+
         register("==", integerType, integerType) { context, (lhs, rhs) ->
             val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.get, rhs.get, "isEqual")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("!=", integerType, integerType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.NE, lhs.get, rhs.get, "isNotEqual")
             context.instructionsBuilder.createReturn(result)
         }
 

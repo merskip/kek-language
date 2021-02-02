@@ -1,0 +1,4 @@
+func main() {
+    var foo: Integer = 12345567890
+    System.print("foo = " + foo.toString() + "\n")
+}
