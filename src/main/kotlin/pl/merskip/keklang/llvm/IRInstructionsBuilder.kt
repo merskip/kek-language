@@ -108,11 +108,11 @@ class IRInstructionsBuilder(
     }
 
     /**
-     * Creates a '@str_HASH = constant [LENGTH x i8] c"<value>\0"' global constant
+     * Creates a '@name = constant [LENGTH x i8] c"<value>\0"' global constant
      * @return Value of type [LENGTH x i8]*
      */
-    fun createGlobalString(value: String): LLVMConstantValue {
-        return LLVMConstantValue(LLVMBuildGlobalString(irBuilder, value, "str_${value.shortHash()}"))
+    fun createGlobalString(value: String, name: String?): LLVMConstantValue {
+        return LLVMConstantValue(LLVMBuildGlobalString(irBuilder, value, name ?: ""))
     }
 
     fun createStructureGetElementPointer(

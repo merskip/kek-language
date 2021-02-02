@@ -123,7 +123,7 @@ fun IRInstructionsBuilder.createStructureInitialize(
 ): Reference {
     checkFields(fields.keys, structureType)
     val structurePointer = createAlloca(structureType.wrappedType, name)
-    val structure = MemoryReference(structureType, structurePointer, this)
+    val structure = WritableMemoryReference(structureType, structurePointer, this)
 
     for ((fieldName, value) in fields) {
         createStructureStore(structure, fieldName, value)
@@ -146,7 +146,7 @@ fun IRInstructionsBuilder.createStructureStore(
     fieldName: String,
     value: LLVMValue
 ): LLVMInstructionValue {
-    val fieldPointer = createGetStructureFieldPointer(reference as MemoryReference, fieldName)
+    val fieldPointer = createGetStructureFieldPointer(reference as WritableMemoryReference, fieldName)
     return createStore(fieldPointer, value)
 }
 
@@ -155,14 +155,14 @@ fun IRInstructionsBuilder.createStructureLoad(
     fieldName: String
 ): Reference {
     val structureType = reference.type as StructureType
-    val fieldPointer = createGetStructureFieldPointer(reference as MemoryReference, fieldName)
+    val fieldPointer = createGetStructureFieldPointer(reference as ReadableMemoryReference, fieldName)
     val fieldType = structureType.getFieldType(fieldName)
     val value = createLoad(fieldPointer, fieldType.wrappedType, fieldName)
     return DirectlyReference(fieldType, value)
 }
 
 private fun IRInstructionsBuilder.createGetStructureFieldPointer(
-    reference: MemoryReference,
+    reference: ReadableMemoryReference,
     fieldName: String
 ): LLVMValue {
     val structureType = reference.type as StructureType

@@ -1,6 +1,10 @@
 package pl.merskip.keklang.llvm
 
+import org.bytedeco.javacpp.annotation.ByPtrPtr
+import org.bytedeco.javacpp.annotation.Cast
 import org.bytedeco.llvm.LLVM.LLVMTypeRef
+import org.bytedeco.llvm.LLVM.LLVMValueRef
+import org.bytedeco.llvm.global.LLVM
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.RawValuable
 import pl.merskip.keklang.llvm.enum.TypeKind
@@ -9,7 +13,7 @@ import pl.merskip.keklang.toInt
 import pl.merskip.keklang.toPointerPointer
 
 abstract class LLVMType(
-    override val reference: LLVMTypeRef
+    override val reference: LLVMTypeRef,
 ) : LLVMReferencing<LLVMTypeRef> {
 
     fun isVoid() = getTypeKind() == TypeKind.Void
@@ -80,7 +84,7 @@ class LLVMIntegerType(reference: LLVMTypeRef) : LLVMType(reference) {
         return LLVMGetIntTypeWidth(reference).toLong()
     }
 
-    fun constantValue(value: Long, isSigned: Boolean): LLVMConstantValue {
+    fun constant(value: Long, isSigned: Boolean): LLVMConstantValue {
         return LLVMConstantValue(LLVMConstInt(reference, value, isSigned.toInt()))
     }
 }
@@ -94,6 +98,11 @@ class LLVMPointerType(reference: LLVMTypeRef) : LLVMType(reference) {
         from(LLVMGetElementType(reference)) as Type
 }
 
-class LLVMStructureType(reference: LLVMTypeRef) : LLVMType(reference)
+class LLVMStructureType(reference: LLVMTypeRef) : LLVMType(reference) {
+
+    fun constant(values: List<LLVMValue>): LLVMConstantValue {
+        return LLVMConstantValue(LLVMConstNamedStruct(reference, values.toPointerPointer(), values.size))
+    }
+}
 
 class LLVMVectorType(reference: LLVMTypeRef) : LLVMType(reference)

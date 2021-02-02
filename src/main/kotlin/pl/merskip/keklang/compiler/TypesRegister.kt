@@ -1,5 +1,6 @@
 package pl.merskip.keklang.compiler
 
+import pl.merskip.keklang.llvm.LLVMConstantValue
 import pl.merskip.keklang.logger.Logger
 
 class TypesRegister {
@@ -8,6 +9,7 @@ class TypesRegister {
 
     private val types = mutableListOf<DeclaredType>()
     private val operators = mutableListOf<DeclaredOperator>()
+    private val metadataMap = mutableMapOf<DeclaredType, LLVMConstantValue>()
 
     fun register(type: DeclaredType) {
         if (types.any { it.identifier == type.identifier })
@@ -50,6 +52,17 @@ class TypesRegister {
 
     fun getOperator(operator: String): DeclaredOperator? {
         return operators.firstOrNull { it.operator == operator }
+    }
+
+    fun setMetadata(type: DeclaredType, metadata: LLVMConstantValue) {
+        if (metadataMap.containsKey(type))
+            throw Exception("Metadata is already registered for: ${type.getDebugDescription()}")
+        metadataMap[type] = metadata
+    }
+
+    fun getMetadata(type: DeclaredType): LLVMConstantValue {
+        return metadataMap[type]
+            ?: throw Exception("Not found metadata for: ${type.getDebugDescription()}")
     }
 
     class RegisteringTypeAlreadyExistsException(type: DeclaredType) : Exception("Registering type already exists: ${type.getDebugDescription()}")

@@ -1,13 +1,11 @@
 package pl.merskip.keklang.llvm
 
 import org.bytedeco.javacpp.BytePointer
-import org.bytedeco.llvm.LLVM.LLVMMemoryBufferRef
 import org.bytedeco.llvm.LLVM.LLVMModuleRef
-import org.bytedeco.llvm.global.LLVM
 import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
 import pl.merskip.keklang.toByteArray
-import java.io.File
+import pl.merskip.keklang.toInt
 
 class LLVMModule(
     val reference: LLVMModuleRef
@@ -16,6 +14,17 @@ class LLVMModule(
     constructor(name: String, context: LLVMContext, targetTriple: LLVMTargetTriple)
             : this(LLVMModuleCreateWithNameInContext(name, context.reference)) {
         LLVMSetTarget(reference, targetTriple.toString())
+    }
+
+    fun addGlobalConstant(name: String?, type: LLVMType, value: LLVMValue): LLVMConstantValue {
+        val globalValue = addGlobal(name, type)
+        LLVMSetGlobalConstant(globalValue.reference, true.toInt())
+        LLVMSetInitializer(globalValue.reference, value.reference)
+        return LLVMConstantValue(globalValue.reference)
+    }
+
+    fun addGlobal(name: String?, type: LLVMType): LLVMValue {
+        return LLVMValue.just(LLVMAddGlobal(reference, type.reference, name ?: ""))
     }
 
     fun addFunction(name: String, type: LLVMFunctionType): LLVMFunctionValue {
@@ -38,6 +47,7 @@ class LLVMModule(
             metadata.reference
         )
     }
+
 
     fun getTargetTriple(): LLVMTargetTriple {
         val targetTriple = LLVMGetTarget(reference).string

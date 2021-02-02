@@ -9,19 +9,15 @@ import pl.merskip.keklang.ast.node.SubroutineDefinitionASTNode
 import pl.merskip.keklang.compiler.node.*
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
-import pl.merskip.keklang.lexer.Token
+import pl.merskip.keklang.llvm.LLVMConstantValue
 import pl.merskip.keklang.llvm.LLVMFileMetadata
 import pl.merskip.keklang.llvm.enum.EmissionKind
 import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
 import pl.merskip.keklang.llvm.enum.SourceLanguage
 import pl.merskip.keklang.logger.Logger
 import java.io.File
-import java.io.InputStream
 import java.io.InputStreamReader
-import java.io.Reader
 import java.net.URL
-import java.nio.file.Paths
-import kotlin.io.path.toPath
 
 class Compiler(
     val context: CompilerContext
@@ -68,7 +64,10 @@ class Compiler(
             context.module.addFlag(ModuleFlagBehavior.Warning, "Debug Info Version", LLVM.LLVMDebugMetadataVersion().toLong())
 
             val filesNodes = parseFiles()
-            val filesSubroutines = registerSubroutines(filesNodes)
+            val filesSubroutines = registerSubroutinesAndDeclaredStructures(filesNodes)
+            context.typesRegister.getAllTypes().forEach {
+                createMetadata(context, it)
+            }
             compileFilesSubroutines(filesSubroutines)
 
             createEntryPoint("_start")
@@ -100,7 +99,7 @@ class Compiler(
         }
     }
 
-    private fun registerSubroutines(filesNodes: List<FileASTNode>): List<FileSubroutines> {
+    private fun registerSubroutinesAndDeclaredStructures(filesNodes: List<FileASTNode>): List<FileSubroutines> {
         return filesNodes
             .map { fileNode ->
                 val subroutines = mutableListOf<FileSubroutines.Subroutine>()
@@ -180,6 +179,29 @@ class Compiler(
                 context.instructionsBuilder.createReturn(structure.get)
             }
         }
+    }
+
+    private fun createMetadata(context: CompilerContext, type: DeclaredType) {
+        if (type is DeclaredSubroutine) return
+
+        val metadataType = context.typesRegister.find(Identifier.Type("Metadata")) as StructureType
+
+        val metadata = metadataType.wrappedType.constant(listOf(
+            createGlobalString(type.identifier.canonical),
+            createGlobalString(type.identifier.mangled),
+            createGlobalString(type.wrappedType.getStringRepresentable())
+        ))
+
+        val metadataGlobal = context.module.addGlobalConstant(type.identifier.canonical + ".Metadata", metadataType.wrappedType, metadata)
+        context.typesRegister.setMetadata(type, metadataGlobal)
+    }
+
+    private fun createGlobalString(value: String): LLVMConstantValue {
+        val stringType = context.typesRegister.find(Identifier.Type("String")) as StructureType
+        return stringType.wrappedType.constant(listOf(
+            context.instructionsBuilder.createGlobalString(value, null),
+            context.context.createConstant(value.length.toLong())
+        ))
     }
 
     private fun compileFilesSubroutines(filesSubroutines: List<FileSubroutines>) {

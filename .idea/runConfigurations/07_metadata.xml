@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="07_metadata" type="JetRunConfigurationType" folderName="Examples">
+    <module name="kek-language.main" />
+    <option name="VM_PARAMETERS" value="" />
+    <option name="PROGRAM_PARAMETERS" value="--dump-llvm-ir --target x86_64-pc-linux 07_metadata.kek" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+    <option name="ALTERNATIVE_JRE_PATH" value="11" />
+    <option name="PASS_PARENT_ENVS" value="true" />
+    <option name="MAIN_CLASS_NAME" value="pl.merskip.keklang.MainKt" />
+    <option name="WORKING_DIRECTORY" value="file://examples/07_metadata/" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -6,8 +6,6 @@ import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
 import pl.merskip.keklang.logger.Logger
 import pl.merskip.keklang.toInt
-import java.io.File
-import java.io.InputStream
 import java.net.URL
 
 typealias BuiltinImplementation = (CompilerContext, List<Reference>) -> Unit
@@ -211,22 +209,23 @@ class Builtin(
     fun getBuiltinFiles(): List<URL> {
         val classLoader = this::class.java.classLoader
         return listOf(
+            classLoader.getResource("builtin/String.kek"),
+            classLoader.getResource("builtin/Metadata.kek"),
             classLoader.getResource("builtin/BytePointer.kek"),
             classLoader.getResource("builtin/Integer.kek"),
             classLoader.getResource("builtin/Memory.kek"),
             classLoader.getResource("builtin/Operators.kek"),
-            classLoader.getResource("builtin/String.kek"),
             classLoader.getResource("builtin/System.kek")
         )
     }
 
     fun createBoolean(value: Boolean): Reference {
-        val constantValue = (booleanType.wrappedType as LLVMIntegerType).constantValue(value.toInt().toLong(), isSigned = false)
+        val constantValue = (booleanType.wrappedType as LLVMIntegerType).constant(value.toInt().toLong(), isSigned = false)
         return DirectlyReference(booleanType, constantValue)
     }
 
     fun createInteger(value: Long): Reference {
-        val constantValue = (integerType.wrappedType as LLVMIntegerType).constantValue(value, isSigned = true)
+        val constantValue = (integerType.wrappedType as LLVMIntegerType).constant(value, isSigned = true)
         return DirectlyReference(integerType, constantValue)
     }
 
