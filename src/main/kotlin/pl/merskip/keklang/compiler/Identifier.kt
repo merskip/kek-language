@@ -14,6 +14,10 @@ sealed class Identifier(
     class Function private constructor(canonical: String, mangled: String) : Identifier(canonical, mangled) {
 
         constructor(
+            externalIdentifier: String
+        ) : this(externalIdentifier, externalIdentifier)
+
+        constructor(
             declaringType: DeclaredType?,
             canonical: String,
             parameters: List<DeclaredType>

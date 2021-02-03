@@ -18,7 +18,10 @@ abstract class SubroutineDefinitionASTNode constructor(
     val isStatic: Boolean
         get() = modifiers.any { it.isKeyword("static") }
 
+    val isExternal: Boolean
+        get() = modifiers.any { it.isKeyword("external") }
+
     companion object {
-        val allowedModifiers = listOf("builtin", "inline", "static")
+        val allowedModifiers = listOf("builtin", "inline", "static", "external")
     }
 }

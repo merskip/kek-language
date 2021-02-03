@@ -1,4 +1,7 @@
 
+external static func Memory.malloc(size: Integer) -> BytePointer;
+external static func Memory.free(pointer: BytePointer);
+
 static builtin func Memory.allocate(size: Integer) -> BytePointer;
 static builtin func Memory.free(address: BytePointer, size: Integer);
 

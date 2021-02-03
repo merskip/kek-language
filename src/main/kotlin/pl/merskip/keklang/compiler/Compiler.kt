@@ -15,7 +15,6 @@ import pl.merskip.keklang.logger.Logger
 import java.io.File
 import java.io.InputStreamReader
 import java.net.URL
-import javax.xml.transform.ErrorListener
 
 class Compiler(
     val context: CompilerContext,
@@ -247,7 +246,7 @@ class Compiler(
     private fun createEntryPoint(symbol: String) {
         logger.debug("Adding entry point: \"$symbol\"")
         context.entryPointSubroutine = FunctionBuilder.register(context) {
-            isExtern(true)
+            isExternal(true)
             identifier(Identifier.Extern(symbol))
             parameters(emptyList())
             returnType(context.builtin.voidType)

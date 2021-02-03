@@ -34,6 +34,7 @@ class SubroutineDefinitionCompiler(
             parameters(parameters)
             returnType(returnType)
             isInline(node.isInline)
+            isExternal(node.isExternal)
             sourceLocation(node.sourceLocation)
         }
     }
@@ -41,6 +42,8 @@ class SubroutineDefinitionCompiler(
     private fun registerOperator(node: OperatorDefinitionASTNode): DeclaredSubroutine {
         if (node.isStatic)
             throw SourceLocationException("Illegal modifier static for operator", node)
+        if (node.isExternal)
+            throw SourceLocationException("Illegal modifier external for operator", node)
 
         val (lhsParameter, rhsParameter) = getParameters(node)
         val identifier = Identifier.Operator(node.operator.text, lhsParameter.type, rhsParameter.type)
@@ -82,6 +85,11 @@ class SubroutineDefinitionCompiler(
                 ?: throw Exception("Not found type: ${node.returnType.identifier}")) else context.builtin.voidType
 
     fun compileFunction(node: SubroutineDefinitionASTNode, subroutine: DeclaredSubroutine) {
+        if (node.isExternal) {
+            assert(node.body == null) { "external function cannot have body" }
+            return
+        }
+
         logger.verbose("Compiling function: ${subroutine.getDebugDescription()}")
 
         FunctionBuilder.buildImplementation(context, subroutine) { parameters ->
@@ -90,7 +98,7 @@ class SubroutineDefinitionCompiler(
                 context.builtin.compileBuiltinFunction(context, subroutine.identifier, parameters)
             }
             else {
-                val body = node.body ?: throw Exception("Only builtin functions can have no body")
+                val body = node.body ?: throw Exception("Only builtin and external functions can have no body")
 
                 val lastValueReference = context.compile(body)
                 when {

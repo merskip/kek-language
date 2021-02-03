@@ -80,10 +80,8 @@ class ParserAST(
     private fun parseModifiers(): List<Token.Identifier> {
         val modifiers = mutableListOf<Token.Identifier>()
         while (true) {
-            if (isNextKeyword("builtin")
-                || isNextKeyword("inline")
-                || isNextKeyword("static")
-            ) modifiers.add(getNextToken())
+            if (isNextOneOfKeyword(SubroutineDefinitionASTNode.allowedModifiers))
+                modifiers.add(getNextToken())
             else break
         }
         return modifiers.toList()
@@ -437,6 +435,9 @@ class ParserAST(
         return if (token is T) token
         else throw SourceLocationException("Expected token ${T::class.simpleName}, but got ${token::class.simpleName}", token)
     }
+
+    private fun isNextOneOfKeyword(keywords: List<String>) =
+        keywords.any { isNextKeyword(it) }
 
     private fun isNextKeyword(keyword: String): Boolean {
         if (!isAnyNextToken()) return false

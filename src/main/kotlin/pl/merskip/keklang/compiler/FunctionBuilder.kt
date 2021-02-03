@@ -16,7 +16,7 @@ class FunctionBuilder() {
     private lateinit var parameters: List<DeclaredSubroutine.Parameter>
     private lateinit var returnType: DeclaredType
     private var declaringType: DeclaredType? = null
-    private var isExtern: Boolean = false
+    private var isExternal: Boolean = false
     private var isInline: Boolean = false
     private var sourceLocation: SourceLocation? = null
     private var implementation: ImplementationBuilder? = null
@@ -36,8 +36,8 @@ class FunctionBuilder() {
     fun declaringType(declaringType: DeclaredType?) =
         apply { this.declaringType = declaringType }
 
-    fun isExtern(isExtern: Boolean = true) =
-        apply { this.isExtern = isExtern }
+    fun isExternal(isExternal: Boolean = true) =
+        apply { this.isExternal = isExternal }
 
     fun isInline(inline: Boolean = true) =
         apply { this.isInline = inline }
@@ -50,7 +50,7 @@ class FunctionBuilder() {
 
     private fun build(context: CompilerContext): DeclaredSubroutine {
 
-        val identifier = identifier
+        val identifier = if (isExternal) Identifier.Function(identifier.canonical) else identifier
         val functionType = LLVMFunctionType(
             result = returnType.wrappedType,
             parameters = parameters.types.map { it.wrappedType },
