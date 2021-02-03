@@ -94,6 +94,10 @@ class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
         LLVMSetLinkage(reference, linkage.rawValue)
     }
 
+    fun setGarbageCollection(name: String) {
+        LLVMSetGC(reference, name)
+    }
+
     /**
      * Set the subprogram attached to a function
      */
