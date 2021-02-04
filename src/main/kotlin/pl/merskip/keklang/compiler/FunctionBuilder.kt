@@ -15,7 +15,6 @@ class FunctionBuilder() {
     private lateinit var identifier: Identifier
     private lateinit var parameters: List<DeclaredSubroutine.Parameter>
     private lateinit var returnType: DeclaredType
-    private var declaringType: DeclaredType? = null
     private var isInline: Boolean = false
     private var sourceLocation: SourceLocation? = null
     private var implementation: ImplementationBuilder? = null
@@ -31,10 +30,6 @@ class FunctionBuilder() {
 
     fun returnType(returnType: DeclaredType) =
         apply { this.returnType = returnType }
-
-    fun declaringType(declaringType: DeclaredType?) =
-        apply { this.declaringType = declaringType }
-
 
     fun isInline(inline: Boolean = true) =
         apply { this.isInline = inline }
@@ -57,7 +52,6 @@ class FunctionBuilder() {
         }
 
         val function = DeclaredSubroutine(
-            declaringType = declaringType,
             identifier = identifier,
             parameters = parameters,
             returnType = returnType,

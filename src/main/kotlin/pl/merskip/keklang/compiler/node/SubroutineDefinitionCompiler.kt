@@ -30,7 +30,6 @@ class SubroutineDefinitionCompiler(
         val identifier = if (node.isExternal) ExternalIdentifier(functionIdentifier.name, functionIdentifier) else functionIdentifier
 
         return FunctionBuilder.register(context) {
-            declaringType(declaringType)
             identifier(identifier)
             parameters(parameters)
             returnType(returnType)

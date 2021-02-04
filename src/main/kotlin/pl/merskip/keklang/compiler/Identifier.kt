@@ -2,6 +2,8 @@ package pl.merskip.keklang.compiler
 
 abstract class Identifier {
 
+    abstract val name: String
+
     abstract fun getDescription(): String
 
     abstract fun getMangled(): String
@@ -10,7 +12,7 @@ abstract class Identifier {
 }
 
 data class ReferenceIdentifier(
-    val name: String,
+    override val name: String,
 ) : Identifier() {
 
     override fun getDescription() = name
@@ -19,7 +21,7 @@ data class ReferenceIdentifier(
 }
 
 data class TypeIdentifier(
-    val name: String,
+    override val name: String,
 ) : Identifier() {
 
     override fun getDescription() = name
@@ -29,7 +31,7 @@ data class TypeIdentifier(
 
 data class FunctionIdentifier(
     val callee: Identifier?,
-    val name: String,
+    override val name: String,
     val parameters: List<Identifier>,
 ) : Identifier() {
 
@@ -42,7 +44,7 @@ data class FunctionIdentifier(
 }
 
 data class OperatorIdentifier(
-    val name: String,
+    override val name: String,
     val parameters: List<Identifier>,
 ) : Identifier() {
 
@@ -59,6 +61,8 @@ class ExternalIdentifier(
     val externalSymbol: String,
     val internalIdentifier: Identifier,
 ) : Identifier() {
+
+    override val name: String = internalIdentifier.name
 
     override fun getDescription() =
         "external($externalSymbol) ${internalIdentifier.getDescription()}"

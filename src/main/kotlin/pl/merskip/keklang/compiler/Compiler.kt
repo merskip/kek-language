@@ -164,7 +164,6 @@ class Compiler(
         context.typesRegister.register(structureType)
 
         FunctionBuilder.register(context) {
-            declaringType(structureType)
             identifier(FunctionIdentifier(structureType.identifier, "init", fields.map { it.type.identifier }))
             parameters(fields.map { field ->
                 DeclaredSubroutine.Parameter(

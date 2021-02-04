@@ -166,11 +166,13 @@ class RicherLLVMIRText(
     private fun recognizeMangledIdentifiersForDefines(lines: MutableList<String>) {
         val lineIterator = lines.listIterator()
         for (line in lineIterator) {
-            val mangledIdentifier = globalIdentifierRegex.find(line)?.value?.substring(1)
-            if (line.contains("define") && mangledIdentifier != null) {
-                val type = typesRegister.find<DeclaredSubroutine> { it.identifier.getMangled() == mangledIdentifier }
-                if (type != null) {
-                    lineIterator.addBefore(line.getIndent() + "; " + type.getDescription())
+            if (line.contains("define") || line.contains("declare")) {
+                val mangledIdentifier = globalIdentifierRegex.find(line)?.value?.substring(1)
+                if (mangledIdentifier != null) {
+                    val type = typesRegister.find<DeclaredSubroutine> { it.identifier.getMangled() == mangledIdentifier }
+                    if (type != null) {
+                        lineIterator.addBefore(line.getIndent() + "; " + type.getDescription())
+                    }
                 }
             }
         }

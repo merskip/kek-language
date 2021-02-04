@@ -35,7 +35,7 @@ class FunctionCallCompiler(
 
     private fun findFunction(calleeNode: ReferenceASTNode, identifier: String, parameters: List<Reference>): Pair<DeclaredSubroutine, List<Reference>> {
         val parametersTypes = parameters.map { it.type }
-        val calleeType = context.typesRegister.find(ReferenceIdentifier(calleeNode.identifier.text))
+        val calleeType = context.typesRegister.find(TypeIdentifier(calleeNode.identifier.text))
         return if (calleeType != null) {
             val function = context.typesRegister.find(FunctionIdentifier(calleeType.identifier, identifier, parametersTypes.map { it.identifier }))
                 ?: throw Exception("Not found function: $identifier, parameters: $parametersTypes")

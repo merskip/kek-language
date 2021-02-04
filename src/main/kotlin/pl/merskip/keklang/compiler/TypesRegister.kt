@@ -15,7 +15,7 @@ class TypesRegister {
         if (types.any { it.identifier.getMangled() == type.identifier.getMangled() })
             throw RegisteringTypeAlreadyExistsException(type)
         types.add(type)
-        logger.verbose("Registered type: ${type.getDescription()}, ${type.identifier}, ${type.identifier.getMangled()}")
+        logger.verbose("Registered type: ${type.getDescription()}, mangled=${type.identifier.getMangled()}")
     }
 
     fun find(identifier: FunctionIdentifier): DeclaredSubroutine? =
