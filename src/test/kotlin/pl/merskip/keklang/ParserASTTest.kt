@@ -253,8 +253,8 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
-        val callNode = funcDef.body!!.statements.single() as FunctionWithDeclaredTypeCallASTNode
-        assertEquals("Bar", callNode.callee.identifier)
+        val callNode = funcDef.body!!.statements.single() as FunctionCallASTNode
+        assertEquals("Bar", callNode.callee?.text)
         assertEquals("bar", callNode.identifier)
         assertTrue(callNode.parameters.isEmpty())
     }

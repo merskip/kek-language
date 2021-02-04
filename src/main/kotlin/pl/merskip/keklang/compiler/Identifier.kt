@@ -1,5 +1,88 @@
 package pl.merskip.keklang.compiler
 
+abstract class Identifier2 {
+
+    abstract val description: String
+
+    abstract fun getMangled(): String
+
+    override fun toString() = description
+}
+
+private fun mangle(prefix: String, string: String): String {
+    return "${prefix}${string.length}${string.escaped()}"
+}
+
+private fun String.escaped(): String {
+    val safeChars = '0'..'9' union 'a'..'z' union 'A'..'Z'
+    return map { char ->
+        if (safeChars.contains(char)) char.toString()
+        else when (char) {
+            '+' -> "_plus"
+            '-' -> "_minus"
+            '*' -> "_asterisk"
+            '/' -> "_slash"
+            '%' -> "_percent"
+            '=' -> "_equals"
+            '!' -> "_not"
+            ':' -> "_colon"
+            '<' -> "_lt"
+            '>' -> "_gt"
+            else -> "_U" + toInt().toString(16)
+        }
+    }.joinToString("")
+}
+
+data class ReferenceIdentifier(
+    val name: String,
+) : Identifier2() {
+
+    override val description: String = name
+
+    override fun getMangled() = name.escaped()
+}
+
+data class StructureIdentifier(
+    val name: String,
+) : Identifier2() {
+
+    override val description: String = name
+
+    override fun getMangled() = mangle("S", name)
+}
+
+data class FunctionIdentifier(
+    val callee: Identifier2?,
+    val name: String,
+    val parameters: List<Identifier2>
+): Identifier2() {
+
+    override val description: String
+        get() = "func " +
+                callee?.description?.let { "$it." }.orEmpty() +
+                name + "(" + parameters.joinToString(", ") { it.description } + ")"
+
+    override fun getMangled() =
+        "F" + callee?.getMangled().orEmpty() + mangle("N", name) + parameters.joinToString("") { it.getMangled() }
+
+}
+
+data class OperatorIdentifier(
+    val name: String,
+    val parameters: List<Identifier2>
+): Identifier2() {
+
+    override val description: String
+        get() = "operator " +
+                name +
+                " (" + parameters.joinToString(", ") { it.description } + ")"
+
+    override fun getMangled() =
+        mangle("O", name) + parameters.joinToString("") { it.getMangled() }
+
+}
+
+@Deprecated("Use Identifier2")
 sealed class Identifier(
     val canonical: String,
     val mangled: String
