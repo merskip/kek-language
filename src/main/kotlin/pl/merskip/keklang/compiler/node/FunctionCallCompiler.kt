@@ -11,7 +11,7 @@ class FunctionCallCompiler(
 ) : ASTNodeCompiling<FunctionCallASTNode> {
 
     override fun compile(node: FunctionCallASTNode): Reference {
-        var parameters = compileParameters(node.parameters)
+        val parameters = compileParameters(node.parameters)
 
         val (function, effectiveParameters) = when (node.callee) {
             null -> findFunction(node.identifier.text, parameters) to parameters
@@ -29,15 +29,15 @@ class FunctionCallCompiler(
 
     private fun findFunction(identifier: String, parameters: List<Reference>): DeclaredSubroutine {
         val parametersTypes = parameters.map { it.type }
-        return context.typesRegister.find(Identifier.Function(null, identifier, parametersTypes))
+        return context.typesRegister.find(FunctionIdentifier(null, identifier, parametersTypes.map { it.identifier }))
             ?: throw Exception("Not found function: $identifier, parameters: $parametersTypes")
     }
 
     private fun findFunction(calleeNode: ReferenceASTNode, identifier: String, parameters: List<Reference>): Pair<DeclaredSubroutine, List<Reference>> {
         val parametersTypes = parameters.map { it.type }
-        val calleeType = context.typesRegister.find(Identifier.Type(calleeNode.identifier.text))
+        val calleeType = context.typesRegister.find(ReferenceIdentifier(calleeNode.identifier.text))
         return if (calleeType != null) {
-            val function = context.typesRegister.find(Identifier.Function(calleeType, identifier, parametersTypes))
+            val function = context.typesRegister.find(FunctionIdentifier(calleeType.identifier, identifier, parametersTypes.map { it.identifier }))
                 ?: throw Exception("Not found function: $identifier, parameters: $parametersTypes")
             function to parameters
         } else {
@@ -50,8 +50,8 @@ class FunctionCallCompiler(
             ?: throw Exception("Callee doesn't have a value")
         val parametersWithThis = listOf(callee) + parameters
         val parametersTypes = parametersWithThis.map { it.type }
-        val function = context.typesRegister.find(Identifier.Function(callee.type, identifier, parametersTypes))
-            ?: throw Exception("Not found function: $identifier, on type: ${callee.type.getDebugDescription()}, parameters: $parametersTypes")
+        val function = context.typesRegister.find(FunctionIdentifier(callee.type.identifier, identifier, parametersTypes.map { it.identifier }))
+            ?: throw Exception("Not found function: $identifier, on type: ${callee.type.getDescription()}, parameters: $parametersTypes")
         return function to parametersWithThis
     }
 

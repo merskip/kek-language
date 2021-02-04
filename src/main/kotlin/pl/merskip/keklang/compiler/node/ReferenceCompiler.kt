@@ -15,15 +15,15 @@ class ReferenceCompiler(
     }
 
     private fun getReference(node: ReferenceASTNode): Reference? {
-        val identifier = Identifier.Reference(node.identifier.text)
+        val identifier = ReferenceIdentifier(node.identifier.text)
         return context.scopesStack.current.getReferenceOrNull(identifier)
     }
 
     private fun getReferenceToMetadata(node: ReferenceASTNode): Reference? {
-        val identifier = Identifier.Type(node.identifier.text)
+        val identifier = TypeIdentifier(node.identifier.text)
         val type = context.typesRegister.find(identifier)
             ?: return null
-        val metadataType = context.typesRegister.find(Identifier.Type("Metadata")) as StructureType
+        val metadataType = context.typesRegister.find(TypeIdentifier("Metadata")) as StructureType
         val metadata = context.typesRegister.getMetadata(type)
         return ReadableMemoryReference(metadataType, metadata, context.instructionsBuilder)
     }

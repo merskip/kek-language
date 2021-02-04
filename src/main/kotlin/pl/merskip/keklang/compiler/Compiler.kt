@@ -148,12 +148,12 @@ class Compiler(
 
     private fun registerStructureDeclaration(node: StructureDefinitionASTNode) {
         val fields = node.fields.map { fieldNode ->
-            val type = context.typesRegister.find(Identifier.Type(fieldNode.type.identifier.text))
+            val type = context.typesRegister.find(TypeIdentifier(fieldNode.type.identifier.text))
                 ?: throw Exception("Not found type: ${fieldNode.type.identifier}")
             StructureType.Field(fieldNode.identifier.text, type)
         }
         val structureType = StructureType(
-            identifier = Identifier.Type(node.identifier.text),
+            identifier = TypeIdentifier(node.identifier.text),
             fields = fields,
             wrappedType = context.context.createStructure(
                 name = node.identifier.text,
@@ -165,7 +165,7 @@ class Compiler(
 
         FunctionBuilder.register(context) {
             declaringType(structureType)
-            identifier(Identifier.Function(structureType, "init", fields.map { it.type }))
+            identifier(FunctionIdentifier(structureType.identifier, "init", fields.map { it.type.identifier }))
             parameters(fields.map { field ->
                 DeclaredSubroutine.Parameter(
                     name = field.name,
@@ -191,20 +191,20 @@ class Compiler(
     private fun createMetadata(context: CompilerContext, type: DeclaredType) {
         if (type is DeclaredSubroutine) return
 
-        val metadataType = context.typesRegister.find(Identifier.Type("Metadata")) as StructureType
+        val metadataType = context.typesRegister.find(TypeIdentifier("Metadata")) as StructureType
 
         val metadata = metadataType.wrappedType.constant(listOf(
-            createGlobalString(type.identifier.canonical),
-            createGlobalString(type.identifier.mangled),
+            createGlobalString(type.identifier.getDescription()),
+            createGlobalString(type.identifier.getMangled()),
             createGlobalString(type.wrappedType.getStringRepresentable())
         ))
 
-        val metadataGlobal = context.module.addGlobalConstant(type.identifier.canonical + ".Metadata", metadataType.wrappedType, metadata)
+        val metadataGlobal = context.module.addGlobalConstant(type.identifier.getMangled() + ".Metadata", metadataType.wrappedType, metadata)
         context.typesRegister.setMetadata(type, metadataGlobal)
     }
 
     private fun createGlobalString(value: String): LLVMConstantValue {
-        val stringType = context.typesRegister.find(Identifier.Type("String")) as StructureType
+        val stringType = context.typesRegister.find(TypeIdentifier("String")) as StructureType
         return stringType.wrappedType.constant(listOf(
             context.instructionsBuilder.createGlobalString(value, null),
             context.context.createConstant(value.length.toLong())
@@ -246,12 +246,11 @@ class Compiler(
     private fun createEntryPoint(symbol: String) {
         logger.debug("Adding entry point: \"$symbol\"")
         context.entryPointSubroutine = FunctionBuilder.register(context) {
-            isExternal(true)
-            identifier(Identifier.Extern(symbol))
+            identifier(ExternalIdentifier(symbol, FunctionIdentifier(null, symbol, emptyList())))
             parameters(emptyList())
             returnType(context.builtin.voidType)
             implementation {
-                val mainFunction = context.typesRegister.find<DeclaredSubroutine> { it.identifier.canonical == "main" }
+                val mainFunction = context.typesRegister.find(FunctionIdentifier(null, "main", emptyList()))
 
                 val exitCode = when {
                     mainFunction == null -> {
@@ -274,10 +273,10 @@ class Compiler(
                 }
 
                 context.instructionsBuilder.createCall(
-                    subroutine = context.typesRegister.find(Identifier.Function(
-                        declaringType = context.builtin.systemType,
-                        canonical = "exit",
-                        parameters = listOf(context.builtin.integerType)
+                    subroutine = context.typesRegister.find(FunctionIdentifier(
+                        callee = context.builtin.systemType.identifier,
+                        name = "exit",
+                        parameters = listOf(context.builtin.integerType.identifier)
                     ))!!,
                     arguments = listOf(exitCode.get)
                 )

@@ -19,7 +19,7 @@ class ConstantStringCompiler(
             .getElementType<LLVMArrayType>()
             .getLength()
 
-        val stringType = context.typesRegister.find(Identifier.Type("String")) as StructureType
+        val stringType = context.typesRegister.find(TypeIdentifier("String")) as StructureType
         val stringConstant = stringType.wrappedType.constant(listOf(
             stringArrayPointer,
             context.context.createConstant(stringLength - 1 /* minus null character */)

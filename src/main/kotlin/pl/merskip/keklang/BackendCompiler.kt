@@ -64,7 +64,7 @@ class BackendCompiler(
 
                 WSLLinker(targetTriple).compile(
                     inputFiles = listOf(temporaryObjectFile),
-                    entryPoint = context.entryPointSubroutine.identifier.mangled,
+                    entryPoint = context.entryPointSubroutine.identifier.getMangled(),
                     outputFile = outputFile
                 )
             }

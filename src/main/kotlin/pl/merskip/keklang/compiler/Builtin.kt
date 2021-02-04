@@ -37,19 +37,19 @@ class Builtin(
             ArchType.X86, ArchType.X86_64 -> {
                 logger.debug("Registering builtin primitive types for x86/x86_64")
                 voidType = registerType {
-                    PrimitiveType(Identifier.Type("Void"), createVoidType())
+                    PrimitiveType(TypeIdentifier("Void"), createVoidType())
                 }
                 booleanType = registerType {
-                    PrimitiveType(Identifier.Type("Boolean"), createIntegerType(1))
+                    PrimitiveType(TypeIdentifier("Boolean"), createIntegerType(1))
                 }
                 byteType = registerType {
-                    PrimitiveType(Identifier.Type("Byte"), createIntegerType(8))
+                    PrimitiveType(TypeIdentifier("Byte"), createIntegerType(8))
                 }
                 integerType = registerType {
-                    PrimitiveType(Identifier.Type("Integer"), createIntegerType(64))
+                    PrimitiveType(TypeIdentifier("Integer"), createIntegerType(64))
                 }
                 bytePointerType = registerType {
-                    byteType.asPointer(Identifier.Type("BytePointer"))
+                    byteType.asPointer(TypeIdentifier("BytePointer"))
                 }
             }
             else -> error("Unsupported arch: ${target.archType}")
@@ -58,11 +58,11 @@ class Builtin(
         logger.debug("Registering builtin standard types")
 
         systemType = registerType {
-            PrimitiveType(Identifier.Type("System"), voidType.wrappedType)
+            PrimitiveType(TypeIdentifier("System"), voidType.wrappedType)
         }
 
         memoryType = registerType {
-            PrimitiveType(Identifier.Type("Memory"), voidType.wrappedType)
+            PrimitiveType(TypeIdentifier("Memory"), voidType.wrappedType)
         }
 
         register(systemType, "exit", listOf(integerType)) { context, (exitCode) ->
@@ -85,7 +85,7 @@ class Builtin(
             context.instructionsBuilder.createUnreachable()
         }
 
-        register(Identifier.Type("System"), "print", listOf(Identifier.Type("String"))) { context, (string) ->
+        register(TypeIdentifier("System"), "print", listOf(TypeIdentifier("String"))) { context, (string) ->
             val standardOutput = createInteger(1L).get
             val guts = context.instructionsBuilder.createStructureLoad(string, "guts")
             val length = context.instructionsBuilder.createStructureLoad(string, "length")
@@ -262,19 +262,17 @@ class Builtin(
     }
 
     private fun register(declaringType: DeclaredType?, identifier: String, parameters: List<DeclaredType>, implementation: BuiltinImplementation) {
-        val functionIdentifier =
-            if (declaringType != null) Identifier.Function(declaringType, identifier, parameters)
-            else Identifier.Function(null, identifier, parameters)
+        val functionIdentifier = FunctionIdentifier(declaringType?.identifier, identifier, parameters.map { it.identifier })
         builtinFunctions[functionIdentifier] = implementation
     }
 
     private fun register(declaringType: Identifier?, identifier: String, parameters: List<Identifier>, implementation: BuiltinImplementation) {
-        val functionIdentifier = Identifier.Function(declaringType, identifier, parameters)
+        val functionIdentifier = FunctionIdentifier(declaringType, identifier, parameters)
         builtinFunctions[functionIdentifier] = implementation
     }
 
     private fun register(operator: String, lhs: DeclaredType, rhs: DeclaredType, implementation: BuiltinImplementation) {
-        val operatorIdentifier = Identifier.Operator(operator, lhs, rhs)
+        val operatorIdentifier = OperatorIdentifier(operator, listOf(lhs.identifier, rhs.identifier))
         builtinFunctions[operatorIdentifier] = implementation
     }
 

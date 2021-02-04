@@ -168,9 +168,9 @@ class RicherLLVMIRText(
         for (line in lineIterator) {
             val mangledIdentifier = globalIdentifierRegex.find(line)?.value?.substring(1)
             if (line.contains("define") && mangledIdentifier != null) {
-                val type = typesRegister.find<DeclaredSubroutine> { it.identifier.mangled == mangledIdentifier }
+                val type = typesRegister.find<DeclaredSubroutine> { it.identifier.getMangled() == mangledIdentifier }
                 if (type != null) {
-                    lineIterator.addBefore(line.getIndent() + "; " + type.getDebugDescription())
+                    lineIterator.addBefore(line.getIndent() + "; " + type.getDescription())
                 }
             }
         }

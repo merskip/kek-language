@@ -1,6 +1,8 @@
 package pl.merskip.keklang.externc
 
+import pl.merskip.keklang.compiler.DeclaredSubroutine
 import pl.merskip.keklang.compiler.DeclaredType
+import pl.merskip.keklang.compiler.TypeIdentifier
 import pl.merskip.keklang.compiler.TypesRegister
 import pl.merskip.keklang.llvm.LLVMIntegerType
 import pl.merskip.keklang.logger.Logger
@@ -25,12 +27,12 @@ class CHeaderGenerator(
         source += "\n\n"
 
         for (function in typesRegister.getFunctions()) {
-            source += "/* ${function.getDebugDescription()} */\n"
+            source += "/* ${function.getDescription()} */\n"
             source += getCType(function.returnType)
             source += " "
-            source += function.identifier.mangled
+            source += function.identifier.getMangled()
             source += "("
-            source += function.parameters.joinToString(", ") { getCType(it.type) + " " + it.name }
+            source += function.parameters.joinToString(", ") { parameterToString(it) }
             source += ");"
             source += "\n\n"
         }
@@ -38,12 +40,21 @@ class CHeaderGenerator(
         outputFile.writeText(source)
     }
 
+    private fun parameterToString(parameter: DeclaredSubroutine.Parameter): String {
+        val cType = getCType(parameter.type)
+        return if (cType.endsWith('*')) // is a pointer
+            cType + parameter.name
+        else cType + " " + parameter.name
+    }
+
     private fun getCType(type: DeclaredType): String {
-        return when {
-            type.isVoid -> "void"
-            type.wrappedType is LLVMIntegerType -> "int"
-            type.identifier.canonical == "BytePointer" -> "void*"
-            type.identifier.canonical == "String" -> "const char*"
+        val identifier = type.identifier as TypeIdentifier
+        return when (identifier.name) {
+            "Void" -> "void"
+            "Byte" -> "unsigned char"
+            "Integer" -> "int"
+            "BytePointer" -> "void *"
+            "String" -> "const char *"
             else -> "?"
         }
     }

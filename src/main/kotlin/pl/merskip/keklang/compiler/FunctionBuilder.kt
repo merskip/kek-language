@@ -16,7 +16,6 @@ class FunctionBuilder() {
     private lateinit var parameters: List<DeclaredSubroutine.Parameter>
     private lateinit var returnType: DeclaredType
     private var declaringType: DeclaredType? = null
-    private var isExternal: Boolean = false
     private var isInline: Boolean = false
     private var sourceLocation: SourceLocation? = null
     private var implementation: ImplementationBuilder? = null
@@ -36,8 +35,6 @@ class FunctionBuilder() {
     fun declaringType(declaringType: DeclaredType?) =
         apply { this.declaringType = declaringType }
 
-    fun isExternal(isExternal: Boolean = true) =
-        apply { this.isExternal = isExternal }
 
     fun isInline(inline: Boolean = true) =
         apply { this.isInline = inline }
@@ -49,14 +46,12 @@ class FunctionBuilder() {
         apply { this.implementation = implementation }
 
     private fun build(context: CompilerContext): DeclaredSubroutine {
-
-        val identifier = if (isExternal) Identifier.Function(identifier.canonical) else identifier
         val functionType = LLVMFunctionType(
             result = returnType.wrappedType,
             parameters = parameters.types.map { it.wrappedType },
             isVariadicArguments = false
         )
-        val functionValue = context.module.addFunction(identifier.mangled, functionType)
+        val functionValue = context.module.addFunction(identifier.getMangled(), functionType)
         if (isInline) {
             functionValue.setAsAlwaysInline()
         }
@@ -105,7 +100,7 @@ class FunctionBuilder() {
         val subprogram = context.debugBuilder.createSubprogram(
             scope = debugFile,
             name = function.toString() ,
-            linkageName = function.identifier.mangled,
+            linkageName = function.identifier.getMangled(),
             file = debugFile,
             lineNumber = sourceLocation.startIndex.line,
             type = subroutine,
@@ -152,7 +147,7 @@ class FunctionBuilder() {
             context.scopesStack.createScope(subroutine.debugScope) {
                 val parameterReferences = subroutine.value.getParametersValues().zip(subroutine.parameters).map { (parameterValue, parameter) ->
 
-                    val parameterIdentifier = Identifier.Reference(parameter.name)
+                    val parameterIdentifier = ReferenceIdentifier(parameter.name)
 
                     val parameterAlloca = context.instructionsBuilder.createAlloca(parameter.type.wrappedType, "_" + parameter.name)
                     context.instructionsBuilder.createStore(parameterAlloca, parameterValue)
