@@ -8,31 +8,6 @@ abstract class Identifier2 {
 
     override fun toString() = description
 }
-
-private fun mangle(prefix: String, string: String): String {
-    return "${prefix}${string.length}${string.escaped()}"
-}
-
-private fun String.escaped(): String {
-    val safeChars = '0'..'9' union 'a'..'z' union 'A'..'Z'
-    return map { char ->
-        if (safeChars.contains(char)) char.toString()
-        else when (char) {
-            '+' -> "_plus"
-            '-' -> "_minus"
-            '*' -> "_asterisk"
-            '/' -> "_slash"
-            '%' -> "_percent"
-            '=' -> "_equals"
-            '!' -> "_not"
-            ':' -> "_colon"
-            '<' -> "_lt"
-            '>' -> "_gt"
-            else -> "_U" + toInt().toString(16)
-        }
-    }.joinToString("")
-}
-
 data class ReferenceIdentifier(
     val name: String,
 ) : Identifier2() {
@@ -80,6 +55,26 @@ data class OperatorIdentifier(
     override fun getMangled() =
         mangle("O", name) + parameters.joinToString("") { it.getMangled() }
 
+}
+
+class ExternalIdentifier(
+    val externalSymbol: String,
+    val internalIdentifier: Identifier2,
+) : Identifier2() {
+
+    override val description: String
+        get() = "external($externalSymbol) ${internalIdentifier.description}"
+
+    override fun getMangled() = externalSymbol
+
+    override fun equals(other: Any?) = when {
+        this === other -> true
+        other is ExternalIdentifier -> internalIdentifier == other.internalIdentifier
+        other is Identifier2 -> internalIdentifier == other
+        else -> false
+    }
+
+    override fun hashCode() = internalIdentifier.hashCode()
 }
 
 @Deprecated("Use Identifier2")
@@ -170,4 +165,28 @@ sealed class Identifier(
     override fun hashCode() = mangled.hashCode()
 
     override fun toString() = canonical
+}
+
+private fun mangle(prefix: String, string: String): String {
+    return "${prefix}${string.length}${string.escaped()}"
+}
+
+private fun String.escaped(): String {
+    val safeChars = '0'..'9' union 'a'..'z' union 'A'..'Z'
+    return map { char ->
+        if (safeChars.contains(char)) char.toString()
+        else when (char) {
+            '+' -> "_plus"
+            '-' -> "_minus"
+            '*' -> "_asterisk"
+            '/' -> "_slash"
+            '%' -> "_percent"
+            '=' -> "_equals"
+            '!' -> "_not"
+            ':' -> "_colon"
+            '<' -> "_lt"
+            '>' -> "_gt"
+            else -> "_U" + toInt().toString(16)
+        }
+    }.joinToString("")
 }

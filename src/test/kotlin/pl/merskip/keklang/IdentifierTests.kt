@@ -3,10 +3,7 @@ package pl.merskip.keklang
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import pl.merskip.keklang.compiler.FunctionIdentifier
-import pl.merskip.keklang.compiler.OperatorIdentifier
-import pl.merskip.keklang.compiler.ReferenceIdentifier
-import pl.merskip.keklang.compiler.StructureIdentifier
+import pl.merskip.keklang.compiler.*
 
 class IdentifierTests {
 
@@ -119,5 +116,17 @@ class IdentifierTests {
         assertEquals("O1_plusS3FooS3Bar", identifier.getMangled())
 
         assertEquals(identifier, OperatorIdentifier("+", listOf(StructureIdentifier("Foo"), StructureIdentifier("Bar"))))
+    }
+
+    @Test
+    fun `external identifier`() {
+        val identifier = ExternalIdentifier("malloc", FunctionIdentifier(null, "foo", emptyList()))
+
+        assertEquals("malloc", identifier.externalSymbol)
+        assertEquals("external(malloc) func foo()", identifier.description)
+        assertEquals("malloc", identifier.getMangled())
+
+        assert((identifier as Identifier2) == (ExternalIdentifier("malloc", FunctionIdentifier(null, "foo", emptyList())) as Identifier2))
+        assert((identifier as Identifier2) == (FunctionIdentifier(null, "foo", emptyList()) as Identifier2))
     }
 }
