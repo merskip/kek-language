@@ -80,7 +80,7 @@ fun main(args: Array<String>) = mainBody {
             }
 
             if (runJIT) {
-                val mainFunction = compiler.context.typesRegister.find<DeclaredSubroutine> { it.identifier.canonical == "main" }
+                val mainFunction = compiler.context.typesRegister.find(FunctionIdentifier(null, "main", emptyList()))
                     ?: throw Exception("Not found main function")
                 JIT(compiler.context.module.reference).run(mainFunction)
             }

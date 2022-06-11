@@ -1,86 +1,104 @@
 package pl.merskip.keklang.compiler
 
-sealed class Identifier(
-    val canonical: String,
-    val mangled: String
-) {
+abstract class Identifier {
 
-    class Reference(name: String) : Identifier(name, name)
+    abstract val name: String
 
-    class Type(canonical: String) : Identifier(canonical, canonical.mangled())
+    abstract fun getDescription(): String
 
-    class Extern(canonical: String) : Identifier(canonical, canonical)
+    abstract fun getMangled(): String
 
-    class Function private constructor(canonical: String, mangled: String) : Identifier(canonical, mangled) {
+    override fun toString() = getDescription()
+}
 
-        constructor(
-            declaringType: DeclaredType?,
-            canonical: String,
-            parameters: List<DeclaredType>
-        ) : this(declaringType?.identifier, canonical, parameters.map { it.identifier })
+data class ReferenceIdentifier(
+    override val name: String,
+) : Identifier() {
 
-        constructor(
-            declaringType: Identifier?,
-            canonical: String,
-            parameters: List<Identifier>
-        ) : this(canonical,
-            listOfNotNull(
-                declaringType?.mangled,
-                canonical.mangled(isType = false),
-                parameters.mangled()
-            ).joinToString("_"))
+    override fun getDescription() = name
+
+    override fun getMangled() = name.escaped()
+}
+
+data class TypeIdentifier(
+    override val name: String,
+) : Identifier() {
+
+    override fun getDescription() = name
+
+    override fun getMangled() = mangle("T", name)
+}
+
+data class FunctionIdentifier(
+    val callee: Identifier?,
+    override val name: String,
+    val parameters: List<Identifier>,
+) : Identifier() {
+
+    override fun getDescription() =
+        "func " + callee?.getDescription()?.let { "$it." }.orEmpty() +
+                name + "(" + parameters.joinToString(", ") { it.getDescription() } + ")"
+
+    override fun getMangled() =
+        "F" + callee?.getMangled().orEmpty() + mangle("N", name) + parameters.joinToString("") { it.getMangled() }
+}
+
+data class OperatorIdentifier(
+    override val name: String,
+    val parameters: List<Identifier>,
+) : Identifier() {
+
+    override fun getDescription() =
+        "operator " + name +
+                " (" + parameters.joinToString(", ") { it.getDescription() } + ")"
+
+    override fun getMangled() =
+        mangle("O", name) + parameters.joinToString("") { it.getMangled() }
+
+}
+
+class ExternalIdentifier(
+    val externalSymbol: String,
+    val internalIdentifier: Identifier,
+) : Identifier() {
+
+    override val name: String = internalIdentifier.name
+
+    override fun getDescription() =
+        "external($externalSymbol) ${internalIdentifier.getDescription()}"
+
+    override fun getMangled() = externalSymbol
+
+    override fun equals(other: Any?) = when {
+        this === other -> true
+        other is ExternalIdentifier -> internalIdentifier == other.internalIdentifier
+        other is Identifier -> internalIdentifier == other
+        else -> false
     }
 
-    class Operator private constructor(canonical: String, mangled: String) : Identifier(canonical, mangled) {
+    override fun hashCode() = internalIdentifier.hashCode()
+}
 
-        constructor(
-            operator: String,
-            lhsType: DeclaredType,
-            rhsType: DeclaredType
-        ) : this(operator, listOfNotNull(
-            operator.mangledOperator(),
-            listOf(lhsType, rhsType).map { it.identifier }.mangled()
-        ).joinToString("_"))
-    }
+private fun mangle(prefix: String, string: String): String {
+    return "${prefix}${string.length}${string.escaped()}"
+}
 
-    companion object {
-
-        private fun List<Identifier>.mangled(): String? =
-            joinToString("_") { it.mangled }.ifEmpty { null }
-
-        private fun String.mangled(isType: Boolean = true): String =
-            when (this) {
-                "Void" -> "v"
-                "Integer" -> "i"
-                "Byte" -> "w"
-                "Boolean" -> "b"
-                "BytePointer" -> "p"
-                "String" -> "s"
-                else -> if (isType) "T$length$this" else "N$length$this"
-            }
-
-        private fun String.mangledOperator(): String =
-            "O" + count() + map { it.mangledOperator() }.joinToString("")
-
-        private fun Char.mangledOperator(): String =
-            when (this) {
-                '+' -> "_plus"
-                '-' -> "_minus"
-                '*' -> "_asterisk"
-                '=' -> "_equals"
-                ':' -> "_colon"
-                '<' -> "_lt"
-                '>' -> "_gt"
-                else -> "_U" + toInt().toString(16)
-            }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (other !is Identifier) return false
-        return mangled == other.mangled
-    }
-
-    override fun hashCode() = mangled.hashCode()
-
-    override fun toString() = canonical
+private fun String.escaped(): String {
+    val safeChars = '0'..'9' union 'a'..'z' union 'A'..'Z'
+    return map { char ->
+        if (safeChars.contains(char)) char.toString()
+        else when (char) {
+            '+' -> "_plus"
+            '-' -> "_minus"
+            '*' -> "_asterisk"
+            '/' -> "_slash"
+            '%' -> "_percent"
+            '=' -> "_equals"
+            '!' -> "_not"
+            ':' -> "_colon"
+            '<' -> "_lt"
+            '>' -> "_gt"
+            else -> "_U" + toInt().toString(16)
+        }
+    }.joinToString("")
 }

@@ -46,6 +46,13 @@ class IRInstructionsBuilder(
     }
 
     /**
+     * Create a 'alloca <type>, <size>' instruction
+     */
+    fun createAllocaArray(type: LLVMType, size: LLVMValue, name: String?): LLVMInstructionValue {
+        return LLVMInstructionValue(LLVMBuildArrayAlloca(irBuilder, type.reference, size.reference, name ?: ""))
+    }
+
+    /**
      * Create a 'store <value>, <storage>' instruction
      */
     fun createStore(storage: LLVMValue, value: LLVMValue): LLVMInstructionValue {

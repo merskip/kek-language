@@ -11,7 +11,7 @@ class ConstantStringCompiler(
 ) : ASTNodeCompiling<ConstantStringASTNode> {
 
     override fun compile(node: ConstantStringASTNode): Reference {
-        val stringContent = node.string.text.removePrefix("\"").removeSuffix("\"").replace("\\n", "\n")
+        val stringContent = node.value.text.removePrefix("\"").removeSuffix("\"").replace("\\n", "\n")
         val stringArrayPointer = context.instructionsBuilder.createGlobalString(stringContent, null)
 
         val stringLength = stringArrayPointer
@@ -19,7 +19,7 @@ class ConstantStringCompiler(
             .getElementType<LLVMArrayType>()
             .getLength()
 
-        val stringType = context.typesRegister.find(Identifier.Type("String")) as StructureType
+        val stringType = context.typesRegister.find(TypeIdentifier("String")) as StructureType
         val stringConstant = stringType.wrappedType.constant(listOf(
             stringArrayPointer,
             context.context.createConstant(stringLength - 1 /* minus null character */)

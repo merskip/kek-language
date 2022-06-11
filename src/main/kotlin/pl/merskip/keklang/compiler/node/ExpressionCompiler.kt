@@ -60,14 +60,12 @@ class ExpressionCompiler(
     }
 
     private fun getOperatorSubroutine(operator: String, lhsType: DeclaredType, rhsType: DeclaredType): DeclaredSubroutine {
-
-
-        val identifier = Identifier.Operator(operator, lhsType, rhsType)
+        val identifier = OperatorIdentifier(operator, listOf(lhsType.identifier, rhsType.identifier))
         return context.typesRegister.find(identifier)
             ?: throw Exception("Not found function for operator: \"$operator\"" +
-                    " for lhs=${lhsType.getDebugDescription()}" +
-                    " and rhs=${rhsType.getDebugDescription()}" +
-                    " (${identifier.mangled}")
+                    " for lhs=${lhsType.getDescription()}" +
+                    " and rhs=${rhsType.getDescription()}" +
+                    " ($identifier")
     }
 
     private fun convertToRPN(items: List<ASTNode>): List<ASTNode> {

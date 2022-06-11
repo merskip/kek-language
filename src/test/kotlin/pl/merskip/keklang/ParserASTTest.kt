@@ -20,7 +20,7 @@ internal class ParserASTTest {
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
         assertEquals(null, funcDef.declaringType)
-        assertEquals("abc", funcDef.identifier)
+        assertEquals("abc", funcDef.identifier.text)
         assertTrue(funcDef.parameters.isEmpty())
         assertNull(funcDef.returnType)
         assertNotNull(funcDef.body)
@@ -37,8 +37,8 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
-        assertEquals("Foo", funcDef.declaringType)
-        assertEquals("abc", funcDef.identifier)
+        assertEquals("Foo", funcDef.declaringType?.text)
+        assertEquals("abc", funcDef.identifier.text)
         assertTrue(funcDef.parameters.isEmpty())
         assertNull(funcDef.returnType)
         assertNotNull(funcDef.body)
@@ -55,12 +55,12 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
-        assertEquals("abc", funcDef.identifier)
+        assertEquals("abc", funcDef.identifier.text)
         assertNull(funcDef.returnType)
 
         val parameter = funcDef.parameters.single()
-        assertEquals("arg1", parameter.identifier)
-        assertEquals("Integer", parameter.type.identifier)
+        assertEquals("arg1", parameter.identifier.text)
+        assertEquals("Integer", parameter.type.identifier.text)
     }
 
     @Test
@@ -74,8 +74,8 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
-        assertEquals("abc", funcDef.identifier)
-        assertEquals("Integer", funcDef.returnType!!.identifier)
+        assertEquals("abc", funcDef.identifier.text)
+        assertEquals("Integer", funcDef.returnType!!.identifier.text)
     }
 
     @Test
@@ -90,12 +90,12 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val secondFuncDef = fileNodeAST.nodes[1] as FunctionDefinitionASTNode
 
-        assertEquals("b", secondFuncDef.identifier)
+        assertEquals("b", secondFuncDef.identifier.text)
 
         assertNotNull(secondFuncDef.body)
         val callNode = secondFuncDef.body!!.statements.single()
                 as FunctionCallASTNode
-        assertEquals("a", callNode.identifier)
+        assertEquals("a", callNode.identifier.text)
         assertTrue(callNode.parameters.isEmpty())
     }
 
@@ -111,16 +111,16 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val secondFuncDef = fileNodeAST.nodes[1] as FunctionDefinitionASTNode
 
-        assertEquals("c", secondFuncDef.identifier)
+        assertEquals("c", secondFuncDef.identifier.text)
 
         assertNotNull(secondFuncDef.body)
         val callNode = secondFuncDef.body!!.statements.single()
                 as FunctionCallASTNode
-        assertEquals("a", callNode.identifier)
+        assertEquals("a", callNode.identifier.text)
 
         val argument = callNode.parameters.single()
-                as IntegerConstantASTNode
-        assertEquals(1, argument.value)
+                as ConstantIntegerASTNode
+        assertEquals("1", argument.value.text)
     }
 
     @Test
@@ -154,8 +154,8 @@ internal class ParserASTTest {
         val funcDef = parseForFunction(source)
 
         val variableDeclaration = funcDef.body!!.single<VariableDeclarationASTNode>()
-        assertEquals("bar", variableDeclaration.identifier)
-        assertEquals("Integer", variableDeclaration.type.identifier)
+        assertEquals("bar", variableDeclaration.identifier.text)
+        assertEquals("Integer", variableDeclaration.type.identifier.text)
     }
 
     @Test
@@ -169,8 +169,8 @@ internal class ParserASTTest {
         val funcDef = parseForFunction(source)
 
         val fieldReference = funcDef.body!!.single<FieldReferenceASTNode>()
-        assertEquals("bar", fieldReference.reference.identifier)
-        assertEquals("field", fieldReference.fieldName)
+        assertEquals("bar", fieldReference.reference.identifier.text)
+        assertEquals("field", fieldReference.fieldName.text)
     }
 
     @Test
@@ -190,7 +190,7 @@ internal class ParserASTTest {
         assertEquals("==", expression.items[1].sourceLocation.text)
         assertEquals("2", expression.items[2].sourceLocation.text)
 
-        assert(whileLoop.body.statements[0] is IntegerConstantASTNode)
+        assert(whileLoop.body.statements[0] is ConstantIntegerASTNode)
         assertEquals("3", whileLoop.body.statements[0].sourceLocation.text)
     }
 
@@ -203,8 +203,8 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
-        assertEquals("Foo", funcDef.declaringType)
-        assertEquals("abc", funcDef.identifier)
+        assertEquals("Foo", funcDef.declaringType?.text)
+        assertEquals("abc", funcDef.identifier.text)
         assertTrue(funcDef.parameters.isEmpty())
         assertNull(funcDef.returnType)
         assertNull(funcDef.body)
@@ -219,7 +219,7 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
-        assertEquals("foo", funcDef.identifier)
+        assertEquals("foo", funcDef.identifier.text)
         assertTrue(funcDef.parameters.isEmpty())
         assertNull(funcDef.returnType)
         assertFalse(funcDef.isBuiltin)
@@ -235,7 +235,7 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
-        assertEquals("foo", funcDef.identifier)
+        assertEquals("foo", funcDef.identifier.text)
         assertTrue(funcDef.parameters.isEmpty())
         assertNull(funcDef.returnType)
         assertTrue(funcDef.isBuiltin)
@@ -253,9 +253,9 @@ internal class ParserASTTest {
         val fileNodeAST = parse(source)
         val funcDef = fileNodeAST.nodes.single() as FunctionDefinitionASTNode
 
-        val callNode = funcDef.body!!.statements.single() as FunctionWithDeclaredTypeCallASTNode
-        assertEquals("Bar", callNode.callee.identifier)
-        assertEquals("bar", callNode.identifier)
+        val callNode = funcDef.body!!.statements.single() as FunctionCallASTNode
+        assertEquals("Bar", callNode.callee?.text)
+        assertEquals("bar", callNode.identifier.text)
         assertTrue(callNode.parameters.isEmpty())
     }
 
@@ -301,11 +301,11 @@ internal class ParserASTTest {
 
         val bar1Node = structNode.fields[0]
         assertEquals("bar1", bar1Node.identifier.text)
-        assertEquals("Integer", bar1Node.type.identifier)
+        assertEquals("Integer", bar1Node.type.identifier.text)
 
         val bar2Node = structNode.fields[1]
         assertEquals("bar2", bar2Node.identifier.text)
-        assertEquals("Boolean", bar2Node.type.identifier)
+        assertEquals("Boolean", bar2Node.type.identifier.text)
     }
 
     private fun parseForFunction(source: String): FunctionDefinitionASTNode {
@@ -320,10 +320,5 @@ internal class ParserASTTest {
 
     private inline fun <reified T : StatementASTNode> CodeBlockASTNode.single(): T {
         return statements.single() as T
-    }
-
-    private fun assertConstValue(expected: Long, node: ASTNode) {
-        val integerConstantValueNode = node as IntegerConstantASTNode
-        assertEquals(expected, integerConstantValueNode.value)
     }
 }

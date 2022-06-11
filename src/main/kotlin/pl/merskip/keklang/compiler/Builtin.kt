@@ -13,7 +13,7 @@ typealias BuiltinImplementation = (CompilerContext, List<Reference>) -> Unit
 class Builtin(
     private val context: LLVMContext,
     module: LLVMModule,
-    private val typesRegister: TypesRegister
+    private val typesRegister: TypesRegister,
 ) {
 
     private val logger = Logger(this::class.java)
@@ -37,19 +37,19 @@ class Builtin(
             ArchType.X86, ArchType.X86_64 -> {
                 logger.debug("Registering builtin primitive types for x86/x86_64")
                 voidType = registerType {
-                    PrimitiveType(Identifier.Type("Void"), createVoidType())
+                    PrimitiveType(TypeIdentifier("Void"), createVoidType())
                 }
                 booleanType = registerType {
-                    PrimitiveType(Identifier.Type("Boolean"), createIntegerType(1))
+                    PrimitiveType(TypeIdentifier("Boolean"), createIntegerType(1))
                 }
                 byteType = registerType {
-                    PrimitiveType(Identifier.Type("Byte"), createIntegerType(8))
+                    PrimitiveType(TypeIdentifier("Byte"), createIntegerType(8))
                 }
                 integerType = registerType {
-                    PrimitiveType(Identifier.Type("Integer"), createIntegerType(64))
+                    PrimitiveType(TypeIdentifier("Integer"), createIntegerType(64))
                 }
                 bytePointerType = registerType {
-                    byteType.asPointer(Identifier.Type("BytePointer"))
+                    byteType.asPointer(TypeIdentifier("BytePointer"))
                 }
             }
             else -> error("Unsupported arch: ${target.archType}")
@@ -58,11 +58,11 @@ class Builtin(
         logger.debug("Registering builtin standard types")
 
         systemType = registerType {
-            PrimitiveType(Identifier.Type("System"), voidType.wrappedType)
+            PrimitiveType(TypeIdentifier("System"), voidType.wrappedType)
         }
 
         memoryType = registerType {
-            PrimitiveType(Identifier.Type("Memory"), voidType.wrappedType)
+            PrimitiveType(TypeIdentifier("Memory"), voidType.wrappedType)
         }
 
         register(systemType, "exit", listOf(integerType)) { context, (exitCode) ->
@@ -85,7 +85,7 @@ class Builtin(
             context.instructionsBuilder.createUnreachable()
         }
 
-        register(Identifier.Type("System"), "print", listOf(Identifier.Type("String"))) { context, (string) ->
+        register(TypeIdentifier("System"), "print", listOf(TypeIdentifier("String"))) { context, (string) ->
             val standardOutput = createInteger(1L).get
             val guts = context.instructionsBuilder.createStructureLoad(string, "guts")
             val length = context.instructionsBuilder.createStructureLoad(string, "length")
@@ -114,7 +114,7 @@ class Builtin(
             if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
                 /* void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset) */
                 val address = context.instructionsBuilder.createSystemCall(
-                    0x09,
+                    9,
                     listOf(
                         /* addr= */ createInteger(0L).get,
                         /* length= */ size.get,
@@ -128,9 +128,52 @@ class Builtin(
                 )
                 context.instructionsBuilder.createReturn(address)
             } else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
-                // TODO: Wait to implement syscall allocate on GuwnOS side. Now just return 0x0 address
-                context.instructionsBuilder.createReturn(createCastToBytePointer(context, createInteger(0L).get).get)
+                val address = context.instructionsBuilder.createSystemCall(
+                    0x05,
+                    listOf(
+                        size.get
+                    ),
+                    bytePointerType.wrappedType,
+                    "syscall_heap_allocate"
+                )
+                context.instructionsBuilder.createReturn(address)
             }
+        }
+
+        register(memoryType, "free", listOf(bytePointerType, integerType)) { context, (address, size) ->
+            val targetTriple = context.module.getTargetTriple()
+            if (targetTriple.isMatch(archType = ArchType.X86_64, operatingSystem = OperatingSystem.Linux)) {
+                context.instructionsBuilder.createSystemCall(
+                    11,
+                    listOf(
+                        /* addr= */ address.get,
+                        /* len= */ size.get
+                    ),
+                    voidType.wrappedType,
+                    null
+                )
+                context.instructionsBuilder.createReturnVoid()
+            } else if (targetTriple.isMatch(ArchType.X86, operatingSystem = OperatingSystem.GunwOS)) {
+                context.instructionsBuilder.createSystemCall(
+                    0x05,
+                    listOf(
+                        address.get,
+                        size.get
+                    ),
+                    bytePointerType.wrappedType,
+                    null
+                )
+                context.instructionsBuilder.createReturnVoid()
+            }
+        }
+
+        register(memoryType, "allocateOnStack", listOf(integerType)) { context, (size) ->
+            val address = context.instructionsBuilder.createAllocaArray(
+                type = context.builtin.byteType.wrappedType,
+                size = size.get,
+                name = null
+            )
+            context.instructionsBuilder.createReturn(address)
         }
 
         register(bytePointerType, "get", listOf(bytePointerType)) { context, (`this`) ->
@@ -141,6 +184,16 @@ class Builtin(
         register(bytePointerType, "set", listOf(bytePointerType, byteType)) { context, (`this`, value) ->
             context.instructionsBuilder.createStore(`this`.get, value.get)
             context.instructionsBuilder.createReturnVoid()
+        }
+
+        register("==", booleanType, booleanType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.EQ, lhs.get, rhs.get, "isEqual")
+            context.instructionsBuilder.createReturn(result)
+        }
+
+        register("!=", booleanType, booleanType) { context, (lhs, rhs) ->
+            val result = context.instructionsBuilder.createIntegerComparison(IntPredicate.NE, lhs.get, rhs.get, "isNotEqual")
+            context.instructionsBuilder.createReturn(result)
         }
 
         register("+", integerType, integerType) { context, (lhs, rhs) ->
@@ -195,7 +248,7 @@ class Builtin(
     }
 
     private fun <T : DeclaredType> registerType(
-        getType: LLVMContext.() -> T
+        getType: LLVMContext.() -> T,
     ): T {
         val type = getType(context)
         typesRegister.register(type)
@@ -209,19 +262,17 @@ class Builtin(
     }
 
     private fun register(declaringType: DeclaredType?, identifier: String, parameters: List<DeclaredType>, implementation: BuiltinImplementation) {
-        val functionIdentifier =
-            if (declaringType != null) Identifier.Function(declaringType, identifier, parameters)
-            else Identifier.Function(null, identifier, parameters)
+        val functionIdentifier = FunctionIdentifier(declaringType?.identifier, identifier, parameters.map { it.identifier })
         builtinFunctions[functionIdentifier] = implementation
     }
 
     private fun register(declaringType: Identifier?, identifier: String, parameters: List<Identifier>, implementation: BuiltinImplementation) {
-        val functionIdentifier = Identifier.Function(declaringType, identifier, parameters)
+        val functionIdentifier = FunctionIdentifier(declaringType, identifier, parameters)
         builtinFunctions[functionIdentifier] = implementation
     }
 
     private fun register(operator: String, lhs: DeclaredType, rhs: DeclaredType, implementation: BuiltinImplementation) {
-        val operatorIdentifier = Identifier.Operator(operator, lhs, rhs)
+        val operatorIdentifier = OperatorIdentifier(operator, listOf(lhs.identifier, rhs.identifier))
         builtinFunctions[operatorIdentifier] = implementation
     }
 
@@ -234,7 +285,8 @@ class Builtin(
             classLoader.getResource("builtin/Integer.kek"),
             classLoader.getResource("builtin/Memory.kek"),
             classLoader.getResource("builtin/Operators.kek"),
-            classLoader.getResource("builtin/System.kek")
+            classLoader.getResource("builtin/System.kek"),
+            classLoader.getResource("builtin/Boolean.kek"),
         )
     }
 

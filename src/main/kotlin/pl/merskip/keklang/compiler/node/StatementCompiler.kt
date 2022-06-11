@@ -14,7 +14,8 @@ class StatementCompiler(
         try {
             return when (node) {
                 is ReferenceASTNode -> context.compile(node)
-                is IntegerConstantASTNode -> context.compile(node)
+                is ConstantBooleanASTNode -> context.compile(node)
+                is ConstantIntegerASTNode -> context.compile(node)
                 is ConstantStringASTNode -> context.compile(node)
                 is FunctionCallASTNode -> context.compile(node)
                 is IfElseConditionNodeAST -> context.compile(node)

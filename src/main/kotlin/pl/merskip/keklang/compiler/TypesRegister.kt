@@ -12,24 +12,24 @@ class TypesRegister {
     private val metadataMap = mutableMapOf<DeclaredType, LLVMConstantValue>()
 
     fun register(type: DeclaredType) {
-        if (types.any { it.identifier == type.identifier })
+        if (types.any { it.identifier.getMangled() == type.identifier.getMangled() })
             throw RegisteringTypeAlreadyExistsException(type)
         types.add(type)
-        logger.verbose("Registered type: ${type.getDebugDescription()}, ${type.identifier.mangled}")
+        logger.verbose("Registered type: ${type.getDescription()}, mangled=${type.identifier.getMangled()}")
     }
 
-    fun find(identifier: Identifier.Function): DeclaredSubroutine? =
+    fun find(identifier: FunctionIdentifier): DeclaredSubroutine? =
         getFunctions().firstOrNull { it.identifier == identifier }
 
-    fun find(identifier: Identifier.Operator): DeclaredSubroutine? =
+    fun find(identifier: OperatorIdentifier): DeclaredSubroutine? =
         getFunctions().firstOrNull { it.identifier == identifier }
-
-    fun getFunctions(): List<DeclaredSubroutine> {
-        return types.mapNotNull { it as? DeclaredSubroutine }
-    }
 
     fun find(identifier: Identifier): DeclaredType? {
         return types.firstOrNull { it.identifier == identifier }
+    }
+
+    fun getFunctions(): List<DeclaredSubroutine> {
+        return types.mapNotNull { it as? DeclaredSubroutine }
     }
 
     inline fun <reified T: DeclaredType> find(predicate: (type: T) -> Boolean): T? {
@@ -56,16 +56,16 @@ class TypesRegister {
 
     fun setMetadata(type: DeclaredType, metadata: LLVMConstantValue) {
         if (metadataMap.containsKey(type))
-            throw Exception("Metadata is already registered for: ${type.getDebugDescription()}")
+            throw Exception("Metadata is already registered for: ${type.getDescription()}")
         metadataMap[type] = metadata
     }
 
     fun getMetadata(type: DeclaredType): LLVMConstantValue {
         return metadataMap[type]
-            ?: throw Exception("Not found metadata for: ${type.getDebugDescription()}")
+            ?: throw Exception("Not found metadata for: ${type.getDescription()}")
     }
 
-    class RegisteringTypeAlreadyExistsException(type: DeclaredType) : Exception("Registering type already exists: ${type.getDebugDescription()}")
+    class RegisteringTypeAlreadyExistsException(type: DeclaredType) : Exception("Registering type already exists: ${type.getDescription()}")
 
     class DeclaredOperatorAlreadyExistsException(operator: DeclaredOperator) : Exception("Declared operator already exists: ${operator.operator}")
 }

@@ -15,8 +15,6 @@ class FunctionBuilder() {
     private lateinit var identifier: Identifier
     private lateinit var parameters: List<DeclaredSubroutine.Parameter>
     private lateinit var returnType: DeclaredType
-    private var declaringType: DeclaredType? = null
-    private var isExtern: Boolean = false
     private var isInline: Boolean = false
     private var sourceLocation: SourceLocation? = null
     private var implementation: ImplementationBuilder? = null
@@ -33,12 +31,6 @@ class FunctionBuilder() {
     fun returnType(returnType: DeclaredType) =
         apply { this.returnType = returnType }
 
-    fun declaringType(declaringType: DeclaredType?) =
-        apply { this.declaringType = declaringType }
-
-    fun isExtern(isExtern: Boolean = true) =
-        apply { this.isExtern = isExtern }
-
     fun isInline(inline: Boolean = true) =
         apply { this.isInline = inline }
 
@@ -49,20 +41,17 @@ class FunctionBuilder() {
         apply { this.implementation = implementation }
 
     private fun build(context: CompilerContext): DeclaredSubroutine {
-
-        val identifier = identifier
         val functionType = LLVMFunctionType(
             result = returnType.wrappedType,
             parameters = parameters.types.map { it.wrappedType },
             isVariadicArguments = false
         )
-        val functionValue = context.module.addFunction(identifier.mangled, functionType)
+        val functionValue = context.module.addFunction(identifier.getMangled(), functionType)
         if (isInline) {
             functionValue.setAsAlwaysInline()
         }
 
         val function = DeclaredSubroutine(
-            declaringType = declaringType,
             identifier = identifier,
             parameters = parameters,
             returnType = returnType,
@@ -105,7 +94,7 @@ class FunctionBuilder() {
         val subprogram = context.debugBuilder.createSubprogram(
             scope = debugFile,
             name = function.toString() ,
-            linkageName = function.identifier.mangled,
+            linkageName = function.identifier.getMangled(),
             file = debugFile,
             lineNumber = sourceLocation.startIndex.line,
             type = subroutine,
@@ -152,7 +141,7 @@ class FunctionBuilder() {
             context.scopesStack.createScope(subroutine.debugScope) {
                 val parameterReferences = subroutine.value.getParametersValues().zip(subroutine.parameters).map { (parameterValue, parameter) ->
 
-                    val parameterIdentifier = Identifier.Reference(parameter.name)
+                    val parameterIdentifier = ReferenceIdentifier(parameter.name)
 
                     val parameterAlloca = context.instructionsBuilder.createAlloca(parameter.type.wrappedType, "_" + parameter.name)
                     context.instructionsBuilder.createStore(parameterAlloca, parameterValue)

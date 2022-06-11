@@ -14,9 +14,9 @@ abstract class DeclaredType(
     fun isCompatibleWith(otherType: DeclaredType): Boolean =
         identifier == otherType.identifier
 
-    abstract fun getDebugDescription(): String
+    abstract fun getDescription(): String
 
-    override fun toString() = getDebugDescription()
+    override fun toString() = getDescription()
 }
 
 class PrimitiveType(
@@ -24,7 +24,7 @@ class PrimitiveType(
     wrappedType: LLVMType
 ) : DeclaredType(identifier, wrappedType) {
 
-    override fun getDebugDescription() = "$identifier=Primitive[$wrappedType]"
+    override fun getDescription() = "$identifier=Primitive[$wrappedType]"
 }
 
 class PointerType(
@@ -33,7 +33,7 @@ class PointerType(
     override val wrappedType: LLVMPointerType
 ) : DeclaredType(identifier, wrappedType) {
 
-    override fun getDebugDescription() = "${identifier}=Pointer[$wrappedType](${elementType.identifier.canonical})"
+    override fun getDescription() = "$identifier=Pointer[$wrappedType](${elementType.identifier})"
 }
 
 class StructureType(
@@ -54,14 +54,13 @@ class StructureType(
         fields.indexOfFirst { it.name == name }
             .takeIf { it >= 0 } ?: throw Exception("Not found field with name: '$name'")
 
-    override fun getDebugDescription() = "${identifier}=Structure[$wrappedType](${getFieldsDescription()})"
+    override fun getDescription() = "$identifier=Structure[$wrappedType](${getFieldsDescription()})"
 
-    private fun getFieldsDescription() = fields.joinToString(", ") { "${it.name}: ${it.type.identifier.canonical}" }
+    private fun getFieldsDescription() = fields.joinToString(", ") { "${it.name}: ${it.type.identifier}" }
 }
 
 class DeclaredSubroutine(
     identifier: Identifier,
-    val declaringType: DeclaredType?,
     val parameters: List<Parameter>,
     val returnType: DeclaredType,
     override val wrappedType: LLVMFunctionType,
@@ -86,18 +85,24 @@ class DeclaredSubroutine(
         debugScope = subprogram
     }
 
-    override fun getDebugDescription(): String {
+    override fun getDescription(): String {
         var description = ""
-        if (declaringType != null) description += declaringType.identifier.canonical + "."
-        description +=
-            if (identifier is Identifier.Operator) "operator ${identifier.canonical} "
-            else identifier.canonical
+        var identifier = identifier
+        if (identifier is ExternalIdentifier) {
+            description += "external(${identifier.externalSymbol}) "
+            identifier = identifier.internalIdentifier
+        }
+        description += when (identifier) {
+            is FunctionIdentifier -> "func ${identifier.callee?.let { it.name + "." }.orEmpty()}${identifier.name}"
+            is OperatorIdentifier -> "operator ${identifier.name} "
+            else -> throw Exception("Illegal identifier for subroutine: $identifier")
+        }
         description += "(" + getParametersDescription() + ")"
-        description += " -> " + returnType.identifier.canonical
+        description += " -> " + returnType.identifier.name
         return description
     }
 
-    private fun getParametersDescription() = parameters.joinToString(", ") { "${it.name}: ${it.type.identifier.canonical}" }
+    private fun getParametersDescription() = parameters.joinToString(", ") { "${it.name}: ${it.type.identifier.name}" }
 }
 
 /* Utils */
