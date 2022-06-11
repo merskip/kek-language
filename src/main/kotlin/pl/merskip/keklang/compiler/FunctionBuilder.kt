@@ -8,7 +8,7 @@ import pl.merskip.keklang.logger.Logger
 
 typealias ImplementationBuilder = (List<Reference>) -> Unit
 
-class FunctionBuilder() {
+class FunctionBuilder {
 
     private val logger = Logger(this::class.java)
 

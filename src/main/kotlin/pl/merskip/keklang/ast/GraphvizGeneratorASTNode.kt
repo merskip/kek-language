@@ -90,6 +90,6 @@ class GraphvizGeneratorASTNode {
     private fun String.sha1(): String {
         return MessageDigest.getInstance("sha1")
             .digest(toByteArray())
-            .fold("", { str, it -> str + "%02x".format(it) })
+            .fold("") { str, it -> str + "%02x".format(it) }
     }
 }
