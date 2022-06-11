@@ -4,7 +4,6 @@ import org.bytedeco.llvm.global.LLVM.*
 import pl.merskip.keklang.llvm.enum.ArchType
 import pl.merskip.keklang.llvm.enum.IntPredicate
 import pl.merskip.keklang.llvm.enum.OperatingSystem
-import pl.merskip.keklang.shortHash
 import pl.merskip.keklang.toPointerPointer
 
 /**
@@ -454,7 +453,8 @@ class IRInstructionsBuilder(
             constraints.toByteArray(), constraints.length.toLong(),
             1,
             0,
-            LLVMInlineAsmDialectATT
+            LLVMInlineAsmDialectATT,
+            0
         )
         return LLVMInstructionValue(
             LLVMBuildCall2(

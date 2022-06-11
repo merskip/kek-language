@@ -2,7 +2,10 @@ package pl.merskip.keklang.compiler
 
 import org.bytedeco.llvm.global.LLVM
 import pl.merskip.keklang.ast.ParserAST
-import pl.merskip.keklang.ast.node.*
+import pl.merskip.keklang.ast.node.FileASTNode
+import pl.merskip.keklang.ast.node.OperatorDeclarationASTNode
+import pl.merskip.keklang.ast.node.StructureDefinitionASTNode
+import pl.merskip.keklang.ast.node.SubroutineDefinitionASTNode
 import pl.merskip.keklang.compiler.node.*
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
@@ -238,7 +241,9 @@ class Compiler(
             emissionKind = EmissionKind.Full,
             DWOId = 0,
             splitDebugInlining = false,
-            debugInfoForProfiling = false
+            debugInfoForProfiling = false,
+            sysRoot = null,
+            SDK = null
         )
     }
 

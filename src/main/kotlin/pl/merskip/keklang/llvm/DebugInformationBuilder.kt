@@ -44,6 +44,8 @@ class DebugInformationBuilder(
      * @param DWOId The DWOId if this is a split skeleton compile unit.
      * @param splitDebugInlining Whether to emit inline debug info.
      * @param debugInfoForProfiling Whether to emit extra debug info for profile collection.
+     * @param sysRoot The Clang system root (value of -isysroot).
+     * @param SDK The SDK. On Darwin, the last component of the sysroot.
      */
     fun createCompileUnit(
         sourceLanguage: SourceLanguage,
@@ -56,7 +58,9 @@ class DebugInformationBuilder(
         emissionKind: EmissionKind,
         DWOId: Int,
         splitDebugInlining: Boolean,
-        debugInfoForProfiling: Boolean
+        debugInfoForProfiling: Boolean,
+        sysRoot: String?,
+        SDK: String?
     ): LLVMCompileUnitMetadata {
         return LLVMDIBuilderCreateCompileUnit(
             diBuilder,
@@ -71,7 +75,9 @@ class DebugInformationBuilder(
             emissionKind.rawValue,
             DWOId,
             splitDebugInlining.toInt(),
-            debugInfoForProfiling.toInt()
+            debugInfoForProfiling.toInt(),
+            sysRoot, sysRoot.orEmpty().length.toLong(),
+            SDK, SDK.orEmpty().length.toLong()
         ).let { LLVMCompileUnitMetadata(it) }
     }
 

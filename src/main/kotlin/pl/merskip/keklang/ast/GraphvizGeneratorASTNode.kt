@@ -1,6 +1,6 @@
 package pl.merskip.keklang.ast
 
-import pl.merskip.keklang.ast.node.*
+import pl.merskip.keklang.ast.node.ASTNode
 import pl.merskip.keklang.lexer.Token
 import java.security.MessageDigest
 
@@ -24,17 +24,18 @@ class GraphvizGeneratorASTNode {
         var output = ""
         output += "digraph G {\n"
 
-        for (node in nodes) {
+        for (childNode in nodes) {
             output += "    "
-            if (node is Token) {
-                output += "\"${node.id()}\" ["
-                output += "label=\"${node::class.java.simpleName}:\\n${node.getEscapedText().replace("\\n", "\\\\n").replace("\"", "\\\"")}\""
+            if (childNode is Token) {
+                output += "\"${childNode.id()}\" ["
+                val stringEscapedText = childNode.getEscapedText().replace("\\n", "\\\\n").replace("\"", "\\\"")
+                output += "label=\"${childNode::class.java.simpleName}:\\n${stringEscapedText}\""
                 output += ",style=filled"
 
                 output += "];\n"
             }
             else {
-                output += "\"${node.id()}\" [label=\"${node::class.java.simpleName}\""
+                output += "\"${childNode.id()}\" [label=\"${childNode::class.java.simpleName}\""
                 output += "];\n"
             }
         }

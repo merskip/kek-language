@@ -67,9 +67,6 @@ class LLVMPassManager(
     fun addGlobalOptimizer() =
         LLVMAddGlobalOptimizerPass(reference)
 
-    fun addIPConstantPropagation() =
-        LLVMAddIPConstantPropagationPass(reference)
-
     fun addPruneEH() =
         LLVMAddPruneEHPass(reference)
 
@@ -174,9 +171,6 @@ class LLVMPassManager(
 
     fun addTailCallElimination() =
         LLVMAddTailCallEliminationPass(reference)
-
-    fun addConstantPropagation() =
-        LLVMAddConstantPropagationPass(reference)
 
     fun addPromoteMemoryToRegister() =
         LLVMAddPromoteMemoryToRegisterPass(reference)

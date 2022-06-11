@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    implementation(group = "org.bytedeco", name = "llvm-platform", version = "10.0.1-1.5.4")
+    implementation(group = "org.bytedeco", name = "llvm-platform", version = "13.0.1-1.5.7")
     testImplementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.6.0")
     implementation(group = "com.xenomachina", name = "kotlin-argparser", version = "2.0.7")
 }
