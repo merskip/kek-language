@@ -70,13 +70,13 @@ fun main(args: Array<String>) = mainBody {
                 CHeaderGenerator(compiler.context.typesRegister)
                     .generate(File(cHeaderOutput!!))
 
-            BackendCompiler(compiler.context)
-                .compile(File(output))
-
             if (runJIT) {
                 val mainFunction = compiler.context.typesRegister.find(FunctionIdentifier(null, "main", emptyList()))
                     ?: throw Exception("Not found main function")
                 JIT(compiler.context.module.reference).run(mainFunction)
+            } else {
+                BackendCompiler(compiler.context)
+                    .emit(File(output))
             }
         } catch (e: SourceLocationException) {
             printException(e)

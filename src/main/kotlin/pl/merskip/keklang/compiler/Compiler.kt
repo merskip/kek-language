@@ -9,8 +9,7 @@ import pl.merskip.keklang.ast.node.SubroutineDefinitionASTNode
 import pl.merskip.keklang.compiler.node.*
 import pl.merskip.keklang.lexer.Lexer
 import pl.merskip.keklang.lexer.SourceLocationException
-import pl.merskip.keklang.llvm.LLVMConstantValue
-import pl.merskip.keklang.llvm.LLVMFileMetadata
+import pl.merskip.keklang.llvm.*
 import pl.merskip.keklang.llvm.enum.EmissionKind
 import pl.merskip.keklang.llvm.enum.ModuleFlagBehavior
 import pl.merskip.keklang.llvm.enum.SourceLanguage
@@ -80,6 +79,24 @@ class Compiler(
 
             createEntryPoint("_start")
             context.debugBuilder.finalize()
+
+            LLVMInitialize.allTargetInfos()
+            LLVMInitialize.allTargets()
+            LLVMInitialize.allTargetMCs()
+            LLVMInitialize.allAsmParsers()
+            LLVMInitialize.allAsmPrinters()
+
+            val targetTriple = context.module.getTargetTriple()
+            context.targetMachine = LLVMTargetMachine.create(targetTriple)
+            val dataLayout = LLVMTargetData.from(context.targetMachine)
+            context.module.setDataLayout(dataLayout)
+
+            LLVMPassManager.runOn(context.module) {
+                addAlwaysInliner()
+                addJumpThreading()
+                addPromoteMemoryToRegister()
+            }
+
             verifyModule()
         }
     }

@@ -15,26 +15,9 @@ class BackendCompiler(
 
     private val logger = Logger(javaClass)
 
-    fun compile(outputFile: File) {
-
-        LLVMInitialize.allTargetInfos()
-        LLVMInitialize.allTargets()
-        LLVMInitialize.allTargetMCs()
-        LLVMInitialize.allAsmParsers()
-        LLVMInitialize.allAsmPrinters()
-
-        LLVMPassManager.runOn(context.module) {
-            addAlwaysInliner()
-            addJumpThreading()
-            addPromoteMemoryToRegister()
-        }
-
+    fun emit(outputFile: File) {
         val targetTriple = context.module.getTargetTriple()
-        val targetMachine = LLVMTargetMachine.create(targetTriple)
-        val dataLayout = LLVMTargetData.from(targetMachine)
-        context.module.setDataLayout(dataLayout)
-
-        val emitter = LLVMEmitter(targetMachine, context.module)
+        val emitter = LLVMEmitter(context.targetMachine, context.module)
 
         when {
             outputFile.hasExtension(".ll") -> {
@@ -47,7 +30,7 @@ class BackendCompiler(
             }
             outputFile.hasExtension(".asm") -> {
                 logger.info("Writing assembler to $outputFile")
-                targetMachine.setAssemblerVerbosity(true)
+                context.targetMachine.setAssemblerVerbosity(true)
                 emitter.emitToFile(outputFile, CodeGenerationFileType.AssemblyFile)
             }
             outputFile.hasExtension(".o") -> {
