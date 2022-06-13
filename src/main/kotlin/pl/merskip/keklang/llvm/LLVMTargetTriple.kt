@@ -44,13 +44,20 @@ data class LLVMTargetTriple(
 
         fun from(string: String): LLVMTargetTriple {
             val chunks = string.split("-")
+            var index = 0
             try {
-                return LLVMTargetTriple(
-                    findValueWithIgnoreCase<ArchType>(chunks[0]),
-                    findValueWithIgnoreCase<VendorType>(chunks[1]),
-                    findValueWithIgnoreCase<OperatingSystem>(chunks[2]),
-                    findValueWithIgnoreCase<EnvironmentType>(chunks.getOrNull(3))
-                )
+                val arch = findValueWithIgnoreCase<ArchType>(chunks.getOrNull(index))
+                if (arch != null || chunks.getOrNull(index) == "unknown") index += 1
+
+                val vendor = findValueWithIgnoreCase<VendorType>(chunks.getOrNull(index))
+                if (vendor != null || chunks.getOrNull(index) == "unknown") index += 1
+
+                val operatingSystem = findValueWithIgnoreCase<OperatingSystem>(chunks.getOrNull(index))
+                if (operatingSystem != null || chunks.getOrNull(index) == "unknown") index += 1
+
+                val environment = findValueWithIgnoreCase<EnvironmentType>(chunks.getOrNull(index))
+
+                return LLVMTargetTriple(arch, vendor, operatingSystem, environment)
             } catch (e: Exception) {
                 throw IllegalArgumentException("Failed parse \"$string\" into target triple", e)
             }

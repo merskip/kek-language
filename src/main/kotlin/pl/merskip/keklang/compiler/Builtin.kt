@@ -81,6 +81,8 @@ class Builtin(
                     voidType.wrappedType,
                     null
                 )
+            } else {
+                error("Unsupported target triple: $targetTriple")
             }
             context.instructionsBuilder.createUnreachable()
         }
@@ -105,6 +107,8 @@ class Builtin(
                     voidType.wrappedType,
                     null
                 )
+            } else {
+                error("Unsupported target triple: $targetTriple")
             }
             context.instructionsBuilder.createReturnVoid()
         }
@@ -137,6 +141,8 @@ class Builtin(
                     "syscall_heap_allocate"
                 )
                 context.instructionsBuilder.createReturn(address)
+            } else {
+                error("Unsupported target triple: $targetTriple")
             }
         }
 
@@ -164,6 +170,8 @@ class Builtin(
                     null
                 )
                 context.instructionsBuilder.createReturnVoid()
+            } else {
+                error("Unsupported target triple: $targetTriple")
             }
         }
 
