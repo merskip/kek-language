@@ -72,6 +72,12 @@ fun main(args: Array<String>) = mainBody {
 
             BackendCompiler(compiler.context)
                 .compile(File(output))
+
+            if (runJIT) {
+                val mainFunction = compiler.context.typesRegister.find(FunctionIdentifier(null, "main", emptyList()))
+                    ?: throw Exception("Not found main function")
+                JIT(compiler.context.module.reference).run(mainFunction)
+            }
         } catch (e: SourceLocationException) {
             printException(e)
         } catch (e: Exception) {
@@ -82,13 +88,6 @@ fun main(args: Array<String>) = mainBody {
                 val richIR = RicherLLVMIRText(plainIR, typesRegister).rich()
                 println(richIR)
             }
-
-            if (runJIT) {
-                val mainFunction = compiler.context.typesRegister.find(FunctionIdentifier(null, "main", emptyList()))
-                    ?: throw Exception("Not found main function")
-                JIT(compiler.context.module.reference).run(mainFunction)
-            }
-
             module.dispose()
         }
     }

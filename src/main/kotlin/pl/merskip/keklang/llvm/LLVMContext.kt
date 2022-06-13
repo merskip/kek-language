@@ -43,6 +43,6 @@ class LLVMContext(
     }
 
     fun createAttribute(attribute: AttributeKind, value: Long = 0L): Attribute {
-        return Attribute(LLVMCreateEnumAttribute(reference, attribute.rawValue, value))
+        return Attribute(LLVMCreateEnumAttribute(reference, attribute.kindId, value))
     }
 }
