@@ -1,9 +1,5 @@
 
-func sayHello() {
+func main() {
     System.print("Hello world!\n")
     System.print("Witaj świecie!\n")
-}
-
-func main() {
-    sayHello()
 }
