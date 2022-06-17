@@ -91,7 +91,7 @@ fun main(args: Array<String>) = mainBody {
                 JIT(compiler.context.module.reference).run(mainFunction)
             } else {
                 BackendCompiler(compiler.context)
-                    .emit(File(output))
+                    .emit(File(output), useLinkerOnWSL)
             }
         } catch (e: SourceLocationException) {
             printException(e)
