@@ -47,7 +47,9 @@ class Compiler(
         context.addNodeCompiler(FieldReferenceCompiler(context))
         context.addNodeCompiler(WhileLoopCompiler(context))
         context.addNodeCompiler(ExpressionCompiler(context))
+    }
 
+    fun addBuiltinFiles() {
         context.builtin.getBuiltinFiles()
             .forEach {
                 addFileURL(it)
@@ -72,12 +74,24 @@ class Compiler(
 
             val filesNodes = parseFiles()
             val filesSubroutines = registerSubroutinesAndDeclaredStructures(filesNodes)
-            context.typesRegister.getAllTypes().forEach {
-                createMetadata(context, it)
+
+            val metadataType = context.typesRegister.find(TypeIdentifier("Metadata")) as? StructureType
+            if (metadataType != null) {
+                context.typesRegister.getAllTypes().forEach {
+                    createMetadata(context, it, metadataType)
+                }
+            } else {
+                logger.warning("Cannot generate metadata because not found Metadata structure")
             }
             compileFilesSubroutines(filesSubroutines)
 
-            createEntryPoint("_start")
+            val mainFunction = context.typesRegister.find(FunctionIdentifier(null, "main", emptyList()))
+            if (mainFunction != null) {
+                createEntryPoint("_start", mainFunction)
+            } else {
+                logger.warning("Not found main function. Define `func main()` or `func main() -> Integer` function")
+            }
+
             context.debugBuilder.finalize()
 
             LLVMInitialize.allTargetInfos()
@@ -214,10 +228,8 @@ class Compiler(
         }
     }
 
-    private fun createMetadata(context: CompilerContext, type: DeclaredType) {
+    private fun createMetadata(context: CompilerContext, type: DeclaredType, metadataType: StructureType) {
         if (type is DeclaredSubroutine) return
-
-        val metadataType = context.typesRegister.find(TypeIdentifier("Metadata")) as StructureType
 
         val metadata = metadataType.wrappedType.constant(
             listOf(
@@ -275,7 +287,7 @@ class Compiler(
         )
     }
 
-    private fun createEntryPoint(symbol: String) {
+    private fun createEntryPoint(symbol: String, mainFunction: DeclaredSubroutine) {
         logger.debug("Adding entry point: \"$symbol\"")
         context.entryPointSubroutine = FunctionBuilder.register(context) {
             identifier(ExternalIdentifier(symbol, FunctionIdentifier(null, symbol, emptyList())))
@@ -283,13 +295,7 @@ class Compiler(
             returnType(context.builtin.voidType)
             skipDebugInformation(true)
             implementation {
-                val mainFunction = context.typesRegister.find(FunctionIdentifier(null, "main", emptyList()))
-
                 val exitCode = when {
-                    mainFunction == null -> {
-                        logger.warning("Not found main function. Define `func main()` or `func main() -> Integer` function")
-                        context.builtin.createInteger(0L)
-                    }
                     mainFunction.isReturnVoid -> {
                         context.instructionsBuilder.createCall(mainFunction, emptyList())
                         context.builtin.createInteger(0L)

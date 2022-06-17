@@ -50,6 +50,21 @@ fun main(args: Array<String>) = mainBody {
         )
 
         try {
+            if (!noBuiltin) {
+                compiler.addBuiltinFiles()
+            }
+
+            if (indirectInput) {
+                var input = ""
+                while (true) {
+                    val line = readLine() ?: break
+                    input += line + "\n"
+                }
+                val fakeFile = File.createTempFile("kek-temp-file-", ".kek")
+                fakeFile.writeText(input)
+                fakeFile.deleteOnExit()
+                compiler.addFile(fakeFile)
+            }
             inputFiles.forEach { inputFile ->
                 compiler.addFile(File(inputFile))
             }

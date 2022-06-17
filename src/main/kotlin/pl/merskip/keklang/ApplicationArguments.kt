@@ -2,7 +2,6 @@ package pl.merskip.keklang
 
 import com.xenomachina.argparser.ArgParser
 import com.xenomachina.argparser.default
-import java.io.File
 
 class ApplicationArguments(parser: ArgParser) {
 
@@ -41,6 +40,11 @@ class ApplicationArguments(parser: ArgParser) {
         help = "Generates header for C Language with all functions"
     ).default<String?>(null)
 
+    val noBuiltin by parser.flagging(
+        "--no-builtin",
+        help = "Skips builtin files while compiling"
+    )
+
     val output by parser.storing(
         "-o", "--output",
         help = "Specify the output file. If the file ends with ...\n" +
@@ -52,8 +56,14 @@ class ApplicationArguments(parser: ArgParser) {
                 "The default value is \"a.out\"."
     ).default("a.out")
 
+    val indirectInput by parser.flagging(
+        "--std-in",
+        help = "Read input"
+    )
+
     val inputFiles by parser.positionalList(
         "INPUT_FILES",
-        help = "Input sources files."
+        help = "Input sources files.",
+        sizeRange = 0..Int.MAX_VALUE
     )
 }
