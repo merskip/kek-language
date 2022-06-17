@@ -64,7 +64,7 @@ class DeclaredSubroutine(
     val parameters: List<Parameter>,
     val returnType: DeclaredType,
     override val wrappedType: LLVMFunctionType,
-    val value: LLVMFunctionValue
+    val value: LLVMFunctionValue,
 ) : DeclaredType(identifier, wrappedType) {
 
     val isReturnVoid: Boolean

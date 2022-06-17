@@ -3,7 +3,7 @@
     <option name="ALTERNATIVE_JRE_PATH" value="11" />
     <option name="MAIN_CLASS_NAME" value="pl.merskip.keklang.MainKt" />
     <module name="kek-language.main" />
-    <option name="PROGRAM_PARAMETERS" value="--run-jit 01_hello_world.kek" />
+    <option name="PROGRAM_PARAMETERS" value="--dump-llvm-ir --run-jit 01_hello_world.kek" />
     <target name="WSL - Ubuntu-20.04" />
     <shortenClasspath name="NONE" />
     <option name="WORKING_DIRECTORY" value="examples/01_hello_world/" />

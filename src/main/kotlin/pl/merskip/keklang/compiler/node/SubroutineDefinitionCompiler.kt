@@ -92,7 +92,7 @@ class SubroutineDefinitionCompiler(
 
         logger.verbose("Compiling function: ${subroutine.getDescription()}")
 
-        FunctionBuilder.buildImplementation(context, subroutine) { parameters ->
+        FunctionBuilder.buildImplementation(context, subroutine, skipDebugInformation = node.isExternal) { parameters ->
             if (node.isBuiltin) {
                 assert(node.body == null) { "builtin function cannot have body" }
                 context.builtin.compileBuiltinFunction(context, subroutine.identifier, parameters)

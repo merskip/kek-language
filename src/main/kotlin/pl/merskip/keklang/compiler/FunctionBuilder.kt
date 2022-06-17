@@ -16,6 +16,7 @@ class FunctionBuilder {
     private lateinit var parameters: List<DeclaredSubroutine.Parameter>
     private lateinit var returnType: DeclaredType
     private var isInline: Boolean = false
+    private var skipDebugInformation: Boolean = false
     private var sourceLocation: SourceLocation? = null
     private var implementation: ImplementationBuilder? = null
 
@@ -31,8 +32,11 @@ class FunctionBuilder {
     fun returnType(returnType: DeclaredType) =
         apply { this.returnType = returnType }
 
-    fun isInline(inline: Boolean = true) =
-        apply { this.isInline = inline }
+    fun isInline(isInline: Boolean) =
+        apply { this.isInline = isInline }
+
+    fun skipDebugInformation(skipDebugInformation: Boolean) =
+        apply { this.skipDebugInformation = skipDebugInformation }
 
     fun sourceLocation(sourceLocation: SourceLocation) =
         apply { this.sourceLocation = sourceLocation }
@@ -56,27 +60,28 @@ class FunctionBuilder {
             parameters = parameters,
             returnType = returnType,
             wrappedType = functionType,
-            value = functionValue
+            value = functionValue,
         )
 
         functionValue.getParametersValues().zip(parameters).map { (parameterValue, parameter) ->
             parameterValue.setName(parameter.name)
         }
 
-        createDebugInformation(context, function)
+        if (!skipDebugInformation)
+            createSubroutineDebugInformation(context, function)
 
         if (implementation != null) {
-            buildImplementation(context, function, implementation!!)
+            buildImplementation(context, function, skipDebugInformation, implementation!!)
         }
 
         return function
     }
 
-    private fun createDebugInformation(context: CompilerContext, function: DeclaredSubroutine) {
+    private fun createSubroutineDebugInformation(context: CompilerContext, function: DeclaredSubroutine) {
         val sourceLocation = sourceLocation
         val debugFile = context.getDebugFile(sourceLocation)
         if (debugFile == null || sourceLocation == null) {
-            logger.warning("Cannot create debug information for function: $function")
+            logger.warning("Cannot create debug information for function: $function. Missing debugFile or sourceLocation.")
             return
         }
 
@@ -93,7 +98,7 @@ class FunctionBuilder {
 
         val subprogram = context.debugBuilder.createSubprogram(
             scope = debugFile,
-            name = function.toString() ,
+            name = function.toString(),
             linkageName = function.identifier.getMangled(),
             file = debugFile,
             lineNumber = sourceLocation.startIndex.line,
@@ -123,7 +128,7 @@ class FunctionBuilder {
 
     companion object {
 
-        private val logger = Logger(this::class.java)
+        private val logger = Logger(FunctionBuilder::class.java)
 
         fun register(context: CompilerContext, builder: FunctionBuilder.() -> Unit): DeclaredSubroutine {
             val functionBuilder = FunctionBuilder()
@@ -136,40 +141,53 @@ class FunctionBuilder {
             return function
         }
 
-        fun buildImplementation(context: CompilerContext, subroutine: DeclaredSubroutine, implementation: ImplementationBuilder) {
+        fun buildImplementation(
+            context: CompilerContext,
+            subroutine: DeclaredSubroutine,
+            skipDebugInformation: Boolean = false,
+            implementation: ImplementationBuilder,
+        ) {
             subroutine.entryBlock = context.instructionsBuilder.appendBasicBlockAtEnd(subroutine.value, "entry")
             context.scopesStack.createScope(subroutine.debugScope) {
-                val parameterReferences = subroutine.value.getParametersValues().zip(subroutine.parameters).map { (parameterValue, parameter) ->
-
-                    val parameterIdentifier = ReferenceIdentifier(parameter.name)
+                val parametersValues = subroutine.value.getParametersValues()
+                val parameterReferences = parametersValues.zip(subroutine.parameters).map { (parameterValue, parameter) ->
 
                     val parameterAlloca = context.instructionsBuilder.createAlloca(parameter.type.wrappedType, "_" + parameter.name)
                     context.instructionsBuilder.createStore(parameterAlloca, parameterValue)
 
-                    val index =  subroutine.parameters.indexOf(parameter)
-                    val debugScope = subroutine.debugScope
-                    val debugParameters = subroutine.debugVariableParameters
-                    if (debugScope != null && debugParameters != null && parameter.sourceLocation != null) {
-                        context.debugBuilder.insertDeclareAtEnd(
-                            storage = parameterAlloca.reference,
-                            variable = debugParameters[index],
-                            expression = context.debugBuilder.createEmptyExpression(),
-                            location = context.debugBuilder.createDebugLocation(
-                                line = parameter.sourceLocation.startIndex.line,
-                                column = parameter.sourceLocation.startIndex.column,
-                                scope = debugScope
-                            ),
-                            block = context.instructionsBuilder.getInsertBlock().blockReference
-                        )
-                    }
-                    else {
-                        logger.warning("Cannot emit parameter declare of ${parameter.name}")
-                    }
-
+                    val parameterIdentifier = ReferenceIdentifier(parameter.name)
                     val reference = IdentifiableMemoryReference(parameterIdentifier, parameter.type, parameterAlloca, context.instructionsBuilder)
+                    if (!skipDebugInformation)
+                        createParameterDebugInformation(context, subroutine, parameter, reference)
                     context.scopesStack.current.addReference(reference)
                 }
                 implementation.invoke(parameterReferences)
+            }
+        }
+
+        private fun createParameterDebugInformation(
+            context: CompilerContext,
+            subroutine: DeclaredSubroutine,
+            parameter: DeclaredSubroutine.Parameter,
+            reference: Reference,
+        ) {
+            val index = subroutine.parameters.indexOf(parameter)
+            val debugScope = subroutine.debugScope
+            val debugParameters = subroutine.debugVariableParameters
+            if (debugScope != null && debugParameters != null && parameter.sourceLocation != null) {
+                context.debugBuilder.insertDeclareAtEnd(
+                    storage = reference.get.reference,
+                    variable = debugParameters[index],
+                    expression = context.debugBuilder.createEmptyExpression(),
+                    location = context.debugBuilder.createDebugLocation(
+                        line = parameter.sourceLocation.startIndex.line,
+                        column = parameter.sourceLocation.startIndex.column,
+                        scope = debugScope
+                    ),
+                    block = context.instructionsBuilder.getInsertBlock().blockReference
+                )
+            } else {
+                logger.warning("Cannot emit debug parameter declare: ${parameter.name}")
             }
         }
     }

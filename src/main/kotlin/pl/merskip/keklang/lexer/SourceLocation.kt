@@ -8,10 +8,10 @@ data class SourceLocation(
     val text: String,
     val startIndex: Index,
     val endIndex: Index,
-    val length: Int
 ) {
+    val length: Int = endIndex.offset - startIndex.offset + 1
 
-    data class Index(
+        data class Index(
         val offset: Int,
         val line: Int,
         val column: Int
@@ -44,7 +44,7 @@ data class SourceLocation(
             val text = source.substring(offset, offset + length)
             val startIndex = calculateIndex(source, offset)
             val endIndex = calculateIndex(source, offset + length - 1)
-            return SourceLocation(file, text, startIndex, endIndex, length)
+            return SourceLocation(file, text, startIndex, endIndex)
         }
 
         private fun calculateIndex(source: String, offset: Int): Index {

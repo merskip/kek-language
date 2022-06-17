@@ -117,10 +117,8 @@ class Compiler(
 
             listeners.forEach { it.onParsed(file, fileNode, isBuiltin) }
 
-            if (!isBuiltin) {
-                val debugFile = createDebugFile(fileNode)
-                createCompileUnit(debugFile)
-            }
+            val debugFile = createDebugFile(fileNode)
+            createCompileUnit(debugFile)
 
             fileNode
         }
@@ -138,7 +136,10 @@ class Compiler(
                                 subroutines.add(FileSubroutines.Subroutine(node, subroutine))
                             }
                             is OperatorDeclarationASTNode -> registerDeclarationOperator(node)
-                            is StructureDefinitionASTNode -> registerStructureDeclaration(node)
+                            is StructureDefinitionASTNode -> {
+                                val structure = registerStructureDeclaration(node)
+                                createDefaultStructureInitialization(context, structure)
+                            }
                             else -> throw Exception("Illegal node at top level: $node")
                         }
                     }
@@ -149,24 +150,26 @@ class Compiler(
     }
 
     private fun registerDeclarationOperator(node: OperatorDeclarationASTNode) {
-        context.typesRegister.register(DeclaredOperator(
-            type = when {
-                node.type.isKeyword("prefix") -> DeclaredOperator.Type.Prefix
-                node.type.isKeyword("postfix") -> DeclaredOperator.Type.Postfix
-                node.type.isKeyword("infix") -> DeclaredOperator.Type.Infix
-                else -> throw SourceLocationException("Unknown operator type", node)
-            },
-            operator = node.operator.text,
-            precedence = node.precedence.text.toInt(),
-            associative = when {
-                node.associative?.isKeyword("right") ?: false -> DeclaredOperator.Associative.Right
-                node.associative?.isKeyword("left") ?: false -> DeclaredOperator.Associative.Left
-                else -> DeclaredOperator.Associative.Left
-            }
-        ))
+        context.typesRegister.register(
+            DeclaredOperator(
+                type = when {
+                    node.type.isKeyword("prefix") -> DeclaredOperator.Type.Prefix
+                    node.type.isKeyword("postfix") -> DeclaredOperator.Type.Postfix
+                    node.type.isKeyword("infix") -> DeclaredOperator.Type.Infix
+                    else -> throw SourceLocationException("Unknown operator type", node)
+                },
+                operator = node.operator.text,
+                precedence = node.precedence.text.toInt(),
+                associative = when {
+                    node.associative?.isKeyword("right") ?: false -> DeclaredOperator.Associative.Right
+                    node.associative?.isKeyword("left") ?: false -> DeclaredOperator.Associative.Left
+                    else -> DeclaredOperator.Associative.Left
+                }
+            )
+        )
     }
 
-    private fun registerStructureDeclaration(node: StructureDefinitionASTNode) {
+    private fun registerStructureDeclaration(node: StructureDefinitionASTNode): StructureType {
         val fields = node.fields.map { fieldNode ->
             val type = context.typesRegister.find(TypeIdentifier(fieldNode.type.identifier.text))
                 ?: throw Exception("Not found type: ${fieldNode.type.identifier}")
@@ -182,10 +185,13 @@ class Compiler(
             )
         )
         context.typesRegister.register(structureType)
+        return structureType
+    }
 
+    private fun createDefaultStructureInitialization(context: CompilerContext, structureType: StructureType) {
         FunctionBuilder.register(context) {
-            identifier(FunctionIdentifier(structureType.identifier, "init", fields.map { it.type.identifier }))
-            parameters(fields.map { field ->
+            identifier(FunctionIdentifier(structureType.identifier, "init", structureType.fields.map { it.type.identifier }))
+            parameters(structureType.fields.map { field ->
                 DeclaredSubroutine.Parameter(
                     name = field.name,
                     type = field.type,
@@ -194,12 +200,13 @@ class Compiler(
             })
             returnType(structureType)
             isInline(true)
+            skipDebugInformation(true)
             implementation { parameters ->
                 val structure = context.instructionsBuilder.createStructureInitialize(
                     structureType = structureType,
-                    fields = fields.zip(parameters).map { (field, parameter) ->
+                    fields = structureType.fields.zip(parameters).associate { (field, parameter) ->
                         field.name to parameter.get
-                    }.toMap(),
+                    },
                     name = null
                 )
                 context.instructionsBuilder.createReturn(structure.get)
@@ -212,11 +219,13 @@ class Compiler(
 
         val metadataType = context.typesRegister.find(TypeIdentifier("Metadata")) as StructureType
 
-        val metadata = metadataType.wrappedType.constant(listOf(
-            createGlobalString(type.identifier.getDescription()),
-            createGlobalString(type.identifier.getMangled()),
-            createGlobalString(type.wrappedType.getStringRepresentable())
-        ))
+        val metadata = metadataType.wrappedType.constant(
+            listOf(
+                createGlobalString(type.identifier.getDescription()),
+                createGlobalString(type.identifier.getMangled()),
+                createGlobalString(type.wrappedType.getStringRepresentable())
+            )
+        )
 
         val metadataGlobal = context.module.addGlobalConstant(type.identifier.getMangled() + ".Metadata", metadataType.wrappedType, metadata)
         context.typesRegister.setMetadata(type, metadataGlobal)
@@ -224,10 +233,12 @@ class Compiler(
 
     private fun createGlobalString(value: String): LLVMConstantValue {
         val stringType = context.typesRegister.find(TypeIdentifier("String")) as StructureType
-        return stringType.wrappedType.constant(listOf(
-            context.instructionsBuilder.createGlobalString(value, null),
-            context.context.createConstant(value.length.toLong())
-        ))
+        return stringType.wrappedType.constant(
+            listOf(
+                context.instructionsBuilder.createGlobalString(value, null),
+                context.context.createConstant(value.length.toLong())
+            )
+        )
     }
 
     private fun compileFilesSubroutines(filesSubroutines: List<FileSubroutines>) {
@@ -270,6 +281,7 @@ class Compiler(
             identifier(ExternalIdentifier(symbol, FunctionIdentifier(null, symbol, emptyList())))
             parameters(emptyList())
             returnType(context.builtin.voidType)
+            skipDebugInformation(true)
             implementation {
                 val mainFunction = context.typesRegister.find(FunctionIdentifier(null, "main", emptyList()))
 
@@ -294,11 +306,13 @@ class Compiler(
                 }
 
                 context.instructionsBuilder.createCall(
-                    subroutine = context.typesRegister.find(FunctionIdentifier(
-                        callee = context.builtin.systemType.identifier,
-                        name = "exit",
-                        parameters = listOf(context.builtin.integerType.identifier)
-                    ))!!,
+                    subroutine = context.typesRegister.find(
+                        FunctionIdentifier(
+                            callee = context.builtin.systemType.identifier,
+                            name = "exit",
+                            parameters = listOf(context.builtin.integerType.identifier)
+                        )
+                    )!!,
                     arguments = listOf(exitCode.get)
                 )
                 context.instructionsBuilder.createUnreachable()
