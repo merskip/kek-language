@@ -56,6 +56,11 @@ class ApplicationArguments(parser: ArgParser) {
                 "The default value is \"a.out\"."
     ).default("a.out")
 
+    val useLinkerOnWSL by parser.flagging(
+        "--linker-on-wsl",
+        help = "Uses linker on WSL to make the executable file"
+    )
+
     val indirectInput by parser.flagging(
         "--std-in",
         help = "Read input"

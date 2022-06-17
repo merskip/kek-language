@@ -20,7 +20,7 @@ class CompilerContext(
 
     private val logger = Logger(this::class.java)
 
-    lateinit var entryPointSubroutine: DeclaredSubroutine
+    var entryPointSubroutine: DeclaredSubroutine? = null
     lateinit var targetMachine: LLVMTargetMachine
     private val debugFiles = mutableMapOf<File, LLVMFileMetadata>()
 

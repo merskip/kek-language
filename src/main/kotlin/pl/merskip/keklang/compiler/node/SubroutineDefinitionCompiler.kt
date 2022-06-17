@@ -34,6 +34,7 @@ class SubroutineDefinitionCompiler(
             parameters(parameters)
             returnType(returnType)
             isInline(node.isInline)
+            skipDebugInformation(node.isExternal)
             sourceLocation(node.sourceLocation)
         }
     }
@@ -53,6 +54,7 @@ class SubroutineDefinitionCompiler(
             parameters(listOf(lhsParameter, rhsParameter))
             returnType(returnType)
             isInline(node.isInline)
+            skipDebugInformation(node.isExternal)
             sourceLocation(node.sourceLocation)
         }
     }

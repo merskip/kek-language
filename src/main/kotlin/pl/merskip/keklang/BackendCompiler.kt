@@ -2,7 +2,7 @@ package pl.merskip.keklang
 
 import pl.merskip.keklang.compiler.CompilerContext
 import pl.merskip.keklang.linker.WSLLinker
-import pl.merskip.keklang.llvm.*
+import pl.merskip.keklang.llvm.LLVMEmitter
 import pl.merskip.keklang.llvm.enum.CodeGenerationFileType
 import pl.merskip.keklang.logger.Logger
 import java.io.File
@@ -15,7 +15,7 @@ class BackendCompiler(
 
     private val logger = Logger(javaClass)
 
-    fun emit(outputFile: File) {
+    fun emit(outputFile: File, useLinkerOnWSL: Boolean) {
         val targetTriple = context.module.getTargetTriple()
         val emitter = LLVMEmitter(context.targetMachine, context.module)
 
@@ -38,7 +38,7 @@ class BackendCompiler(
                 logger.info("Writing object file to $outputFile")
                 emitter.emitToFile(objectFile, CodeGenerationFileType.ObjectFile)
             }
-            else -> {
+            useLinkerOnWSL -> {
                 logger.info("Writing executable file to $outputFile")
                 val temporaryObjectFile = Files.createTempFile(outputFile.nameWithoutExtension, ".o").toFile()
                 temporaryObjectFile.deleteOnExit()
@@ -47,9 +47,12 @@ class BackendCompiler(
 
                 WSLLinker(targetTriple).compile(
                     inputFiles = listOf(temporaryObjectFile),
-                    entryPoint = context.entryPointSubroutine.identifier.getMangled(),
+                    entryPoint = context.entryPointSubroutine?.identifier?.getMangled(),
                     outputFile = outputFile
                 )
+            }
+            else -> {
+                logger.warning("Creating native executable file not supported yet")
             }
         }
     }
