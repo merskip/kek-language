@@ -116,6 +116,13 @@ class LLVMFunctionValue(reference: LLVMValueRef) : LLVMValue(reference) {
     fun setDebugSubprogram(subprogram: LLVMSubprogramMetadata) {
         LLVMSetSubprogram(reference, subprogram.reference)
     }
+
+    fun verify() {
+        if (LLVMVerifyFunction(reference, LLVMPrintMessageAction) != 0)
+            throw FailedVerifyFunction()
+    }
+
+    class FailedVerifyFunction : Exception("Failed verify function")
 }
 
 class LLVMConstantValue(reference: LLVMValueRef) : LLVMValue(reference)
